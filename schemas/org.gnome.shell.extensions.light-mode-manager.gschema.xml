@@ -26,5 +26,9 @@
     <key name="color-surface-dark" type="s"><default>''</default><summary>OSD/switcher (dark, empty = system)</summary></key>
     <key name="color-dash-dark" type="s"><default>''</default><summary>Dash/search/folder (dark, empty = system)</summary></key>
     <key name="color-overview-dark" type="s"><default>''</default><summary>Overview (dark, empty = system)</summary></key>
+    <key name="radius-quick-toggle" type="i"><default>999</default><summary>Quick toggle buttons radius</summary></key>
+    <key name="radius-quick-header" type="i"><default>999</default><summary>Quick settings header buttons radius</summary></key>
+    <key name="radius-quick-submenu" type="i"><default>24</default><summary>Quick settings submenu radius</summary></key>
+    <key name="radius-media" type="i"><default>16</default><summary>Media player radius</summary></key>
   </schema>
 </schemalist>

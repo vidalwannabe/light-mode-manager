@@ -28,6 +28,9 @@ const RADII = [
     ['radius-switcher', '.switcher-list'],
     ['radius-tile', '.overview-tile, .grid-search-result'],
     ['radius-search', '.search-section-content'],
+    ['radius-media', '.message.media-message'],
+    ['radius-quick-header', '.quick-settings-system-item StButton, .quick-settings-system-item .button, .quick-settings-system-item .icon-button, .quick-settings-system-item .power-item'],
+    ['radius-quick-submenu', '.quick-toggle-menu'],
     ['radius-datemenu', '.datemenu-popover'],
 ];
 
@@ -149,6 +152,13 @@ export default class LightModeManagerExtension extends Extension {
         let o = '';
         for (const [key, selector] of RADII)
             o += `${selector} {\n  border-radius: ${this._settings.get_int(key)}px;\n}\n`;
+        const r = this._settings.get_int('radius-quick-toggle');
+        o += `.quick-toggle, .quick-toggle-has-menu {\n  border-radius: ${r}px;\n}\n` +
+            `.quick-toggle-has-menu .quick-toggle:ltr {\n  border-radius: ${r}px 0 0 ${r}px;\n}\n` +
+            `.quick-toggle-has-menu .quick-toggle:rtl {\n  border-radius: 0 ${r}px ${r}px 0;\n}\n` +
+            `.quick-toggle-has-menu .quick-toggle-menu-button:ltr {\n  border-radius: 0 ${r}px ${r}px 0;\n}\n` +
+            `.quick-toggle-has-menu .quick-toggle-menu-button:rtl {\n  border-radius: ${r}px 0 0 ${r}px;\n}\n` +
+            `.quick-toggle-has-menu .quick-toggle:ltr:last-child, .quick-toggle-has-menu .quick-toggle:rtl:last-child {\n  border-radius: ${r}px;\n}\n`;
         return o;
     }
 

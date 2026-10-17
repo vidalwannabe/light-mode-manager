@@ -127,6 +127,12 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         spinRow(g, 'radius-switcher', 'Alt+Tab');
         spinRow(g, 'radius-tile', 'App icons');
         spinRow(g, 'radius-search', 'Search results');
-        addResetGroup(rad, ['radius-popup', 'radius-quick-settings', 'radius-datemenu', 'radius-notification', 'radius-modal', 'radius-dash', 'radius-switcher', 'radius-tile', 'radius-search']);
+
+        g = mkGroup(rad, 'Quick settings elements', 'Buttons, submenus and media player inside the quick settings panel.');
+        spinRow(g, 'radius-quick-toggle', 'Toggle buttons', 'Wi-Fi, Bluetooth, Dark Style... (active or not)');
+        spinRow(g, 'radius-quick-header', 'Header buttons', 'Battery, screenshot, settings, lock, power');
+        spinRow(g, 'radius-quick-submenu', 'Submenu boxes', 'Boxes that open under toggles, like the Wi-Fi list');
+        spinRow(g, 'radius-media', 'Media player', 'Player card in quick settings');
+        addResetGroup(rad, ['radius-popup', 'radius-quick-settings', 'radius-datemenu', 'radius-notification', 'radius-modal', 'radius-dash', 'radius-switcher', 'radius-tile', 'radius-search', 'radius-quick-toggle', 'radius-quick-header', 'radius-quick-submenu', 'radius-media']);
     }
 }
