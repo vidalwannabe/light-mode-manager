@@ -14,7 +14,7 @@ const toCss = (c) => {
 export default class LightModeManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
-        window.set_default_size(600, 660);
+        window.set_default_size(600, 740);
 
         const mkPage = (title, icon) => {
             const p = new Adw.PreferencesPage({title, icon_name: icon});
@@ -77,6 +77,17 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             group.add(row);
         };
 
+        const addResetGroup = (page, keys) => {
+            const grp = new Adw.PreferencesGroup();
+            const r = new Adw.ActionRow({title: 'Restore this tab to defaults'});
+            const btn = new Gtk.Button({label: 'Restore defaults', valign: Gtk.Align.CENTER});
+            btn.add_css_class('destructive-action');
+            btn.connect('clicked', () => keys.forEach(k => s.reset(k)));
+            r.add_suffix(btn);
+            grp.add(r);
+            page.add(grp);
+        };
+
         // ----- Light mode -----
         const light = mkPage('Light mode', 'weather-clear-symbolic');
         let g = mkGroup(light, 'Colors', 'Hover, focus and active states are derived automatically from these colors.');
@@ -89,6 +100,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         colorRow(g, 'color-dash', 'Dash, search and folders', 'Overview dock, search results, app folders');
         colorRow(g, 'color-overview', 'Overview and app grid', 'Overview and icon background');
 
+        addResetGroup(light, ['color-panel', 'color-fg', 'color-fg-muted', 'color-popup', 'color-card', 'color-surface', 'color-dash', 'color-overview']);
+
         // ----- Dark mode -----
         const dark = mkPage('Dark mode', 'weather-clear-night-symbolic');
         g = mkGroup(dark, 'Colors', 'Empty = system default. Use the reset button to go back to the default.');
@@ -99,6 +112,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         colorRow(g, 'color-surface-dark', 'OSD and switcher', 'Alt+Tab, volume/brightness', false, true);
         colorRow(g, 'color-dash-dark', 'Dash, search and folders', 'Overview dock, search, app folders', false, true);
         colorRow(g, 'color-overview-dark', 'Overview', 'Overview background', false, true);
+
+        addResetGroup(dark, ['color-panel-dark', 'color-panel-text-dark', 'color-popup-dark', 'color-card-dark', 'color-surface-dark', 'color-dash-dark', 'color-overview-dark']);
 
         // ----- Border radius (both modes) -----
         const rad = mkPage('Border Radius', 'applications-graphics-symbolic');
@@ -112,5 +127,6 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         spinRow(g, 'radius-switcher', 'Alt+Tab');
         spinRow(g, 'radius-tile', 'App icons');
         spinRow(g, 'radius-search', 'Search results');
+        addResetGroup(rad, ['radius-popup', 'radius-quick-settings', 'radius-datemenu', 'radius-notification', 'radius-modal', 'radius-dash', 'radius-switcher', 'radius-tile', 'radius-search']);
     }
 }

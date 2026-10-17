@@ -19,7 +19,7 @@
     <key name="radius-tile" type="i"><default>24</default><summary>App tile radius</summary></key>
     <key name="radius-search" type="i"><default>24</default><summary>Search results radius</summary></key>
     <key name="radius-datemenu" type="i"><default>30</default><summary>Calendar radius</summary></key>
-    <key name="color-panel-dark" type="s"><default>''</default><summary>Top bar (dark, empty = system)</summary></key>
+    <key name="color-panel-dark" type="s"><default>'#36363a'</default><summary>Top bar (dark, empty = system)</summary></key>
     <key name="color-panel-text-dark" type="s"><default>''</default><summary>Top bar text (dark, empty = system)</summary></key>
     <key name="color-popup-dark" type="s"><default>''</default><summary>Menus and dialogs (dark, empty = system)</summary></key>
     <key name="color-card-dark" type="s"><default>''</default><summary>Cards (dark, empty = system)</summary></key>
