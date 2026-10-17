@@ -1,11 +1,16 @@
 {
   "uuid": "light-mode-manager@vidalwannabe.github.io",
   "name": "Light Mode Manager",
-  "description": "Light mode for GNOME Shell parts that ignore it (panel, overview, quick settings...), with a preferences window to customize colors and shapes. Derived from Luminus.",
+  "description": "Light mode for GNOME Shell parts that ignore it (panel, overview, quick settings...), with a preferences window to customize colors. Derived from Luminus.",
   "url": "https://github.com/vidalwannabe/light-mode-manager",
   "settings-schema": "org.gnome.shell.extensions.light-mode-manager",
-  "session-modes": ["unlock-dialog", "user"],
-  "shell-version": ["48"],
+  "session-modes": [
+    "unlock-dialog",
+    "user"
+  ],
+  "shell-version": [
+    "48"
+  ],
   "version": 1,
   "version-name": "1.0"
 }
