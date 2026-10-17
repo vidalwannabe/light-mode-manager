@@ -14,7 +14,7 @@ const toCss = (c) => {
 export default class LightModeManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
-        window.set_default_size(680, 780);
+        window.set_default_size(600, 660);
 
         const mkPage = (title, icon) => {
             const p = new Adw.PreferencesPage({title, icon_name: icon});
