@@ -19,9 +19,9 @@ const TOKENS = [
     ['color-popup', 'whitesmoke', '245, 245, 245'],
 ];
 
-// Matches the panel placeholder, every token color and its rgba() variants.
+// Matches every token color and its rgba() variants.
 const TOKEN_RE = new RegExp(
-    `##F5F5F5|${TOKENS.map(([, c]) => c.startsWith('#') ? `${c}\\b` : `\\b${c}\\b`).join('|')}|` +
+    `${TOKENS.map(([, c]) => c.startsWith('#') ? `${c}\\b` : `\\b${c}\\b`).join('|')}|` +
     `rgba\\((${TOKENS.map(([, , rgb]) => rgb).join('|')}), ([\\d.]+)\\)`,
     'gi');
 
@@ -125,12 +125,15 @@ export default class LightModeManagerExtension extends Extension {
         }
 
         let css = this._templateHead.replace(TOKEN_RE, (m, rgb, alpha) => {
-            if (m === '##F5F5F5')
-                return s.get_string('color-panel');
             if (rgb)
                 return `rgba(${byRgb[rgb]}, ${alpha})`;
             return byColor[m.toLowerCase()] ?? m;
         }) + this._templateTail;
+
+        // The top bar shares its template color with the menus, so it gets its own rule.
+        const panel = s.get_string('color-panel').trim();
+        if (panel)
+            css += rule('#panel', 'background-color', panel);
 
         const panelText = s.get_string('color-panel-text').trim();
         if (panelText)
