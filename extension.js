@@ -23,16 +23,41 @@ const RADII = [
     ['radius-popup', '.popup-menu-content, .candidate-popup-content'],
     ['radius-quick-settings', '.quick-settings'],
     ['radius-dash', '#dash .dash-background'],
-    ['radius-notification', '.message, .notification-banner'],
+    ['radius-notification', '.message, .notification-banner, .message-list-clear-button'],
     ['radius-modal', '.modal-dialog'],
     ['radius-switcher', '.switcher-list'],
     ['radius-tile', '.overview-tile, .grid-search-result'],
     ['radius-search', '.search-section-content'],
-    ['radius-media', '.message.media-message'],
-    ['radius-quick-header', '.quick-settings-system-item StButton, .quick-settings-system-item .button, .quick-settings-system-item .icon-button, .quick-settings-system-item .power-item'],
+    ['radius-media', '.message.media-message, .media-message, .quick-settings .message, .quick-settings .media-message', true],
+    ['radius-quick-header', '.quick-settings-system-item StButton, .quick-settings-system-item .button, .quick-settings-system-item .icon-button, .quick-settings-system-item .power-item', true],
     ['radius-quick-submenu', '.quick-toggle-menu'],
-    ['radius-datemenu', '.datemenu-popover'],
+    ['radius-datemenu', '.datemenu-popover, .calendar, .datemenu-today-button, .events-button, .world-clocks-button, .weather-button'],
+    ['radius-search-entry', '.search-entry'],
 ];
+
+// Top bar text color. The lock/login screen keeps its white text.
+const PANEL_TEXT_SEL = '#panel .panel-button, #panel .panel-button.clock-display, #panel:overview .panel-button, #panel:overview .panel-button.clock-display';
+const PANEL_LOCK_SEL = '#panel.unlock-screen .panel-button, #panel.login-screen .panel-button, #panel.unlock-screen .panel-button.clock-display, #panel.login-screen .panel-button.clock-display';
+const panelTextCss = color =>
+    `${PANEL_TEXT_SEL} {\n  color: ${color};\n}\n${PANEL_LOCK_SEL} {\n  color: #ffffff;\n}\n`;
+
+// Dark mode has no template: these lists approximate "text" and "secondary text".
+const DARK_FG_SEL = [
+    'stage', '.popup-menu', '.popup-menu-item', '.popup-inactive-menu-item', '.message',
+    '.quick-toggle-menu', '.events-button', '.world-clocks-button', '.weather-button',
+    '.datemenu-today-button', '.calendar .calendar-day', '.calendar .calendar-month-header .calendar-month-label',
+    '.modal-dialog', '.osd-window', '.switcher-list .item-box', '.overview-tile', '.grid-search-result',
+    '.list-search-result', '.search-section-content', '.app-folder-dialog',
+].join(', ');
+const DARK_MUTED_SEL = [
+    '.message .message-header', '.message .message-header .message-header-content .event-time',
+    '.events-button .events-box .events-title', '.events-button .events-box .events-list .event-box .event-time',
+    '.events-button .events-box .events-list .event-placeholder', '.world-clocks-button .world-clocks-header',
+    '.world-clocks-button .world-clocks-grid .world-clocks-timezone',
+    '.weather-button .weather-box .weather-header-box .weather-header',
+    '.calendar .calendar-day.calendar-weekend', '.calendar .calendar-week-number',
+    '.list-search-result .list-search-result-description', '.device-subtitle',
+].join(', ');
 
 function hexToRgb(v) {
     const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(v);
@@ -100,12 +125,16 @@ export default class LightModeManagerExtension extends Extension {
                     o += `${sel} {\n  ${prop}: ${v};\n}\n`;
             };
             rule('#panel', 'background-color', 'color-panel-dark');
-            rule('#panel .panel-button', 'color', 'color-panel-text-dark');
+            const panelText = s.get_string('color-panel-text-dark').trim();
+            if (panelText)
+                o += panelTextCss(panelText);
             rule('.popup-menu-content, .candidate-popup-content, .modal-dialog', 'background-color', 'color-popup-dark');
             rule('.message, .notification-banner, .quick-toggle-menu', 'background-color', 'color-card-dark');
             rule('.switcher-list, .osd-window, .workspace-switcher, .resize-popup', 'background-color', 'color-surface-dark');
             rule('#dash .dash-background, .search-section-content, .app-folder-dialog', 'background-color', 'color-dash-dark');
             rule('#overviewGroup', 'background-color', 'color-overview-dark');
+            rule(DARK_FG_SEL, 'color', 'color-fg-dark');
+            rule(DARK_MUTED_SEL, 'color', 'color-fg-muted-dark');
             return o + this._radiiCss();
         }
 
@@ -144,14 +173,26 @@ export default class LightModeManagerExtension extends Extension {
         });
 
         out += tail + '\n/* Light Mode Manager overrides */\n';
+        const panelText = s.get_string('color-panel-text').trim();
+        if (panelText)
+            out += panelTextCss(panelText);
         return out + this._radiiCss();
     }
 
     // Border radius applies to both light and dark modes.
+    // -1 means "system default": nothing is written and the theme's own radius applies.
+    // 0 means square corners.
     _radiiCss() {
+        const isSet = key => this._settings.get_int(key) >= 0;
         let o = '';
-        for (const [key, selector] of RADII)
-            o += `${selector} {\n  border-radius: ${this._settings.get_int(key)}px;\n}\n`;
+        for (const [key, selector, important] of RADII) {
+            if (!isSet(key))
+                continue;
+            const imp = important ? ' !important' : '';
+            o += `${selector} {\n  border-radius: ${this._settings.get_int(key)}px${imp};\n}\n`;
+        }
+        if (!isSet('radius-quick-toggle'))
+            return o;
         const r = this._settings.get_int('radius-quick-toggle');
         o += `.quick-toggle, .quick-toggle-has-menu {\n  border-radius: ${r}px;\n}\n` +
             `.quick-toggle-has-menu .quick-toggle:ltr {\n  border-radius: ${r}px 0 0 ${r}px;\n}\n` +
