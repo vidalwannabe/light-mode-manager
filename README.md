@@ -49,7 +49,7 @@ Each tab has a profile selector to apply a set of colors in one click.
 - **Override Dash to Panel colors**: Dash to Panel's panels and window previews (shown when hovering an open app) always use this extension's panel color and opacity (or GNOME's own with the GNOME profile) instead of Dash to Panel's color and transparency settings, which are left unchanged. Window previews keep Dash to Panel's own opacity if it has a custom preview opacity set.
 - **Automatic switch**: applies a chosen general profile at two times of day (for example, a light setup in the morning and an Oled one at night). A profile picked by hand in between is kept until the next switch time.
 - **Panel menu entry**: adds a "Light Mode Manager" entry that opens these preferences to the right-click menu of the panel. Requires [Dash to Panel](https://github.com/home-sweet-gnome/dash-to-panel).
-- **Quick Settings switcher**: adds a button to Quick Settings that shows the applied general profile and switches it from its menu. Hidden on the lock screen.
+- **Quick Settings switcher**: adds a button to Quick Settings that shows the applied general profile and switches it from its menu, which also has a Settings entry that opens these preferences. Hidden on the lock screen.
 - **Backup**: exports all colors, profiles and options to a JSON file. When importing, you can either replace all current settings or only add the profiles from the file, without changing anything you have.
 
 ## Installation from source

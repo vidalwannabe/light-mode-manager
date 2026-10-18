@@ -357,15 +357,22 @@ const AUTO_KEYS = ['auto-switch', 'auto-switch-1-time', 'auto-switch-1-profile',
 // often (instead of one long timer) also catches up right after a suspend.
 const AUTO_CHECK_SECONDS = 30;
 
-// Quick Settings button: shows the applied general profile and switches it from its menu.
+// Quick Settings button: shows the applied general profile and switches it from its menu,
+// which also opens these preferences (on their first tab, General).
 const ProfileToggle = GObject.registerClass(
 class ProfileToggle extends QuickMenuToggle {
-    _init(settings) {
+    _init(extension) {
         super._init({title: 'Profile', iconName: PROFILE_ICON, toggleMode: false});
+        const settings = extension.getSettings();
         this._profiles = createProfiles(settings).general;
         this.menu.setHeader(PROFILE_ICON, 'General profile');
         this._items = new PopupMenu.PopupMenuSection();
         this.menu.addMenuItem(this._items);
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        this.menu.addAction('Settings', () => {
+            Main.panel.closeQuickSettings();
+            extension.openPreferences();
+        });
         this.connect('clicked', () => this.menu.open());
 
         // Applying a profile changes several keys at once; rebuild only once.
@@ -405,9 +412,9 @@ class ProfileToggle extends QuickMenuToggle {
 
 const ProfileIndicator = GObject.registerClass(
 class ProfileIndicator extends SystemIndicator {
-    _init(settings) {
+    _init(extension) {
         super._init();
-        this.quickSettingsItems.push(new ProfileToggle(settings));
+        this.quickSettingsItems.push(new ProfileToggle(extension));
     }
 
     destroy() {
@@ -488,7 +495,7 @@ export default class LightModeManagerExtension extends Extension {
     _syncQuickSettings() {
         const show = this._settings.get_boolean('quick-settings-profiles') && !Main.sessionMode.isLocked;
         if (show && !this._indicator) {
-            this._indicator = new ProfileIndicator(this._settings);
+            this._indicator = new ProfileIndicator(this);
             Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator);
         } else if (!show && this._indicator) {
             this._indicator.destroy();
