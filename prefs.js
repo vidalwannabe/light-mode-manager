@@ -71,24 +71,40 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             group.add(row);
         };
 
-        // Asks for a new profile name. taken(name) says whether the name is already used.
-        const nameDialog = (taken, onConfirm) => {
-            const entry = new Gtk.Entry({placeholder_text: 'Profile name', activates_default: true});
-            const dialog = new Adw.AlertDialog({heading: 'New profile', extra_child: entry});
+        // Asks for a new profile name, plus one choice per entry of `combos`
+        // ({title, names, selected}). taken(name) says whether the name is already used.
+        const profileDialog = (taken, onConfirm, combos = [], heading = 'New profile') => {
+            const fields = new Gtk.ListBox({selection_mode: Gtk.SelectionMode.NONE});
+            fields.add_css_class('boxed-list');
+            const entry = new Adw.EntryRow({title: 'Profile name'});
+            fields.append(entry);
+            const choices = combos.map(({title, names, selected}) => {
+                const row = new Adw.ComboRow({title, model: Gtk.StringList.new(names)});
+                row.set_selected(Math.max(0, names.indexOf(selected)));
+                fields.append(row);
+                return () => names[row.get_selected()];
+            });
+
+            const dialog = new Adw.AlertDialog({heading, extra_child: fields});
             dialog.add_response('cancel', 'Cancel');
             dialog.add_response('ok', 'Save');
             dialog.set_response_appearance('ok', Adw.ResponseAppearance.SUGGESTED);
             dialog.set_default_response('ok');
             dialog.set_close_response('cancel');
-            const validate = () => {
-                const name = entry.get_text().trim();
-                dialog.set_response_enabled('ok', name !== '' && !taken(name));
-            };
-            entry.connect('changed', validate);
-            validate();
+            const name = () => entry.get_text().trim();
+            const valid = () => name() !== '' && !taken(name());
+            entry.connect('changed', () => dialog.set_response_enabled('ok', valid()));
+            dialog.set_response_enabled('ok', false);
+            const done = () => onConfirm(name(), ...choices.map(get => get()));
             dialog.connect('response', (_d, response) => {
                 if (response === 'ok')
-                    onConfirm(entry.get_text().trim());
+                    done();
+            });
+            entry.connect('entry-activated', () => {
+                if (valid()) {
+                    done();
+                    dialog.close();
+                }
             });
             dialog.present(window);
             entry.grab_focus();
@@ -111,49 +127,66 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         const defaults = suffix => Object.fromEntries(
             COLOR_ROWS.map(([n]) => [n, s.get_default_value(`color-${n}${suffix}`).unpack()]));
 
-        // Profile selector and "+" menu at the top of a tab.
-        // builtins: fixed profiles listed first; they cannot be deleted or overwritten.
-        const profilesGroup = (suffix, builtins) => {
-            const listKey = `profiles${suffix}`;
-            const activeKey = `active-profile${suffix}`;
-            const colorKey = n => `color-${n}${suffix}`;
-            const defaultColors = defaults(suffix);
+        // Profiles saved as JSON in `listKey`, after the fixed `builtins`, remembering the
+        // applied one by name in `activeKey` (so two equal profiles are never both marked).
+        // isValid(p) checks the fields of a saved profile.
+        const profileStore = (listKey, activeKey, builtins, isValid) => {
             const reserved = new Set(builtins.map(p => p.name));
-
             // The user's own profiles (a saved one can never shadow a built-in name).
-            const load = () => {
+            const own = () => {
                 try {
                     const list = JSON.parse(s.get_string(listKey));
                     return Array.isArray(list)
-                        ? list.filter(p => typeof p?.name === 'string' && !reserved.has(p.name) &&
-                            p.colors && typeof p.colors === 'object')
+                        ? list.filter(p => typeof p?.name === 'string' && !reserved.has(p.name) && isValid(p))
                         : [];
                 } catch {
                     return [];
                 }
             };
-            const save = list => s.set_string(listKey, JSON.stringify(list));
-            const current = () => Object.fromEntries(COLOR_ROWS.map(([n]) => [n, s.get_string(colorKey(n))]));
-            // A row that is missing or equal to its default is reset, so dconf only keeps real changes.
-            const apply = colors => {
-                for (const [n] of COLOR_ROWS) {
-                    const value = colors[n];
-                    if (typeof value !== 'string' || value === defaultColors[n])
-                        s.reset(colorKey(n));
-                    else
-                        s.set_string(colorKey(n), value);
-                }
+            return {
+                builtins, own,
+                all: () => [...builtins, ...own()],
+                save: list => s.set_string(listKey, JSON.stringify(list)),
+                taken: name => reserved.has(name) || own().some(p => p.name === name),
+                activeName: () => s.get_string(activeKey),
+                setActive: name => s.set_string(activeKey, name),
+                keys: [listKey, activeKey],
             };
-            const matches = colors => COLOR_ROWS.every(([n]) => (colors[n] ?? defaultColors[n]) === s.get_string(colorKey(n)));
-            // The applied profile is remembered by name, so two profiles with the same
-            // colors are not both marked. It stops counting once a color is changed.
-            const setActive = name => s.set_string(activeKey, name);
-            const active = profiles => {
-                const name = s.get_string(activeKey);
-                const p = profiles.find(q => q.name === name);
-                return p && matches(p.colors) ? p : null;
-            };
+        };
 
+        // The profiles of the Light or Dark tab.
+        const modeProfiles = (suffix, builtins) => {
+            const store = profileStore(`profiles${suffix}`, `active-profile${suffix}`, builtins,
+                p => p.colors && typeof p.colors === 'object');
+            const colorKey = n => `color-${n}${suffix}`;
+            const defaultColors = defaults(suffix);
+            const matches = colors =>
+                COLOR_ROWS.every(([n]) => (colors[n] ?? defaultColors[n]) === s.get_string(colorKey(n)));
+            return {
+                ...store,
+                keys: [...store.keys, ...COLOR_ROWS.map(([n]) => colorKey(n))],
+                current: () => Object.fromEntries(COLOR_ROWS.map(([n]) => [n, s.get_string(colorKey(n))])),
+                // A row that is missing or equal to its default is reset, so dconf only keeps real changes.
+                apply(profile) {
+                    store.setActive(profile.name);
+                    for (const [n] of COLOR_ROWS) {
+                        const value = profile.colors[n];
+                        if (typeof value !== 'string' || value === defaultColors[n])
+                            s.reset(colorKey(n));
+                        else
+                            s.set_string(colorKey(n), value);
+                    }
+                },
+                // The applied profile; it stops counting once a color is changed.
+                applied(profiles = store.all()) {
+                    const p = profiles.find(q => q.name === store.activeName());
+                    return p && matches(p.colors) ? p : null;
+                },
+            };
+        };
+
+        // A "Profiles" group: one row with a selector (apply, delete) and the given add button.
+        const selectorGroup = ({title, subtitle, model, describe, addButton, onRefresh}) => {
             const list = new Gtk.ListBox({selection_mode: Gtk.SelectionMode.NONE});
             list.add_css_class('boxed-list');
             const popover = new Gtk.Popover({child: new Gtk.ScrolledWindow({
@@ -162,66 +195,23 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             })});
             const selector = new Gtk.MenuButton({popover, valign: Gtk.Align.CENTER, tooltip_text: 'Saved profiles'});
 
-            // "+" menu: save the current colors as a new profile or into an existing one.
-            const actions = new Gio.SimpleActionGroup();
-            const newAction = new Gio.SimpleAction({name: 'new'});
-            newAction.connect('activate', () => nameDialog(
-                name => reserved.has(name) || load().some(p => p.name === name),
-                name => {
-                    save([...load(), {name, colors: current()}]);
-                    setActive(name);
-                }));
-            const overwriteAction = new Gio.SimpleAction({name: 'overwrite', parameter_type: new GLib.VariantType('s')});
-            overwriteAction.connect('activate', (_a, param) => {
-                const name = param.unpack();
-                confirm(`Apply to "${name}"?`, 'Its saved colors will be replaced with the current ones.', 'Replace', () => {
-                    save(load().map(p => p.name === name ? {name, colors: current()} : p));
-                    setActive(name);
-                });
-            });
-            [newAction, overwriteAction, new Gio.SimpleAction({name: 'none', enabled: false})]
-                .forEach(a => actions.add_action(a));
-
-            const addButton = new Gtk.MenuButton({
-                icon_name: 'list-add-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Save current colors',
-            });
-            addButton.add_css_class('flat');
-            addButton.insert_action_group('profile', actions);
-            const buildAddMenu = own => {
-                const menu = new Gio.Menu();
-                menu.append('Create new profile', 'profile.new');
-                if (own.length === 0) {
-                    menu.append('Apply to existing profile', 'profile.none');
-                } else {
-                    const sub = new Gio.Menu();
-                    for (const p of own) {
-                        const item = Gio.MenuItem.new(p.name, null);
-                        item.set_action_and_target_value('profile.overwrite', new GLib.Variant('s', p.name));
-                        sub.append_item(item);
-                    }
-                    menu.append_submenu('Apply to existing profile', sub);
-                }
-                addButton.set_menu_model(menu);
-            };
-
             const profileRow = (profile, applied) => {
-                const builtin = builtins.includes(profile);
+                const builtin = model.builtins.includes(profile);
                 const row = new Adw.ActionRow({
-                    title: profile.name, subtitle: builtin ? 'Built-in' : '', activatable: true, tooltip_text: 'Apply',
+                    title: profile.name, subtitle: describe(profile, builtin), activatable: true, tooltip_text: 'Apply',
                 });
                 // Every row gets the check icon so names stay aligned; only the applied one shows it.
                 row.add_prefix(new Gtk.Image({icon_name: 'object-select-symbolic', opacity: profile === applied ? 1 : 0}));
                 row.connect('activated', () => {
                     popover.popdown();
-                    setActive(profile.name);
-                    apply(profile.colors);
+                    model.apply(profile);
                 });
                 if (!builtin) {
                     const del = flatButton({icon_name: 'user-trash-symbolic', tooltip_text: 'Delete'});
                     del.connect('clicked', () => {
                         popover.popdown();
                         confirm(`Delete "${profile.name}"?`, 'This profile will be removed.', 'Delete',
-                            () => save(load().filter(p => p.name !== profile.name)));
+                            () => model.save(model.own().filter(p => p.name !== profile.name)));
                     });
                     row.add_suffix(del);
                 }
@@ -229,14 +219,13 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             };
 
             const refresh = () => {
-                const own = load();
-                buildAddMenu(own);
-                const profiles = [...builtins, ...own];
-                const applied = active(profiles);
+                const profiles = model.all();
+                const applied = model.applied(profiles);
                 selector.set_label(applied?.name ?? 'No profile');
                 list.remove_all();
                 for (const profile of profiles)
                     list.append(profileRow(profile, applied));
+                onRefresh?.();
             };
 
             // Applying a profile changes several keys at once; rebuild only once.
@@ -255,10 +244,10 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             });
 
             refresh();
-            for (const key of [listKey, activeKey, ...COLOR_ROWS.map(([n]) => colorKey(n))])
+            for (const key of model.keys)
                 watch(key, queueRefresh);
 
-            const row = new Adw.ActionRow({title: 'Profile', subtitle: 'Apply a built-in or saved color set'});
+            const row = new Adw.ActionRow({title, subtitle});
             row.add_suffix(selector);
             row.add_suffix(addButton);
             const group = new Adw.PreferencesGroup({title: 'Profiles'});
@@ -266,9 +255,101 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             return group;
         };
 
-        const addTab = (title, icon, suffix, builtins) => {
+        // Light or Dark tab profiles, with a "+" menu to save the current colors
+        // as a new profile or into an existing one.
+        const modeProfilesGroup = model => {
+            const actions = new Gio.SimpleActionGroup();
+            const newAction = new Gio.SimpleAction({name: 'new'});
+            newAction.connect('activate', () => profileDialog(model.taken, name => {
+                model.save([...model.own(), {name, colors: model.current()}]);
+                model.setActive(name);
+            }));
+            const overwriteAction = new Gio.SimpleAction({name: 'overwrite', parameter_type: new GLib.VariantType('s')});
+            overwriteAction.connect('activate', (_a, param) => {
+                const name = param.unpack();
+                confirm(`Apply to "${name}"?`, 'Its saved colors will be replaced with the current ones.', 'Replace', () => {
+                    model.save(model.own().map(p => p.name === name ? {name, colors: model.current()} : p));
+                    model.setActive(name);
+                });
+            });
+            [newAction, overwriteAction, new Gio.SimpleAction({name: 'none', enabled: false})]
+                .forEach(a => actions.add_action(a));
+
+            const addButton = new Gtk.MenuButton({
+                icon_name: 'list-add-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Save current colors',
+            });
+            addButton.add_css_class('flat');
+            addButton.insert_action_group('profile', actions);
+            const buildAddMenu = () => {
+                const own = model.own();
+                const menu = new Gio.Menu();
+                menu.append('Create new profile', 'profile.new');
+                if (own.length === 0) {
+                    menu.append('Apply to existing profile', 'profile.none');
+                } else {
+                    const sub = new Gio.Menu();
+                    for (const p of own) {
+                        const item = Gio.MenuItem.new(p.name, null);
+                        item.set_action_and_target_value('profile.overwrite', new GLib.Variant('s', p.name));
+                        sub.append_item(item);
+                    }
+                    menu.append_submenu('Apply to existing profile', sub);
+                }
+                addButton.set_menu_model(menu);
+            };
+
+            return selectorGroup({
+                title: 'Profile', subtitle: 'Apply a built-in or saved color set', model, addButton,
+                describe: (_p, builtin) => builtin ? 'Built-in' : '',
+                onRefresh: buildAddMenu,
+            });
+        };
+
+        // A general profile pairs a light and a dark profile and applies both.
+        const generalProfilesGroup = (light, dark) => {
+            const store = profileStore('general-profiles', 'active-general-profile', [
+                {name: 'Default', light: 'Default', dark: 'Default'},
+                {name: 'GNOME', light: 'GNOME', dark: 'GNOME'},
+            ], p => typeof p.light === 'string' && typeof p.dark === 'string');
+            const find = (mode, name) => mode.all().find(p => p.name === name);
+            const model = {
+                ...store,
+                keys: [...store.keys, ...light.keys, ...dark.keys],
+                // A side whose profile was deleted is left as it is.
+                apply(profile) {
+                    store.setActive(profile.name);
+                    const [l, d] = [find(light, profile.light), find(dark, profile.dark)];
+                    if (l)
+                        light.apply(l);
+                    if (d)
+                        dark.apply(d);
+                },
+                applied(profiles = store.all()) {
+                    const p = profiles.find(q => q.name === store.activeName());
+                    return p && light.applied()?.name === p.light && dark.applied()?.name === p.dark ? p : null;
+                },
+            };
+            const side = (mode, name) => find(mode, name) ? name : `${name} (deleted)`;
+
+            const addButton = flatButton({icon_name: 'list-add-symbolic', tooltip_text: 'New general profile'});
+            addButton.connect('clicked', () => profileDialog(store.taken, (name, l, d) => {
+                store.save([...store.own(), {name, light: l, dark: d}]);
+                model.apply({name, light: l, dark: d});
+            }, [
+                {title: 'Light mode profile', names: light.all().map(p => p.name), selected: 'Default'},
+                {title: 'Dark mode profile', names: dark.all().map(p => p.name), selected: 'Default'},
+            ], 'New general profile'));
+
+            return selectorGroup({
+                title: 'General profile', subtitle: 'Applies a light and a dark mode profile together',
+                model, addButton,
+                describe: p => `Light: ${side(light, p.light)} · Dark: ${side(dark, p.dark)}`,
+            });
+        };
+
+        const addTab = (title, icon, suffix, model) => {
             const page = new Adw.PreferencesPage({title, icon_name: icon});
-            page.add(profilesGroup(suffix, builtins));
+            page.add(modeProfilesGroup(model));
             const group = new Adw.PreferencesGroup({title: 'Colors'});
             for (const [name, label, subtitle] of COLOR_ROWS)
                 colorRow(group, `color-${name}${suffix}`, label, subtitle);
@@ -313,8 +394,9 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             group.add(row);
         };
 
-        const addGeneralTab = () => {
+        const addGeneralTab = (light, dark) => {
             const page = new Adw.PreferencesPage({title: 'General', icon_name: 'preferences-other-symbolic'});
+            page.add(generalProfilesGroup(light, dark));
 
             const effects = new Adw.PreferencesGroup({title: 'Visual effects'});
             sliderRow(effects, 'transition-duration', 'Transition',
@@ -338,13 +420,14 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         // "Default": the schema defaults. "GNOME": every row on system default.
         // "Oled": the dark Default with a pure black general background.
         const gnome = {name: 'GNOME', colors: Object.fromEntries(COLOR_ROWS.map(([n]) => [n, '']))};
-        addTab('Light mode', 'weather-clear-symbolic', '',
-            [{name: 'Default', colors: defaults('')}, gnome]);
-        addTab('Dark mode', 'weather-clear-night-symbolic', '-dark', [
+        const light = modeProfiles('', [{name: 'Default', colors: defaults('')}, gnome]);
+        const dark = modeProfiles('-dark', [
             {name: 'Default', colors: defaults('-dark')},
             gnome,
             {name: 'Oled', colors: {...defaults('-dark'), general: '#000000'}},
         ]);
-        addGeneralTab();
+        addTab('Light mode', 'weather-clear-symbolic', '', light);
+        addTab('Dark mode', 'weather-clear-night-symbolic', '-dark', dark);
+        addGeneralTab(light, dark);
     }
 }
