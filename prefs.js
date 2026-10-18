@@ -14,8 +14,7 @@ const toCss = c => {
 // [key name, title, subtitle, supports transparency]
 const COLOR_ROWS = [
     ['general', 'General background', 'Top bar, menus and dialogs, OSD and switcher, overview (supports transparency)', true],
-    ['panel-text', 'Top bar text', 'Top bar text and icon color', false],
-    ['fg', 'Text and icons', 'Main text color', false],
+    ['fg', 'Text and icons', 'Main text color, including the top bar', false],
     ['fg-muted', 'Secondary text', 'Dates, captions, subtitles', false],
     ['card', 'Cards, dash and search', 'Notifications, calendar, quick settings, dock, search results, app folders', false],
 ];
@@ -92,7 +91,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
 
         addTab('Light mode', 'weather-clear-symbolic',
             'Hover, focus and active states are derived automatically from these colors.', '',
-            name => name === 'panel-text' ? ['Same as "Text and icons"', 'color-fg'] : [null, null]);
+            () => [null, null]);
         addTab('Dark mode', 'weather-clear-night-symbolic',
             'Rows set to "System default" keep the native GNOME dark look.', '-dark',
             () => ['System default', null]);

@@ -111,7 +111,8 @@ export default class LightModeManagerExtension extends Extension {
             if (value)
                 css += rule(selector, prop, value);
         }
-        const panelText = s.get_string('color-panel-text-dark').trim();
+        // The top bar text follows "Text and icons".
+        const panelText = s.get_string('color-fg-dark').trim();
         if (panelText)
             css += panelTextCss(panelText);
         return css;
@@ -138,7 +139,8 @@ export default class LightModeManagerExtension extends Extension {
         if (panel)
             css += rule('#panel', 'background-color', panel);
 
-        const panelText = s.get_string('color-panel-text').trim();
+        // The top bar text follows "Text and icons".
+        const panelText = s.get_string('color-fg').trim();
         if (panelText)
             css += panelTextCss(panelText);
         return css;
