@@ -6,20 +6,16 @@ import Adw from 'gi://Adw';
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 // The Light mode and Dark mode tabs show exactly these rows.
-// [key name, title, subtitle, supports transparency]
+// [key name, title, subtitle]. Transparency is set only in the Tuning tab.
 const COLOR_ROWS = [
-    ['general', 'General background', 'Top bar, menus and dialogs, OSD and switcher, overview (supports transparency)', true],
-    ['fg', 'Text and icons', 'Main text color, including the top bar', false],
-    ['fg-muted', 'Secondary text', 'Dates, captions, subtitles', false],
-    ['card', 'Cards, dash and search', 'Notifications, calendar, quick settings, dock, search results, app folders', false],
+    ['general', 'General background', 'Top bar, menus and dialogs, OSD and switcher, overview'],
+    ['fg', 'Text and icons', 'Main text color, including the top bar'],
+    ['fg-muted', 'Secondary text', 'Dates, captions, subtitles'],
+    ['card', 'Cards, dash and search', 'Notifications, calendar, quick settings, dock, search results, app folders'],
 ];
 
-const toCss = c => {
-    const [r, g, b] = [c.red, c.green, c.blue].map(v => Math.round(v * 255));
-    if (c.alpha < 0.999)
-        return `rgba(${r}, ${g}, ${b}, ${c.alpha.toFixed(2)})`;
-    return `#${[r, g, b].map(v => v.toString(16).padStart(2, '0')).join('')}`;
-};
+const toHex = c => `#${[c.red, c.green, c.blue]
+    .map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('')}`;
 
 const flatButton = props => {
     const button = new Gtk.Button({valign: Gtk.Align.CENTER, ...props});
@@ -44,10 +40,10 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             return false;
         });
 
-        const colorRow = (group, key, title, subtitle, alpha) => {
+        const colorRow = (group, key, title, subtitle) => {
             const row = new Adw.ActionRow({title});
             const button = new Gtk.ColorDialogButton({
-                dialog: new Gtk.ColorDialog({with_alpha: alpha}),
+                dialog: new Gtk.ColorDialog({with_alpha: false}),
                 valign: Gtk.Align.CENTER,
             });
             let loading = false;
@@ -64,7 +60,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             load();
             button.connect('notify::rgba', () => {
                 if (!loading)
-                    s.set_string(key, toCss(button.get_rgba()));
+                    s.set_string(key, toHex(button.get_rgba()));
             });
             watch(key, load);
 
@@ -274,8 +270,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             const page = new Adw.PreferencesPage({title, icon_name: icon});
             page.add(profilesGroup(suffix, builtins));
             const group = new Adw.PreferencesGroup({title: 'Colors'});
-            for (const [name, label, subtitle, alpha] of COLOR_ROWS)
-                colorRow(group, `color-${name}${suffix}`, label, subtitle, alpha);
+            for (const [name, label, subtitle] of COLOR_ROWS)
+                colorRow(group, `color-${name}${suffix}`, label, subtitle);
             page.add(group);
             window.add(page);
         };

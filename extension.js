@@ -89,13 +89,13 @@ function colorToRgb(value) {
     return m ? m.slice(1).join(', ') : null;
 }
 
-// The color with the general opacity (percent) applied on top of its own alpha.
+// The general background with the opacity from the Tuning tab. Any alpha already in the
+// color (older settings or profiles) is ignored: the Tuning tab is the only source.
 function withOpacity(value, opacity) {
-    const rgb = value && opacity < 100 ? colorToRgb(value) : null;
-    if (!rgb)
+    const rgb = value ? colorToRgb(value) : null;
+    if (!rgb || (opacity >= 100 && value.startsWith('#')))
         return value;
-    const alpha = /^rgba\(.*,\s*([\d.]+)\s*\)$/i.exec(value)?.[1] ?? 1;
-    return `rgba(${rgb}, ${+(alpha * opacity / 100).toFixed(3)})`;
+    return `rgba(${rgb}, ${opacity / 100})`;
 }
 
 export default class LightModeManagerExtension extends Extension {
