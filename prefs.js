@@ -27,6 +27,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
         window.set_default_size(600, 500);
+        window.set_search_enabled(false);
 
         // Settings handlers and pending idles are dropped when the window closes,
         // so they never run on dead widgets.
