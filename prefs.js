@@ -9,14 +9,16 @@ import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/ex
 import {createProfiles} from './profiles.js';
 
 // The Light mode and Dark mode tabs show exactly these rows.
-// [key name, title, subtitle]. Transparency is set only in the General tab.
+// [key name, title, subtitle, label and swatch when empty]. Transparency is set only in the
+// General tab.
 const COLOR_ROWS = [
     ['general', 'General background', 'Top bar, menus, dialogs, OSD and switcher, overview'],
     ['panel-fg', 'Top bar content', 'Top bar text and icons'],
-    ['fg', 'Text and icons', 'Menus, Quick Settings, notifications and dialogs'],
-    ['fg-muted', 'Secondary text', 'Dates, captions and subtitles'],
+    ['fg', 'Main text and icons', 'Titles and icons: notifications, widgets, menus, dialogs, Quick Settings'],
+    ['fg-muted', 'Secondary text', 'The line under a title: notification text, times, locations'],
     ['card', 'Cards, dash and search', 'Notifications, calendar, slider buttons, dock, search, app folders'],
-    ['qs-button', 'Inactive Quick Settings buttons', 'Toggles that are off, round buttons at the top, and their menus'],
+    ['qs-active-fg', 'Active buttons text and icons', 'Quick Settings toggles that are on, like Wi-Fi', 'Accent text color', '#ffffff'],
+    ['qs-button', 'Idle Quick Settings buttons', 'Toggles that are off, round buttons at the top, and their menus'],
     ['border', 'Borders', 'Outline of Quick Settings, the calendar and other menus'],
 ];
 
@@ -32,7 +34,7 @@ const flatButton = props => {
 export default class LightModeManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
-        window.set_default_size(600, 855);
+        window.set_default_size(600, 845);
         window.set_search_enabled(false);
 
         // Settings handlers and pending idles are dropped when the window closes,
@@ -47,7 +49,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             return false;
         });
 
-        const colorRow = (group, key, title, subtitle) => {
+        const colorRow = (group, key, title, subtitle, emptyLabel = 'System default', emptyColor = '#808080') => {
             const row = new Adw.ActionRow({title});
             const button = new Gtk.ColorDialogButton({
                 dialog: new Gtk.ColorDialog({with_alpha: false}),
@@ -58,9 +60,9 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 // Empty or unreadable: the shell uses the system default.
                 const color = new Gdk.RGBA();
                 const valid = color.parse(s.get_string(key).trim());
-                row.set_subtitle(valid ? subtitle : 'System default');
+                row.set_subtitle(valid ? subtitle : emptyLabel);
                 if (!valid)
-                    color.parse('#808080');
+                    color.parse(emptyColor);
                 loading = true;
                 button.set_rgba(color);
                 loading = false;
@@ -276,8 +278,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             const page = new Adw.PreferencesPage({title, icon_name: icon});
             page.add(modeProfilesGroup(model));
             const group = new Adw.PreferencesGroup({title: 'Colors'});
-            for (const [name, label, subtitle] of COLOR_ROWS)
-                colorRow(group, `color-${name}${suffix}`, label, subtitle);
+            for (const [name, label, subtitle, emptyLabel, emptyColor] of COLOR_ROWS)
+                colorRow(group, `color-${name}${suffix}`, label, subtitle, emptyLabel, emptyColor);
             page.add(group);
             window.add(page);
         };

@@ -81,13 +81,15 @@ const SLIDER_BUTTONS = '.quick-slider .icon-button';
 const DARK_CARD_BUTTONS = ['.quick-toggle-menu', SLIDER_BUTTONS, ...CARD_BUTTONS];
 
 // Color settings of each mode.
-const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button', 'color-panel-fg'];
+const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button', 'color-panel-fg',
+    'color-qs-active-fg'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and General tab options);
 // other keys (profiles...) never do.
 const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'hide-borders', 'match-arrow-buttons', 'calendar-background'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
-const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark', ...EFFECT_KEYS];
+const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark',
+    'color-qs-active-fg-dark', ...EFFECT_KEYS];
 
 // Accepted color values: #rgb, #rrggbb, rgb()/rgba() or a name. Anything else (edited in
 // dconf or imported) counts as system default, so it can never break the stylesheet.
@@ -135,7 +137,7 @@ function buttonCss(selectors, base, dark) {
         'background-color', color)).join('');
 }
 
-// Inactive Quick Settings buttons: toggles that are off and the round buttons at the top;
+// Idle Quick Settings buttons: toggles that are off and the round buttons at the top;
 // the menus they expand (Wi-Fi, Power Off...) use the same color. Checked toggles get
 // GNOME's accent states again after them, and the Background Apps item (also a toggle)
 // its transparent background, which still gives way to the hover.
@@ -198,18 +200,78 @@ const MENU_TITLE = 'Light Mode Manager';
 
 const rule = (selector, prop, value) => `${selector} {\n  ${prop}: ${value};\n}\n`;
 const noShadowCss = rule(SHADOW_SEL, 'box-shadow', 'none');
+const insensitive = selectors => selectors.map(s => `${s}:insensitive`).join(', ');
+
 // Quick Settings text and icons on GNOME's dark style, which keeps them white: toggles and
-// their arrows, the round buttons at the top and the slider buttons. Checked toggles and
-// arrows keep the accent's text color.
-const QS_TEXT_SEL = '.quick-settings .button, .quick-settings .icon-button';
-const QS_TEXT_CHECKED_SEL = '.quick-settings .quick-toggle:checked, ' +
-    '.quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked';
+// their arrows, the round buttons at the top and the slider buttons.
+const QS_TEXT = ['.quick-settings .button', '.quick-settings .icon-button'];
 function quickSettingsTextCss(color) {
-    const insensitive = sel => sel.split(', ').map(s => `${s}:insensitive`).join(', ');
-    return rule(QS_TEXT_SEL, 'color', color) +
-        rule(insensitive(QS_TEXT_SEL), 'color', `st-transparentize(${color}, 0.5)`) +
-        rule(QS_TEXT_CHECKED_SEL, 'color', '-st-accent-fg-color') +
-        rule(insensitive(QS_TEXT_CHECKED_SEL), 'color', 'st-transparentize(-st-accent-fg-color, 0.5)');
+    return rule(QS_TEXT.join(', '), 'color', color) +
+        rule(insensitive(QS_TEXT), 'color', `st-transparentize(${color}, 0.5)`);
+}
+
+// "Active buttons text and icons": Quick Settings toggles that are on (and their arrows and
+// subtitles), and the icon of the menu they open. GNOME's own: the accent's text color.
+const QS_ACTIVE = ['.quick-settings .quick-toggle:checked',
+    '.quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked'];
+const QS_ACTIVE_TEXT = [...QS_ACTIVE, '.quick-settings .quick-toggle:checked .quick-toggle-subtitle',
+    '.quick-toggle-menu .header .icon.active'];
+function activeTextCss(color) {
+    return rule(QS_ACTIVE_TEXT.join(', '), 'color', color) +
+        rule(insensitive(QS_ACTIVE), 'color', `st-transparentize(${color}, 0.5)`);
+}
+
+// Text roles. "Main text and icons" colors titles and icons, "Secondary text" only the line
+// that comes under a title (a notification's body and time, a location, "No Events"...).
+// GNOME dims some titles too (a notification's app name, "Today", "Weather", weekends), so
+// each role is set here explicitly, after the template or GNOME's own rules.
+const MAIN_TEXT = [
+    '.message .message-header .message-header-content .message-source-title',
+    '.message .message-header .message-source-icon',
+    '.message .message-box .message-content .message-title',
+    '.message-notification-group .message-group-header .message-group-title',
+    '.events-button .events-box .events-title',
+    '.events-button .events-box .events-list .event-box .event-summary',
+    '.world-clocks-button .world-clocks-header',
+    '.world-clocks-button .world-clocks-grid .world-clocks-city',
+    '.world-clocks-button .world-clocks-grid .world-clocks-time',
+    '.weather-button .weather-box .weather-header-box .weather-header',
+    '.weather-button .weather-box .weather-grid .weather-forecast-icon',
+    '.weather-button .weather-box .weather-grid .weather-forecast-temp',
+    '.datemenu-today-button .date-label',
+    '.calendar .calendar-month-header .calendar-month-label',
+    '.calendar .calendar-day.calendar-weekend',
+    '.quick-toggle-menu .header .title',
+    '.message-dialog-content .message-dialog-title',
+];
+const SECONDARY_TEXT = [
+    '.message .message-box .message-content .message-body',
+    '.message .message-header .message-header-content .event-time',
+    '.events-button .events-box .events-list .event-box .event-time',
+    '.events-button .events-box .events-list .event-placeholder',
+    '.world-clocks-button .world-clocks-grid .world-clocks-timezone',
+    '.weather-button .weather-box .weather-header-box .weather-header.location',
+    '.weather-button .weather-box .weather-grid .weather-forecast-time',
+    '.datemenu-today-button .day-label',
+    '.quick-toggle-menu .header .subtitle',
+    '.quick-settings .quick-toggle .quick-toggle-subtitle',
+    '.message-dialog-content .message-dialog-description',
+];
+// Calendar days that keep their own look over the main color: other months dimmed, today on
+// the accent.
+const CALENDAR_OTHER_MONTH = '.calendar .calendar-day.calendar-other-month, ' +
+    '.calendar .calendar-day.calendar-other-month.calendar-weekend';
+const CALENDAR_TODAY_TEXT = '.calendar .calendar-day.calendar-today';
+function textRolesCss(main, secondary) {
+    let css = '';
+    if (main) {
+        css += rule(MAIN_TEXT.join(', '), 'color', main) +
+            rule(CALENDAR_OTHER_MONTH, 'color', `st-transparentize(${main}, 0.5)`) +
+            rule(CALENDAR_TODAY_TEXT, 'color', '-st-accent-fg-color');
+    }
+    if (secondary)
+        css += rule(SECONDARY_TEXT.join(', '), 'color', secondary);
+    return css;
 }
 
 const panelTextCss = color => rule(PANEL_TEXT_SEL, 'color', color) + rule(PANEL_LOCK_SEL, 'color', '#ffffff') +
@@ -733,10 +795,15 @@ export default class LightModeManagerExtension extends Extension {
         const [panelFg] = this._values(['color-panel-fg-dark']);
         if (panelFg)
             css += panelTextCss(panelFg);
-        // Quick Settings text and icons: "Text and icons".
+        // Titles, subtitles and Quick Settings text: "Main text and icons", "Secondary text"
+        // and "Active buttons text and icons".
         const fg = values[DARK_KEYS.indexOf('color-fg-dark')];
+        const [active] = this._values(['color-qs-active-fg-dark']);
         if (fg)
             css += quickSettingsTextCss(fg);
+        if (fg || active)
+            css += activeTextCss(active || '-st-accent-fg-color');
+        css += textRolesCss(fg, values[DARK_KEYS.indexOf('color-fg-muted-dark')]);
         css += this._darkCardsCss(values[DARK_KEYS.indexOf('color-card-dark')],
             this._values(['color-qs-button-dark'])[0]);
         return css + this._borderCss('color-border-dark');
@@ -762,7 +829,7 @@ export default class LightModeManagerExtension extends Extension {
         return css;
     }
 
-    // Inactive Quick Settings buttons, the menus they open and the arrow buttons. An empty
+    // Idle Quick Settings buttons, the menus they open and the arrow buttons. An empty
     // color uses `native`: GNOME's own toggle, arrow (off, checked) and menu colors.
     _quickSettingsCss(dark, color, native) {
         const match = this._settings.get_boolean('match-arrow-buttons');
@@ -846,6 +913,10 @@ export default class LightModeManagerExtension extends Extension {
         // The top bar: "Top bar content".
         if (byKey['color-panel-fg'])
             css += panelTextCss(byKey['color-panel-fg']);
+        // Titles and subtitles (the template's own colors when empty), and active buttons.
+        css += textRolesCss(fill('#222226', solid), fill('#767679', solid));
+        if (byKey['color-qs-active-fg'])
+            css += activeTextCss(byKey['color-qs-active-fg']);
         // Cards (the template's own color when empty), inactive Quick Settings buttons and
         // calendar background. GNOME's light expressions get the template's tokens filled in;
         // the color settings are used as they are.

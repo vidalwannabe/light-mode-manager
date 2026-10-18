@@ -8,16 +8,17 @@ It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 app
 
 ### Light mode and Dark mode tabs
 
-Each tab has seven colors:
+Each tab has eight colors:
 
 | Color | What it paints |
 | --- | --- |
 | General background | Top bar, menus and dialogs, OSD and window switcher, overview |
 | Top bar content | Top bar text and icons: clock, indicators, the overview button and Dash to Panel's app grid button |
-| Text and icons | Main text and icons: menus, Quick Settings (toggles, their arrows and buttons), notifications, dialogs |
-| Secondary text | Dates, captions, subtitles |
+| Main text and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, menus, dialogs, Quick Settings |
+| Secondary text | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday, toggle subtitles |
 | Cards, dash and search | Notifications, calendar, Quick Settings slider buttons, dock, search results, app folders |
-| Inactive Quick Settings buttons | Quick Settings toggles that are off, their arrows, the round buttons at the top and the menus they open |
+| Active buttons text and icons | Quick Settings toggles that are on (Wi-Fi, Dark Style…), their arrows and subtitles. Empty: the accent's text color |
+| Idle Quick Settings buttons | Quick Settings toggles that are off, their arrows, the round buttons at the top and the menus they open |
 | Borders | Outline of Quick Settings, the calendar and other menus |
 
 Hover, focus and active states follow these colors automatically. Every color has a button to restore its Default profile value.
