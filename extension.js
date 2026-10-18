@@ -430,11 +430,16 @@ export default class LightModeManagerExtension extends Extension {
     // it, with get_preferred_height(-1): at no particular width. Text that wraps (Bluetooth
     // off: "Turn on Bluetooth to connect to devices") then counts as one line and the menu
     // covers the buttons below (GNOME issue 7622). With fix-qs-menu-height both are measured
-    // at the real width, in any language: QuickToggleMenu.open() (the opening animation) and
-    // the menus' overlay (read by the Quick Settings layout once the animation ends).
+    // at the width of the menus' overlay, in any language:
+    // - QuickToggleMenu.open(), for the opening animation;
+    // - the grid's placeholder, whose height the Quick Settings layout reads as the room for
+    //   an open menu. Its height is bound to the overlay by a constraint that measures it
+    //   in C, at -1, so the placeholder's own get_preferred_height() is replaced.
     _syncQsMenuHeight(fix = this._settings.get_boolean('fix-qs-menu-height')) {
-        const overlay = Main.panel.statusArea.quickSettings?.menu?._overlay;
-        if (!overlay || fix === !!this._menuOpen)
+        const menu = Main.panel.statusArea.quickSettings?.menu;
+        const overlay = menu?._overlay;
+        const placeholder = menu?._grid?.layout_manager?._overlay;
+        if (!overlay || !placeholder || fix === !!this._menuOpen)
             return;
         if (fix) {
             // QuickToggleMenu is not exported: its prototype comes from a throwaway item.
@@ -452,16 +457,16 @@ export default class LightModeManagerExtension extends Extension {
                     delete actor.get_preferred_height;
                 }
             };
-            this._overlayHeight = heightAtWidth(overlay, () => overlay.get_parent()?.width ?? 0);
+            this._overlayHeight = heightAtWidth(overlay, () => overlay.width);
             this._override(proto, 'open', this._menuOpen);
-            this._override(overlay, 'get_preferred_height', this._overlayHeight);
+            this._override(placeholder, 'get_preferred_height', this._overlayHeight);
         } else {
             this._restore(this._menuOpen);
             this._restore(this._overlayHeight);
             this._menuOpen = this._overlayHeight = null;
         }
         // A menu open right now gets the new height.
-        overlay.get_parent()?.queue_relayout();
+        menu._grid.queue_relayout();
     }
 
     // ---------- Automatic switch ----------
