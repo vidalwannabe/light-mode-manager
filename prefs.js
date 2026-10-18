@@ -635,7 +635,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             s.bind('match-arrow-buttons', arrowRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(arrowRow);
             const dimRow = new Adw.SwitchRow({
-                title: 'Remove Quick Settings dimming',
+                title: 'Disable Quick Settings dimming',
                 subtitle: 'Quick Settings is not darkened while one of its menus is open',
             });
             s.bind('no-qs-dimming', dimRow, 'active', Gio.SettingsBindFlags.DEFAULT);
