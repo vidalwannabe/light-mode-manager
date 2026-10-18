@@ -80,12 +80,8 @@ const DARK_OVERVIEW_SEL = '#overviewGroup';
 const LIGHT_OVERVIEW_RE = /overview|app-folder|grid-search-result/;
 
 // GNOME draws a shadow under the whole menu, so a translucent menu showed it through
-// and looked darker than the panel. These shadows fade with the general opacity.
-// [selectors, shadow geometry, light alpha, dark alpha], as in GNOME 48's stylesheets.
-const SHADOWS = [
-    ['.popup-menu-content, .candidate-popup-content', '0 2px 4px 0', 0.05, 0.2],
-    ['.switcher-list', '0 8px 8px 0', 0.05, 0.2],
-];
+// and looked darker than the panel. Below 100% opacity these shadows are removed.
+const SHADOW_SEL = '.popup-menu-content, .candidate-popup-content, .switcher-list';
 
 // GNOME's own delay before fading out the snapshot of the old screen.
 const TRANSITION_DELAY = 250;
@@ -96,8 +92,7 @@ const DTP_SCHEMA = 'org.gnome.shell.extensions.dash-to-panel';
 const MENU_TITLE = 'Light Mode Manager';
 
 const rule = (selector, prop, value) => `${selector} {\n  ${prop}: ${value};\n}\n`;
-const shadowCss = (opacity, dark) => SHADOWS.map(([selector, geometry, light, darkAlpha]) =>
-    rule(selector, 'box-shadow', `${geometry} rgba(0, 0, 0, ${+((dark ? darkAlpha : light) * opacity / 100).toFixed(3)})`)).join('');
+const noShadowCss = rule(SHADOW_SEL, 'box-shadow', 'none');
 const panelTextCss = color => rule(PANEL_TEXT_SEL, 'color', color) + rule(PANEL_LOCK_SEL, 'color', '#ffffff');
 
 // "r, g, b" of a #rrggbb, rgb() or rgba() color, so hover/active variants follow it.
@@ -374,7 +369,7 @@ export default class LightModeManagerExtension extends Extension {
         if (opaque) {
             css += rule(DARK_OVERVIEW_SEL, 'background-color', opaque);
             if (opacity < 100)
-                css += shadowCss(opacity, true);
+                css += noShadowCss;
         }
         // The top bar text follows "Text and icons".
         const fg = values[DARK_KEYS.indexOf('color-fg-dark')];
@@ -422,14 +417,14 @@ export default class LightModeManagerExtension extends Extension {
 
         const [head, tail, overview] = this._template();
         let css = fill(head, byColor) + tail;
-        // Translucent general background: the overview stays opaque and shadows fade.
+        // Translucent general background: the overview stays opaque and shadows are removed.
         if (opaque && opacity < 100) {
             const opaqueColors = {...byColor};
             for (const [key, color] of TOKENS) {
                 if (key === 'color-general')
                     opaqueColors[color] = opaque;
             }
-            css += fill(overview, opaqueColors) + shadowCss(opacity, false);
+            css += fill(overview, opaqueColors) + noShadowCss;
         }
 
         // The top bar has no template color of its own, so it gets its own rule.
