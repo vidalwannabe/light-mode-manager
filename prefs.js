@@ -614,14 +614,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 'Fade when switching between light and dark mode', 2000, 100, ' ms');
             sliderRow(effects, 'general-opacity', 'General background opacity',
                 'Applies to light and dark mode', 100, 1, '%', 5);
-            const dtpRow = new Adw.SwitchRow({
-                title: 'Override Dash to Panel color settings',
-                subtitle: 'Dash to Panel uses this extension\'s panel color and opacity',
-            });
-            s.bind('override-dtp-colors', dtpRow, 'active', Gio.SettingsBindFlags.DEFAULT);
-            effects.add(dtpRow);
             const ignoreRow = new Adw.SwitchRow({
-                title: 'Ignore panel',
+                title: 'Keep panel solid',
                 subtitle: 'The opacity above applies to everything except the panel',
             });
             s.bind('ignore-panel', ignoreRow, 'active', Gio.SettingsBindFlags.DEFAULT);
@@ -638,6 +632,12 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             });
             s.bind('match-arrow-buttons', arrowRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(arrowRow);
+            const dtpRow = new Adw.SwitchRow({
+                title: 'Override Dash to Panel color settings',
+                subtitle: 'Dash to Panel uses this extension\'s panel color and opacity',
+            });
+            s.bind('override-dtp-colors', dtpRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+            effects.add(dtpRow);
             page.add(effects);
 
             const panel = new Adw.PreferencesGroup({title: 'Panel'});

@@ -35,10 +35,10 @@ Each tab has a profile selector to apply a set of colors in one click.
 - **General profile**: pairs a light mode profile with a dark mode profile and applies both at once. Built-in **Default** and **GNOME** general profiles are included.
 - **Transition**: duration of the fade when switching between light and dark mode, from 0 (instant) to 2000 ms. Default: 500 ms, like GNOME.
 - **General background opacity**: transparency of the general background (top bar, menus and dialogs, OSD and switcher), from 0 to 100%, in both modes. The overview stays opaque, and below 100% menu shadows are removed so translucent menus match the top bar.
-- **Override Dash to Panel color settings**: Dash to Panel's panels use this extension's panel color and opacity instead of Dash to Panel's own color and transparency settings (which are left unchanged).
-- **Ignore panel**: the general background opacity applies to everything except the panel, which stays opaque.
+- **Keep panel solid**: the general background opacity applies to everything except the panel, which stays opaque.
 - **Hide borders**: removes the outline of Quick Settings, the calendar and other menus, in both modes.
 - **Matching arrow buttons**: the arrow (›) next to Quick Settings toggles such as Wi-Fi or Bluetooth uses the same color as its toggle, on and off, instead of GNOME's separate shade.
+- **Override Dash to Panel color settings**: Dash to Panel's panels use this extension's panel color and opacity instead of Dash to Panel's own color and transparency settings (which are left unchanged).
 - **Automatic switch**: applies a chosen general profile at two times of day (for example, a light setup in the morning and an Oled one at night). A profile picked by hand in between is kept until the next switch time.
 - **Panel menu entry**: adds a "Light Mode Manager" entry that opens these preferences to the right-click menu of the panel. Requires [Dash to Panel](https://github.com/home-sweet-gnome/dash-to-panel).
 - **Quick Settings switcher**: adds a button to Quick Settings that shows the applied general profile and switches it from its menu. Hidden on the lock screen.
