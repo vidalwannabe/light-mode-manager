@@ -12,13 +12,13 @@ import {createProfiles} from './profiles.js';
 // [key name, title, subtitle, label and swatch when empty]. Transparency is set only in the
 // General tab.
 const COLOR_ROWS = [
-    ['general', 'General background', 'Top bar, menus, dialogs, OSD and switcher, overview'],
-    ['panel-fg', 'Top bar content', 'Top bar text and icons'],
-    ['fg', 'Main text and icons', 'Titles and icons: notifications, widgets, menus, dialogs, Quick Settings'],
-    ['fg-muted', 'Secondary text', 'The line under a title: notification text, times, locations'],
-    ['card', 'Cards, dash and search background', 'Notifications, calendar, slider buttons, dock, search, app folders'],
-    ['qs-active-fg', 'Active buttons text and icons', 'Quick Settings toggles that are on, like Wi-Fi', 'Accent text color', '#ffffff'],
-    ['qs-button', 'Idle Quick Settings buttons', 'Toggles that are off, round buttons at the top, and their menus'],
+    ['general', 'General background', 'Top bar, menus, dialogs, OSD, window switcher and overview'],
+    ['panel-fg', 'Top bar content', 'Clock, indicators, overview button and Dash to Panel app grid icon'],
+    ['fg', 'Main text and icons', 'Titles and icons of notifications, widgets, menus, dialogs and Quick Settings'],
+    ['fg-muted', 'Secondary text', 'Text under titles: notification body, times, locations and subtitles'],
+    ['card', 'Cards, dash and search background', 'Notifications, calendar widgets, slider buttons, dock, search and app folders'],
+    ['qs-active-fg', 'Active buttons text and icons', 'Text, icons and arrows of Quick Settings toggles that are on', 'Accent text color', '#ffffff'],
+    ['qs-button', 'Idle Quick Settings buttons', 'Toggles that are off, top round buttons and toggle menus'],
     ['border', 'Borders', 'Outline of Quick Settings, the calendar and other menus'],
 ];
 
@@ -247,7 +247,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             };
 
             return selectorGroup({
-                title: 'Profile', subtitle: 'Apply a built-in or saved color set', model, addButton,
+                title: 'Profile', subtitle: 'Applies a built-in or saved color set to this mode', model, addButton,
                 describe: (_p, builtin) => builtin ? 'Built-in' : '',
                 onRefresh: buildAddMenu,
             });
@@ -437,7 +437,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
 
         const autoSwitchGroup = general => {
             const group = new Adw.PreferencesGroup({title: 'Automatic switch'});
-            const enable = new Adw.SwitchRow({title: 'Enable', subtitle: 'Applies a general profile at set times of day'});
+            const enable = new Adw.SwitchRow({title: 'Enable', subtitle: 'Applies a general profile at two set times of day'});
             s.bind('auto-switch', enable, 'active', Gio.SettingsBindFlags.DEFAULT);
             group.add(enable);
             for (const [i, title] of [[1, 'First switch'], [2, 'Second switch']]) {
@@ -599,7 +599,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
 
         const backupGroup = () => {
             const group = new Adw.PreferencesGroup({title: 'Backup'});
-            const row = new Adw.ActionRow({title: 'Settings', subtitle: 'Colors, profiles and options in a JSON file'});
+            const row = new Adw.ActionRow({title: 'Settings', subtitle: 'Exports or imports colors, profiles and options as JSON'});
             const importButton = new Gtk.Button({label: 'Import', valign: Gtk.Align.CENTER});
             importButton.connect('clicked', importSettings);
             const exportButton = new Gtk.Button({label: 'Export', valign: Gtk.Align.CENTER});
@@ -616,50 +616,50 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
 
             const effects = new Adw.PreferencesGroup({title: 'Visual tweaks'});
             sliderRow(effects, 'transition-duration', 'Transition',
-                'Fade between light and dark mode', 2000, 100, ' ms');
+                'Fade duration when switching between light and dark mode', 2000, 100, ' ms');
             sliderRow(effects, 'general-opacity', 'Shell opacity',
-                'Top bar, menus, OSD and switcher; dialogs stay solid', 100, 1, '%', 5);
+                'Top bar, menus, OSD and switcher; dialogs and overview stay solid', 100, 1, '%', 5);
             sliderRow(effects, 'card-opacity', 'Card opacity',
-                'Notification cards, inactive Quick Settings buttons', 100, 1, '%', 5);
+                'Cards, slider buttons, idle Quick Settings buttons and their menus', 100, 1, '%', 5);
             const panelOpacityRow = new Adw.SwitchRow({
                 title: 'Enable panel opacity',
-                subtitle: 'Top bar also gets the shell opacity; solid otherwise',
+                subtitle: 'Applies shell opacity to the top bar; solid when off',
             });
             s.bind('panel-opacity', panelOpacityRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(panelOpacityRow);
             const bordersRow = new Adw.SwitchRow({
                 title: 'Disable menu borders',
-                subtitle: 'No outline around Quick Settings, the calendar and menus',
+                subtitle: 'Hides the outline of Quick Settings, the calendar and other menus',
             });
             s.bind('hide-borders', bordersRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(bordersRow);
             const dimRow = new Adw.SwitchRow({
                 title: 'Disable Quick Settings dimming',
-                subtitle: 'Quick Settings stays bright while one of its menus is open',
+                subtitle: 'Keeps Quick Settings bright while a toggle menu is open',
             });
             s.bind('no-qs-dimming', dimRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(dimRow);
             const arrowRow = new Adw.SwitchRow({
                 title: 'Uniform Quick Settings button colors',
-                subtitle: 'Arrows (›) next to toggles use the toggle color, on and off',
+                subtitle: 'Toggle arrows (›) use their toggle color, on and off',
             });
             s.bind('match-arrow-buttons', arrowRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(arrowRow);
             const calendarRow = new Adw.SwitchRow({
                 title: 'Calendar as card',
-                subtitle: 'Calendar gets the card color, without a circle behind each day',
+                subtitle: 'Gives the calendar the card background and removes the circles behind days',
             });
             s.bind('calendar-background', calendarRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(calendarRow);
             const menuHeightRow = new Adw.SwitchRow({
                 title: 'Fix menu overlap',
-                subtitle: 'Menus with wrapped text (like Bluetooth off) no longer cover the buttons below',
+                subtitle: 'Stops wrapped-text menus (Bluetooth off) from covering buttons below',
             });
             s.bind('fix-qs-menu-height', menuHeightRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(menuHeightRow);
             const dtpRow = new Adw.SwitchRow({
                 title: 'Override Dash to Panel colors',
-                subtitle: "Its panels and window previews use this extension's colors, not its own",
+                subtitle: "Dash to Panel and its window previews use this extension's color and opacity",
             });
             s.bind('override-dtp-colors', dtpRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(dtpRow);
@@ -674,7 +674,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             panel.add(menuRow);
             const quickRow = new Adw.SwitchRow({
                 title: 'Quick Settings switcher',
-                subtitle: 'Adds a button to Quick Settings to switch general profiles',
+                subtitle: 'Adds a Quick Settings toggle to switch general profiles',
             });
             s.bind('quick-settings-profiles', quickRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             panel.add(quickRow);
