@@ -72,7 +72,7 @@ const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode; other keys (profiles...) never do.
 // General tab options that change the theme.
-const EFFECT_KEYS = ['general-opacity', 'ignore-panel', 'hide-borders', 'match-arrow-buttons'];
+const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'hide-borders', 'match-arrow-buttons'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', ...EFFECT_KEYS];
 
@@ -342,7 +342,7 @@ export default class LightModeManagerExtension extends Extension {
     // settings and code are never changed.
 
     // The background the loaded stylesheets give #panel: this extension's color, opacity and
-    // "Keep panel solid", or GNOME's own with the GNOME profile. Read from a hidden probe,
+    // "Apply opacity to panel", or GNOME's own with the GNOME profile. Read from a hidden probe,
     // as Dash to Panel does, so no inline style is involved.
     _themePanelColor() {
         const probe = new St.Bin({name: 'panel'});
@@ -439,12 +439,12 @@ export default class LightModeManagerExtension extends Extension {
     }
 
     // Opacity on GNOME's own general backgrounds, for a general background on system
-    // default. Keep panel solid leaves the panel as it is.
+    // default. The panel only gets it with "Apply opacity to panel".
     _nativeOpacityCss() {
         const opacity = this._settings.get_int('general-opacity');
         if (opacity >= 100)
             return '';
-        const solid = this._settings.get_boolean('ignore-panel');
+        const solid = !this._settings.get_boolean('panel-opacity');
         return NATIVE_GENERAL
             .filter(([selector]) => !(solid && selector === '#panel'))
             .map(([selector, color]) => rule(selector, 'background-color', withOpacity(color, opacity)))
@@ -498,7 +498,7 @@ export default class LightModeManagerExtension extends Extension {
             css += this._nativeOpacityCss();
         if (opaque) {
             css += rule(DARK_OVERVIEW_SEL, 'background-color', opaque);
-            if (this._settings.get_boolean('ignore-panel'))
+            if (!this._settings.get_boolean('panel-opacity'))
                 css += rule('#panel', 'background-color', opaque);
             if (opacity < 100)
                 css += noShadowCss;
@@ -566,7 +566,7 @@ export default class LightModeManagerExtension extends Extension {
         // The top bar has no template color of its own, so it gets its own rule.
         if (byKey['color-general']) {
             css += rule('#panel', 'background-color',
-                this._settings.get_boolean('ignore-panel') ? opaque : byKey['color-general']);
+                this._settings.get_boolean('panel-opacity') ? byKey['color-general'] : opaque);
         }
         // The top bar text follows "Text and icons".
         if (byKey['color-fg'])

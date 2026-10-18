@@ -614,12 +614,12 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 'Fade when switching between light and dark mode', 2000, 100, ' ms');
             sliderRow(effects, 'general-opacity', 'Opacity',
                 'Applies to light and dark mode', 100, 1, '%', 5);
-            const ignoreRow = new Adw.SwitchRow({
-                title: 'Keep panel solid',
-                subtitle: 'The opacity above applies to everything except the panel',
+            const panelOpacityRow = new Adw.SwitchRow({
+                title: 'Apply opacity to panel',
+                subtitle: 'The panel also gets the opacity above; otherwise it stays solid',
             });
-            s.bind('ignore-panel', ignoreRow, 'active', Gio.SettingsBindFlags.DEFAULT);
-            effects.add(ignoreRow);
+            s.bind('panel-opacity', panelOpacityRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+            effects.add(panelOpacityRow);
             const bordersRow = new Adw.SwitchRow({
                 title: 'Hide borders',
                 subtitle: 'Removes the outline of Quick Settings, the calendar and other menus',
