@@ -366,18 +366,26 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         const profileDropDown = (key, general) => {
             const dropDown = new Gtk.DropDown({valign: Gtk.Align.CENTER});
             let names = [];
+            let labels = '';
             let loading = false;
             const load = () => {
                 const saved = s.get_string(key);
-                names = general.all().map(p => p.name);
-                const labels = [...names];
-                if (!names.includes(saved)) {
-                    names.push(saved);
-                    labels.push(`${saved} (deleted)`);
+                const next = general.all().map(p => p.name);
+                const nextLabels = [...next];
+                if (!next.includes(saved)) {
+                    next.push(saved);
+                    nextLabels.push(`${saved} (deleted)`);
                 }
+                names = next;
                 loading = true;
-                dropDown.set_model(Gtk.StringList.new(labels));
-                dropDown.set_selected(names.indexOf(saved));
+                // The list is only replaced when the names change: replacing it while GTK
+                // handles a click on one of its items crashes the preferences window.
+                if (nextLabels.join('\n') !== labels) {
+                    labels = nextLabels.join('\n');
+                    dropDown.set_model(Gtk.StringList.new(nextLabels));
+                }
+                if (dropDown.get_selected() !== names.indexOf(saved))
+                    dropDown.set_selected(names.indexOf(saved));
                 loading = false;
             };
             load();
@@ -386,8 +394,23 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 if (!loading && name !== undefined && name !== s.get_string(key))
                     s.set_string(key, name);
             });
-            watch(key, load);
-            watch('general-profiles', load);
+
+            // Reload once the current click is fully handled, never during it.
+            let loadId = 0;
+            const queueLoad = () => {
+                loadId ||= GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+                    loadId = 0;
+                    load();
+                    return GLib.SOURCE_REMOVE;
+                });
+            };
+            cleanups.push(() => {
+                if (loadId)
+                    GLib.Source.remove(loadId);
+                loadId = 0;
+            });
+            watch(key, queueLoad);
+            watch('general-profiles', queueLoad);
             return dropDown;
         };
 
