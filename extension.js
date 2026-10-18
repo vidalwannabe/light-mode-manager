@@ -205,6 +205,10 @@ class ProfileIndicator extends SystemIndicator {
     }
 });
 
+// Runs in the "user" and "unlock-dialog" session modes (metadata.json): staying enabled
+// while locked keeps the theme on the lock screen and avoids a full stylesheet reload on
+// every lock/unlock. Nothing interactive is shown while locked (see _syncQuickSettings);
+// only colors are applied and the automatic switch keeps running.
 export default class LightModeManagerExtension extends Extension {
     // ---------- Color scheme ----------
     _getColorScheme() {
@@ -332,7 +336,9 @@ export default class LightModeManagerExtension extends Extension {
         return schema ? new Gio.Settings({settings_schema: schema}) : null;
     }
 
-    // Adds or removes our entry in Dash to Panel's own list of extra menu entries.
+    // Adds or removes our entry in Dash to Panel's own list of extra menu entries
+    // (panel-context-menu-commands/titles). Only our entry is ever added or removed; the
+    // user's entries are left untouched. Removed again in disable().
     _syncPanelMenu(show) {
         try {
             const dtp = this._dtpSettings();
