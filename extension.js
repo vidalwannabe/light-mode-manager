@@ -109,6 +109,15 @@ function arrowCss(dark) {
     return states('', off) + states(':checked', '-st-accent-color');
 }
 
+// GNOME 48's own (dark) backgrounds of the general background elements. With the general
+// background on system default (GNOME profile) the shell uses this dark style in both
+// modes, so the opacity is applied to these colors.
+const NATIVE_GENERAL = [
+    ['#panel', '#000000'],
+    ['.popup-menu-content, .candidate-popup-content, .modal-dialog', '#36363a'],
+    ['.switcher-list, .osd-window, .workspace-switcher, .resize-popup', '#2e2e33'],
+];
+
 // GNOME's own delay before fading out the snapshot of the old screen.
 const TRANSITION_DELAY = 250;
 
@@ -429,6 +438,19 @@ export default class LightModeManagerExtension extends Extension {
         }
     }
 
+    // Opacity on GNOME's own general backgrounds, for a general background on system
+    // default. Keep panel solid leaves the panel as it is.
+    _nativeOpacityCss() {
+        const opacity = this._settings.get_int('general-opacity');
+        if (opacity >= 100)
+            return '';
+        const solid = this._settings.get_boolean('ignore-panel');
+        return NATIVE_GENERAL
+            .filter(([selector]) => !(solid && selector === '#panel'))
+            .map(([selector, color]) => rule(selector, 'background-color', withOpacity(color, opacity)))
+            .join('') + noShadowCss;
+    }
+
     // The value strings of the given keys; empty means system default.
     _values(keys) {
         return keys.map(key => this._settings.get_string(key).trim());
@@ -472,6 +494,8 @@ export default class LightModeManagerExtension extends Extension {
             if (values[i])
                 css += rule(selector, prop, values[i]);
         });
+        if (!opaque)
+            css += this._nativeOpacityCss();
         if (opaque) {
             css += rule(DARK_OVERVIEW_SEL, 'background-color', opaque);
             if (this._settings.get_boolean('ignore-panel'))
@@ -510,7 +534,8 @@ export default class LightModeManagerExtension extends Extension {
         // Every color on system default: no stylesheet (see _syncShellScheme), where the
         // shell keeps its own dark style, so the arrow buttons follow that one.
         if (values.every(v => !v))
-            return (this._settings.get_boolean('match-arrow-buttons') ? arrowCss(true) : '') + this._borderCss(null);
+            return (this._settings.get_boolean('match-arrow-buttons') ? arrowCss(true) : '') +
+                this._borderCss(null) + this._nativeOpacityCss();
 
         // An empty color keeps the template's original one.
         const byKey = Object.fromEntries(LIGHT_KEYS.map((key, i) => [key, values[i]]));
