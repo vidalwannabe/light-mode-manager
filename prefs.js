@@ -16,7 +16,7 @@ const COLOR_ROWS = [
     ['panel-fg', 'Top bar content', 'Top bar text and icons'],
     ['fg', 'Main text and icons', 'Titles and icons: notifications, widgets, menus, dialogs, Quick Settings'],
     ['fg-muted', 'Secondary text', 'The line under a title: notification text, times, locations'],
-    ['card', 'Cards, dash and search', 'Notifications, calendar, slider buttons, dock, search, app folders'],
+    ['card', 'Cards, dash and search background', 'Notifications, calendar, slider buttons, dock, search, app folders'],
     ['qs-active-fg', 'Active buttons text and icons', 'Quick Settings toggles that are on, like Wi-Fi', 'Accent text color', '#ffffff'],
     ['qs-button', 'Idle Quick Settings buttons', 'Toggles that are off, round buttons at the top, and their menus'],
     ['border', 'Borders', 'Outline of Quick Settings, the calendar and other menus'],

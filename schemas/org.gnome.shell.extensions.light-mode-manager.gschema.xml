@@ -6,7 +6,7 @@
     <key name="color-fg" type="s"><default>'#000000'</default><summary>Main text and icons: titles and icons</summary></key>
     <key name="color-panel-fg" type="s"><default>'#000000'</default><summary>Top bar content: text and icons</summary></key>
     <key name="color-fg-muted" type="s"><default>'#77767b'</default><summary>Secondary text</summary></key>
-    <key name="color-card" type="s"><default>'#ebebed'</default><summary>Cards, dash and search</summary></key>
+    <key name="color-card" type="s"><default>'#ebebed'</default><summary>Cards, dash and search background</summary></key>
     <key name="color-qs-active-fg" type="s"><default>''</default><summary>Active buttons text and icons (empty: accent text color)</summary></key>
     <key name="color-qs-button" type="s"><default>'#ebebed'</default><summary>Idle Quick Settings buttons</summary></key>
     <key name="color-border" type="s"><default>'#e3e3e3'</default><summary>Menu borders</summary></key>
@@ -15,7 +15,7 @@
     <key name="color-fg-dark" type="s"><default>'#ffffff'</default><summary>Main text and icons: titles and icons</summary></key>
     <key name="color-panel-fg-dark" type="s"><default>'#ffffff'</default><summary>Top bar content: text and icons</summary></key>
     <key name="color-fg-muted-dark" type="s"><default>'#c0bfbc'</default><summary>Secondary text</summary></key>
-    <key name="color-card-dark" type="s"><default>'#343437'</default><summary>Cards, dash and search</summary></key>
+    <key name="color-card-dark" type="s"><default>'#343437'</default><summary>Cards, dash and search background</summary></key>
     <key name="color-qs-active-fg-dark" type="s"><default>''</default><summary>Active buttons text and icons (empty: accent text color)</summary></key>
     <key name="color-qs-button-dark" type="s"><default>'#343437'</default><summary>Idle Quick Settings buttons</summary></key>
     <key name="color-border-dark" type="s"><default>'#424247'</default><summary>Menu borders</summary></key>
