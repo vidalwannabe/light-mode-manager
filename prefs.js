@@ -30,7 +30,7 @@ const flatButton = props => {
 export default class LightModeManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
-        window.set_default_size(600, 930);
+        window.set_default_size(600, 1040);
         window.set_search_enabled(false);
 
         // Settings handlers and pending idles are dropped when the window closes,
@@ -628,8 +628,6 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             effects.add(arrowRow);
             page.add(effects);
 
-            page.add(autoSwitchGroup(general));
-
             const panel = new Adw.PreferencesGroup({title: 'Panel'});
             const menuRow = new Adw.SwitchRow({
                 title: 'Panel menu entry',
@@ -644,6 +642,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             s.bind('quick-settings-profiles', quickRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             panel.add(quickRow);
             page.add(panel);
+
+            page.add(autoSwitchGroup(general));
 
             page.add(backupGroup());
 
