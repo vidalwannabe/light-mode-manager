@@ -614,6 +614,18 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 'Fade when switching between light and dark mode', 2000, 100, ' ms');
             sliderRow(effects, 'general-opacity', 'General background opacity',
                 'Applies to light and dark mode', 100, 1, '%', 5);
+            const dtpRow = new Adw.SwitchRow({
+                title: 'Override Dash to Panel color settings',
+                subtitle: 'Dash to Panel uses this extension\'s panel color and opacity',
+            });
+            s.bind('override-dtp-colors', dtpRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+            effects.add(dtpRow);
+            const ignoreRow = new Adw.SwitchRow({
+                title: 'Ignore panel',
+                subtitle: 'The opacity above applies to everything except the panel',
+            });
+            s.bind('ignore-panel', ignoreRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+            effects.add(ignoreRow);
             const bordersRow = new Adw.SwitchRow({
                 title: 'Hide borders',
                 subtitle: 'Removes the outline of Quick Settings, the calendar and other menus',

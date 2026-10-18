@@ -72,7 +72,7 @@ const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode; other keys (profiles...) never do.
 // General tab options that change the theme.
-const EFFECT_KEYS = ['general-opacity', 'hide-borders', 'match-arrow-buttons'];
+const EFFECT_KEYS = ['general-opacity', 'ignore-panel', 'hide-borders', 'match-arrow-buttons'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', ...EFFECT_KEYS];
 
@@ -325,6 +325,69 @@ export default class LightModeManagerExtension extends Extension {
         });
     }
 
+    // ---------- Dash to Panel colors ----------
+    // Dash to Panel paints each of its panels with an inline style from its own color and
+    // opacity settings, and St always ranks inline styles above stylesheets. With
+    // override-dtp-colors, that inline background is replaced with this extension's panel
+    // color each time Dash to Panel sets it, and restored when turned off. Dash to Panel's
+    // settings and code are never changed.
+
+    // This extension's panel color in the current mode, or '' for the system's.
+    _panelColor() {
+        const [value] = this._values([this._isDark() ? 'color-general-dark' : 'color-general']);
+        const opacity = this._settings.get_boolean('ignore-panel') ? 100 : this._settings.get_int('general-opacity');
+        return value ? withOpacity(value, opacity) : '';
+    }
+
+    _syncDtpPanels() {
+        this._unhookDtpPanels();
+        const dtp = global.dashToPanel;
+        if (!dtp || !this._settings.get_boolean('override-dtp-colors'))
+            return;
+        // Dash to Panel recreates its panels on monitor or layout changes.
+        this._dtp = dtp;
+        this._dtpCreatedId = dtp.connect('panels-created', () => this._syncDtpPanels());
+        this._dtpPanels = new Map();
+        for (const panel of dtp.panels ?? []) {
+            this._dtpPanels.set(panel, {original: panel.get_style() ?? '', ours: null});
+            panel.connectObject(
+                'notify::style', () => this._overrideDtpPanel(panel),
+                'destroy', () => this._dtpPanels?.delete(panel),
+                this);
+            this._overrideDtpPanel(panel);
+        }
+    }
+
+    // Keeps Dash to Panel's own style (transition...) with this extension's background.
+    _overrideDtpPanel(panel) {
+        const state = this._dtpPanels?.get(panel);
+        if (!state)
+            return;
+        const style = panel.get_style() ?? '';
+        if (style !== state.ours)
+            state.original = style;
+        const color = this._panelColor();
+        const next = color
+            ? `background-color: ${color}; ${state.original.replace(/background-color:[^;]*;?\s*/g, '')}`
+            : state.original;
+        state.ours = next;
+        if (style !== next)
+            panel.set_style(next);
+    }
+
+    _unhookDtpPanels() {
+        for (const [panel, state] of this._dtpPanels ?? []) {
+            panel.disconnectObject(this);
+            if (panel.get_style() === state.ours)
+                panel.set_style(state.original);
+        }
+        this._dtpPanels = null;
+        if (this._dtpCreatedId)
+            this._dtp?.disconnect(this._dtpCreatedId);
+        this._dtp = null;
+        this._dtpCreatedId = 0;
+    }
+
     // ---------- Dash to Panel menu entry ----------
     _dtpSettings() {
         const dir = Main.extensionManager.lookup(DTP_UUID)?.dir.get_child('schemas');
@@ -409,6 +472,8 @@ export default class LightModeManagerExtension extends Extension {
         });
         if (opaque) {
             css += rule(DARK_OVERVIEW_SEL, 'background-color', opaque);
+            if (this._settings.get_boolean('ignore-panel'))
+                css += rule('#panel', 'background-color', opaque);
             if (opacity < 100)
                 css += noShadowCss;
         }
@@ -472,8 +537,10 @@ export default class LightModeManagerExtension extends Extension {
         }
 
         // The top bar has no template color of its own, so it gets its own rule.
-        if (byKey['color-general'])
-            css += rule('#panel', 'background-color', byKey['color-general']);
+        if (byKey['color-general']) {
+            css += rule('#panel', 'background-color',
+                this._settings.get_boolean('ignore-panel') ? opaque : byKey['color-general']);
+        }
         // The top bar text follows "Text and icons".
         if (byKey['color-fg'])
             css += panelTextCss(byKey['color-fg']);
@@ -482,7 +549,16 @@ export default class LightModeManagerExtension extends Extension {
         return css + this._borderCss('color-border');
     }
 
+    // Loads the stylesheet, then keeps Dash to Panel's panels on this extension's color.
     _applyTheme() {
+        try {
+            this._applyStylesheet();
+        } finally {
+            this._dtpPanels?.forEach((_s, panel) => this._overrideDtpPanel(panel));
+        }
+    }
+
+    _applyStylesheet() {
         let file = null;
         try {
             this._syncShellScheme();
@@ -573,6 +649,8 @@ export default class LightModeManagerExtension extends Extension {
         this._settingsId = this._settings.connect('changed', (_s, key) => {
             if (key === 'panel-menu-entry')
                 this._syncPanelMenu(this._settings.get_boolean(key));
+            else if (key === 'override-dtp-colors')
+                this._syncDtpPanels();
             else if (key === 'quick-settings-profiles')
                 this._syncQuickSettings();
             else if (AUTO_KEYS.includes(key))
@@ -581,6 +659,11 @@ export default class LightModeManagerExtension extends Extension {
                 this._scheduleApply();
         });
         this._syncPanelMenu(this._settings.get_boolean('panel-menu-entry'));
+        // Dash to Panel may be enabled, disabled or reloaded after this extension.
+        Main.extensionManager.connectObject('extension-state-changed', (_m, ext) => {
+            if (ext.uuid === DTP_UUID)
+                this._syncDtpPanels();
+        }, this);
 
         this._interface = Gio.Settings.new('org.gnome.desktop.interface');
         const current = this._getColorScheme();
@@ -598,6 +681,7 @@ export default class LightModeManagerExtension extends Extension {
         this._syncQuickSettings();
 
         this._applyTheme();
+        this._syncDtpPanels();
         this._profiles = createProfiles(this._settings);
         this._syncAutoSwitch();
     }
@@ -613,6 +697,8 @@ export default class LightModeManagerExtension extends Extension {
 
         this._unloadTheme();
         this._syncPanelMenu(false);
+        Main.extensionManager.disconnectObject(this);
+        this._unhookDtpPanels();
         this._indicator?.destroy();
         this._indicator = null;
         if (this._autoId) {
