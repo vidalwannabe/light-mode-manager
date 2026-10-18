@@ -38,6 +38,7 @@ Each tab has a profile selector to apply a set of colors in one click.
 - **Enable panel opacity**: the panel stays solid by default; when on, it also gets the opacity.
 - **Hide borders**: removes the outline of Quick Settings, the calendar and other menus, in both modes.
 - **Match arrow buttons**: the arrow (›) next to Quick Settings toggles such as Wi-Fi or Bluetooth uses the same color as its toggle, on and off, instead of GNOME's separate shade.
+- **Calendar background**: the month calendar gets the color of the cards below it (Today, World Clocks, Weather), without a pill behind each day. In dark mode and with the GNOME profile those cards keep GNOME's own color, and so does the calendar.
 - **Override Dash to Panel color settings**: Dash to Panel's panels use the theme's panel color (this extension's color and opacity, or GNOME's own with the GNOME profile) instead of Dash to Panel's own color and transparency settings (which are left unchanged).
 - **Automatic switch**: applies a chosen general profile at two times of day (for example, a light setup in the morning and an Oled one at night). A profile picked by hand in between is kept until the next switch time.
 - **Panel menu entry**: adds a "Light Mode Manager" entry that opens these preferences to the right-click menu of the panel. Requires [Dash to Panel](https://github.com/home-sweet-gnome/dash-to-panel).

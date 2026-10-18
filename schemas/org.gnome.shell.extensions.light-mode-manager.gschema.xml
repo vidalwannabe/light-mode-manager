@@ -27,6 +27,7 @@
     <key name="panel-opacity" type="b"><default>false</default><summary>The general background opacity also applies to the panel (solid otherwise)</summary></key>
     <key name="hide-borders" type="b"><default>false</default><summary>Hide the menu borders, both modes</summary></key>
     <key name="match-arrow-buttons" type="b"><default>false</default><summary>Quick Settings arrow buttons use the same color as their toggle</summary></key>
+    <key name="calendar-background" type="b"><default>false</default><summary>The month calendar gets the cards' color, without a pill behind each day</summary></key>
     <key name="general-opacity" type="i"><range min="0" max="100"/><default>100</default><summary>General background opacity in percent, both modes</summary></key>
     <!-- Automatic switch: apply a general profile at two times of day (minutes since midnight) -->
     <key name="auto-switch" type="b"><default>false</default><summary>Apply general profiles automatically at set times</summary></key>

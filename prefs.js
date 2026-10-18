@@ -633,6 +633,12 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             });
             s.bind('match-arrow-buttons', arrowRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(arrowRow);
+            const calendarRow = new Adw.SwitchRow({
+                title: 'Calendar background',
+                subtitle: 'The calendar gets the color of the cards below it, without a pill behind each day',
+            });
+            s.bind('calendar-background', calendarRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+            effects.add(calendarRow);
             const dtpRow = new Adw.SwitchRow({
                 title: 'Override Dash to Panel color settings',
                 subtitle: 'Dash to Panel uses this extension\'s panel color and opacity',
