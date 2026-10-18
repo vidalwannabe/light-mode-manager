@@ -59,12 +59,20 @@ const DARK_RULES = [
     ].join(', '), 'color', 'color-fg-muted-dark'],
 ];
 
+// Settings that affect each mode; other keys (profiles...) never rebuild the theme.
+const LIGHT_KEYS = new Set([...TOKENS.map(([key]) => key), 'color-general', 'color-fg']);
+const DARK_KEYS = new Set([...DARK_RULES.map(([, , key]) => key), 'color-fg-dark']);
+
 const rule = (selector, prop, value) => `${selector} {\n  ${prop}: ${value};\n}\n`;
 const panelTextCss = color => rule(PANEL_TEXT_SEL, 'color', color) + rule(PANEL_LOCK_SEL, 'color', '#ffffff');
 
-function hexToRgb(value) {
-    const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(value);
-    return m ? m.slice(1).map(h => parseInt(h, 16)).join(', ') : null;
+// "r, g, b" of a #rrggbb, rgb() or rgba() color, so hover/active variants follow it.
+function colorToRgb(value) {
+    let m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(value);
+    if (m)
+        return m.slice(1).map(h => parseInt(h, 16)).join(', ');
+    m = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*[,)]/i.exec(value);
+    return m ? m.slice(1).join(', ') : null;
 }
 
 export default class LightModeManagerExtension extends Extension {
@@ -97,9 +105,18 @@ export default class LightModeManagerExtension extends Extension {
 
     _schemeChanged() {
         const scheme = this._getColorScheme();
-        this._setColorScheme(scheme === 'default' ? 'prefer-light' : scheme);
+        // "default" is turned into "prefer-light", which fires this handler again.
+        if (scheme === 'default') {
+            this._setColorScheme('prefer-light');
+            return;
+        }
+        St.Settings.get().notify('color-scheme');
         this._setLegacyColorScheme(scheme);
         this._applyTheme();
+    }
+
+    _isDark() {
+        return this._getColorScheme() === 'prefer-dark';
     }
 
     // ---------- Stylesheet ----------
@@ -125,7 +142,7 @@ export default class LightModeManagerExtension extends Extension {
         for (const [key, color, rgb] of TOKENS) {
             const value = s.get_string(key);
             byColor[color] = value;
-            byRgb[rgb] = hexToRgb(value) ?? rgb;
+            byRgb[rgb] = colorToRgb(value) ?? rgb;
         }
 
         let css = this._templateHead.replace(TOKEN_RE, (m, rgb, alpha) => {
@@ -148,16 +165,20 @@ export default class LightModeManagerExtension extends Extension {
 
     _applyTheme() {
         try {
-            const css = this._getColorScheme() === 'prefer-dark' ? this._darkCss() : this._lightCss();
-            const dir = GLib.build_filenamev([GLib.get_user_cache_dir(), 'light-mode-manager']);
-            GLib.mkdir_with_parents(dir, 0o755);
-            const file = Gio.File.new_for_path(GLib.build_filenamev([dir, `theme-${Date.now()}.css`]));
+            const css = this._isDark() ? this._darkCss() : this._lightCss();
+            // Nothing changed: skip writing and reloading the stylesheet.
+            if (this._themeFile && css === this._lastCss)
+                return;
+
+            // St only reloads a stylesheet from a new file, hence the unique name.
+            const file = Gio.File.new_for_path(GLib.build_filenamev([this._cacheDir, `theme-${Date.now()}.css`]));
             file.replace_contents(new TextEncoder().encode(css), null, false,
                 Gio.FileCreateFlags.REPLACE_DESTINATION, null);
 
             St.ThemeContext.get_for_stage(global.stage).get_theme().load_stylesheet(file);
             this._unloadTheme();
             this._themeFile = file;
+            this._lastCss = css;
         } catch (e) {
             console.error(`[LightModeManager] ${e.message}`);
         }
@@ -173,6 +194,25 @@ export default class LightModeManagerExtension extends Extension {
             // The file may already be gone; nothing else to clean.
         }
         this._themeFile = null;
+        this._lastCss = null;
+    }
+
+    // Removes theme files left behind by a session that ended without disable().
+    _clearCache() {
+        GLib.mkdir_with_parents(this._cacheDir, 0o755);
+        try {
+            const dir = Gio.File.new_for_path(this._cacheDir);
+            const files = dir.enumerate_children('standard::name', Gio.FileQueryInfoFlags.NONE, null);
+            let info;
+            while ((info = files.next_file(null))) {
+                const name = info.get_name();
+                if (name.startsWith('theme-') && name.endsWith('.css'))
+                    dir.get_child(name).delete(null);
+            }
+            files.close(null);
+        } catch (e) {
+            console.error(`[LightModeManager] ${e.message}`);
+        }
     }
 
     _scheduleApply() {
@@ -193,12 +233,16 @@ export default class LightModeManagerExtension extends Extension {
         this._templateHead = idx >= 0 ? template.slice(0, idx) : template;
         this._templateTail = idx >= 0 ? template.slice(idx) : '';
 
+        this._cacheDir = GLib.build_filenamev([GLib.get_user_cache_dir(), 'light-mode-manager']);
+        this._clearCache();
+
         this._settings = this.getSettings();
-        this._settingsId = this._settings.connect('changed', () => this._scheduleApply());
+        this._settingsId = this._settings.connect('changed', (_s, key) => {
+            if ((this._isDark() ? DARK_KEYS : LIGHT_KEYS).has(key))
+                this._scheduleApply();
+        });
 
         this._interface = Gio.Settings.new('org.gnome.desktop.interface');
-        this._schemeId = this._interface.connect('changed::color-scheme', () => this._schemeChanged());
-
         this._savedColorScheme = Main.sessionMode.colorScheme;
         const current = this._getColorScheme();
         if (current === 'default')
@@ -206,6 +250,8 @@ export default class LightModeManagerExtension extends Extension {
         this._setDefaultColorScheme('prefer-light');
         this._setLegacyColorScheme(current);
 
+        // Connected after the initial setup so it does not apply the theme twice.
+        this._schemeId = this._interface.connect('changed::color-scheme', () => this._schemeChanged());
         this._applyTheme();
     }
 
@@ -218,6 +264,7 @@ export default class LightModeManagerExtension extends Extension {
         this._settings = null;
         this._unloadTheme();
         this._templateHead = this._templateTail = null;
+        this._cacheDir = null;
 
         this._interface.disconnect(this._schemeId);
         if (this._getColorScheme() === 'prefer-light')

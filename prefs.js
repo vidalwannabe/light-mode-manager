@@ -26,6 +26,15 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         const s = this.getSettings();
         window.set_default_size(600, 600);
 
+        // Settings handlers are dropped when the window closes, so they never run on dead widgets.
+        const handlerIds = [];
+        const watch = (key, fn) => handlerIds.push(s.connect(`changed::${key}`, fn));
+        window.connect('close-request', () => {
+            handlerIds.forEach(id => s.disconnect(id));
+            handlerIds.length = 0;
+            return false;
+        });
+
         const resetButton = key => {
             const b = new Gtk.Button({
                 icon_name: 'edit-undo-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Restore default',
@@ -35,9 +44,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             return b;
         };
 
-        // emptyLabel: subtitle shown while the value is empty.
-        // fallbackKey: whose color the swatch shows while the value is empty.
-        const colorRow = (group, key, title, subtitle, alpha, emptyLabel, fallbackKey) => {
+        // emptyLabel: subtitle shown while the value is empty (dark mode: system default).
+        const colorRow = (group, key, title, subtitle, alpha, emptyLabel) => {
             const row = new Adw.ActionRow({title, subtitle});
             const button = new Gtk.ColorDialogButton({
                 dialog: new Gtk.ColorDialog({with_alpha: alpha}),
@@ -49,7 +57,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 if (emptyLabel)
                     row.set_subtitle(value === '' ? emptyLabel : subtitle);
                 const color = new Gdk.RGBA();
-                if (!color.parse(value || (fallbackKey ? s.get_string(fallbackKey) : '#808080')))
+                if (!color.parse(value || '#808080'))
                     color.parse('#808080');
                 loading = true;
                 button.set_rgba(color);
@@ -60,9 +68,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 if (!loading)
                     s.set_string(key, toCss(button.get_rgba()));
             });
-            s.connect(`changed::${key}`, load);
-            if (fallbackKey)
-                s.connect(`changed::${fallbackKey}`, load);
+            watch(key, load);
             row.add_suffix(button);
             row.add_suffix(resetButton(key));
             group.add(row);
@@ -194,6 +200,24 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 addButton.set_menu_model(menu);
             };
 
+            // Applying a profile changes several keys at once; rebuild the list only once.
+            let refreshId = 0;
+            const queueRefresh = () => {
+                if (!refreshId) {
+                    refreshId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+                        refreshId = 0;
+                        refresh();
+                        return GLib.SOURCE_REMOVE;
+                    });
+                }
+            };
+            window.connect('close-request', () => {
+                if (refreshId)
+                    GLib.Source.remove(refreshId);
+                refreshId = 0;
+                return false;
+            });
+
             const refresh = () => {
                 const profiles = load();
                 buildAddMenu(profiles);
@@ -204,7 +228,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                     list.append(new Adw.ActionRow({title: 'No saved profiles', subtitle: 'Use + to save the current colors'}));
                     return;
                 }
-                profiles.forEach((profile, i) => {
+                profiles.forEach(profile => {
                     const row = new Adw.ActionRow({title: profile.name, activatable: true, tooltip_text: 'Apply'});
                     // Every row gets the check icon so names stay aligned; only the applied one shows it.
                     row.add_prefix(new Gtk.Image({icon_name: 'object-select-symbolic', opacity: profile === applied ? 1 : 0}));
@@ -219,7 +243,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                     del.connect('clicked', () => {
                         popover.popdown();
                         confirm(`Delete "${profile.name}"?`, 'This profile will be removed.', 'Delete',
-                            () => save(load().filter((_p, j) => j !== i)));
+                            () => save(load().filter(p => p.name !== profile.name)));
                     });
 
                     row.add_suffix(del);
@@ -227,10 +251,10 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 });
             };
             refresh();
-            s.connect(`changed::${listKey}`, refresh);
-            s.connect(`changed::${activeKey}`, refresh);
+            watch(listKey, queueRefresh);
+            watch(activeKey, queueRefresh);
             for (const [n] of COLOR_ROWS)
-                s.connect(`changed::${colorKey(n)}`, refresh);
+                watch(colorKey(n), queueRefresh);
 
             const row = new Adw.ActionRow({title: 'Profile', subtitle: 'Apply or delete saved color sets'});
             row.add_suffix(selector);
@@ -240,7 +264,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             return group;
         };
 
-        const addTab = (title, icon, description, suffix, emptyFor) => {
+        const addTab = (title, icon, description, suffix, emptyLabel) => {
             const page = new Adw.PreferencesPage({title, icon_name: icon});
             page.add(profilesGroup(suffix));
             const group = new Adw.PreferencesGroup({title: 'Colors', description});
@@ -248,7 +272,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             const keys = [];
             for (const [name, label, subtitle, alpha] of COLOR_ROWS) {
                 const key = `color-${name}${suffix}`;
-                colorRow(group, key, label, subtitle, alpha, ...emptyFor(name));
+                colorRow(group, key, label, subtitle, alpha, emptyLabel);
                 keys.push(key);
             }
 
@@ -265,10 +289,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         };
 
         addTab('Light mode', 'weather-clear-symbolic',
-            'Hover, focus and active states are derived automatically from these colors.', '',
-            () => [null, null]);
+            'Hover, focus and active states are derived automatically from these colors.', '', null);
         addTab('Dark mode', 'weather-clear-night-symbolic',
-            'Rows set to "System default" keep the native GNOME dark look.', '-dark',
-            () => ['System default', null]);
+            'These colors are applied over the native GNOME dark style.', '-dark', 'System default');
     }
 }
