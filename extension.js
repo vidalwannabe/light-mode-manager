@@ -71,7 +71,7 @@ const DARK_RULES = [
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode; other keys (profiles...) never do.
-const OPACITY_KEYS = ['general-opacity', 'border-opacity', 'border-follow-opacity', 'match-arrow-buttons'];
+const OPACITY_KEYS = ['general-opacity', 'hide-borders', 'match-arrow-buttons'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...OPACITY_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', ...OPACITY_KEYS];
 
@@ -380,15 +380,13 @@ export default class LightModeManagerExtension extends Extension {
     }
 
     // ---------- Stylesheet ----------
-    // The menu border rule for the given border color setting, with its opacity.
+    // The menu border rule for the given border color setting (none for the system's).
+    // Hidden borders stay 1px wide but transparent, so menus keep their size.
     _borderCss(key) {
-        const [color] = this._values([key]);
-        if (!color)
-            return '';
-        const opacity = this._settings.get_boolean('border-follow-opacity')
-            ? this._settings.get_int('general-opacity')
-            : this._settings.get_int('border-opacity');
-        return rule(BORDER_SEL, 'border-color', withOpacity(color, opacity));
+        if (this._settings.get_boolean('hide-borders'))
+            return rule(BORDER_SEL, 'border-color', 'transparent');
+        const [color] = key ? this._values([key]) : [''];
+        return color ? rule(BORDER_SEL, 'border-color', color) : '';
     }
 
     _darkCss() {
@@ -438,7 +436,7 @@ export default class LightModeManagerExtension extends Extension {
         // Every color on system default: no stylesheet (see _syncShellScheme), where the
         // shell keeps its own dark style, so the arrow buttons follow that one.
         if (values.every(v => !v))
-            return this._settings.get_boolean('match-arrow-buttons') ? arrowCss(true) : '';
+            return (this._settings.get_boolean('match-arrow-buttons') ? arrowCss(true) : '') + this._borderCss(null);
 
         // An empty color keeps the template's original one.
         const byKey = Object.fromEntries(LIGHT_KEYS.map((key, i) => [key, values[i]]));

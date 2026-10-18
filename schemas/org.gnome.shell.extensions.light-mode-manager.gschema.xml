@@ -23,8 +23,7 @@
     <key name="active-general-profile" type="s"><default>'Default'</default><summary>Last applied general profile</summary></key>
     <!-- General tab -->
     <key name="transition-duration" type="i"><range min="0" max="2000"/><default>500</default><summary>Fade duration in ms when switching between light and dark mode</summary></key>
-    <key name="border-opacity" type="i"><range min="0" max="100"/><default>100</default><summary>Menu border opacity in percent, both modes</summary></key>
-    <key name="border-follow-opacity" type="b"><default>false</default><summary>Menu border opacity follows the general background opacity</summary></key>
+    <key name="hide-borders" type="b"><default>false</default><summary>Hide the menu borders, both modes</summary></key>
     <key name="match-arrow-buttons" type="b"><default>false</default><summary>Quick Settings arrow buttons use the same color as their toggle</summary></key>
     <key name="general-opacity" type="i"><range min="0" max="100"/><default>100</default><summary>General background opacity in percent, both modes</summary></key>
     <!-- Automatic switch: apply a general profile at two times of day (minutes since midnight) -->

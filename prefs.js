@@ -280,7 +280,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         };
 
         // A slider row bound to an integer setting, snapped to `step`. Each mouse wheel
-        // notch moves it by `wheelStep`. Returns the row.
+        // notch moves it by `wheelStep`.
         const sliderRow = (group, key, title, subtitle, max, step, unit, wheelStep = step) => {
             const row = new Adw.ActionRow({title, subtitle});
             const scale = new Gtk.Scale({
@@ -329,7 +329,6 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             row.add_suffix(scale);
             row.add_suffix(reset);
             group.add(row);
-            return row;
         };
 
         // ---------- Automatic switch ----------
@@ -615,16 +614,12 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 'Fade when switching between light and dark mode', 2000, 100, ' ms');
             sliderRow(effects, 'general-opacity', 'General background opacity',
                 'Applies to light and dark mode', 100, 1, '%', 5);
-            const borderRow = sliderRow(effects, 'border-opacity', 'Border opacity',
-                'Outline of Quick Settings, the calendar and other menus', 100, 1, '%', 5);
-            const followRow = new Adw.SwitchRow({
-                title: 'Follow background opacity',
-                subtitle: 'Borders use the general background opacity',
+            const bordersRow = new Adw.SwitchRow({
+                title: 'Hide borders',
+                subtitle: 'Removes the outline of Quick Settings, the calendar and other menus',
             });
-            s.bind('border-follow-opacity', followRow, 'active', Gio.SettingsBindFlags.DEFAULT);
-            followRow.bind_property('active', borderRow, 'sensitive',
-                GObject.BindingFlags.SYNC_CREATE | GObject.BindingFlags.INVERT_BOOLEAN);
-            effects.add(followRow);
+            s.bind('hide-borders', bordersRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+            effects.add(bordersRow);
             const arrowRow = new Adw.SwitchRow({
                 title: 'Matching arrow buttons',
                 subtitle: 'The arrow next to Quick Settings toggles uses the toggle\'s color',
