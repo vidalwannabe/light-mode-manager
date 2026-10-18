@@ -167,8 +167,16 @@ export default class LightModeManagerExtension extends Extension {
         try {
             const css = this._isDark() ? this._darkCss() : this._lightCss();
             // Nothing changed: skip writing and reloading the stylesheet.
-            if (this._themeFile && css === this._lastCss)
+            if (css === this._lastCss)
                 return;
+
+            // Nothing to override (e.g. every dark color on system default): St fails to
+            // load an empty stylesheet, so just drop ours and keep the native look.
+            if (!css) {
+                this._unloadTheme();
+                this._lastCss = css;
+                return;
+            }
 
             // St only reloads a stylesheet from a new file, hence the unique name.
             const file = Gio.File.new_for_path(GLib.build_filenamev([this._cacheDir, `theme-${Date.now()}.css`]));

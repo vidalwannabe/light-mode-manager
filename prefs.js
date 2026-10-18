@@ -37,7 +37,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
 
         const resetButton = key => {
             const b = new Gtk.Button({
-                icon_name: 'edit-undo-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Restore default',
+                icon_name: 'edit-undo-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Restore the Default profile color',
             });
             b.add_css_class('flat');
             b.connect('clicked', () => s.reset(key));
@@ -292,21 +292,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             page.add(profilesGroup(suffix, builtins));
             const group = new Adw.PreferencesGroup({title: 'Colors', description});
             page.add(group);
-            const keys = [];
-            for (const [name, label, subtitle, alpha] of COLOR_ROWS) {
-                const key = `color-${name}${suffix}`;
-                colorRow(group, key, label, subtitle, alpha, emptyLabel);
-                keys.push(key);
-            }
-
-            const resetRow = new Adw.ActionRow({title: 'Restore this tab to defaults'});
-            const resetAll = new Gtk.Button({label: 'Restore defaults', valign: Gtk.Align.CENTER});
-            resetAll.add_css_class('destructive-action');
-            resetAll.connect('clicked', () => keys.forEach(k => s.reset(k)));
-            resetRow.add_suffix(resetAll);
-            const resetGroup = new Adw.PreferencesGroup();
-            resetGroup.add(resetRow);
-            page.add(resetGroup);
+            for (const [name, label, subtitle, alpha] of COLOR_ROWS)
+                colorRow(group, `color-${name}${suffix}`, label, subtitle, alpha, emptyLabel);
 
             window.add(page);
         };
