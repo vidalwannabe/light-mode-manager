@@ -2,24 +2,18 @@
 <schemalist>
   <schema id="org.gnome.shell.extensions.light-mode-manager" path="/org/gnome/shell/extensions/light-mode-manager/">
     <!-- Light mode -->
-    <key name="color-panel" type="s"><default>'#f5f5f5'</default><summary>Top bar</summary></key>
+    <key name="color-general" type="s"><default>'#fafafb'</default><summary>General background (top bar, menus and dialogs, OSD and switcher, overview)</summary></key>
     <key name="color-panel-text" type="s"><default>''</default><summary>Top bar text (empty = same as text color)</summary></key>
     <key name="color-fg" type="s"><default>'#222226'</default><summary>Text and icons</summary></key>
     <key name="color-fg-muted" type="s"><default>'#767679'</default><summary>Secondary text</summary></key>
-    <key name="color-popup" type="s"><default>'#f5f5f5'</default><summary>Menus and dialogs</summary></key>
     <key name="color-card" type="s"><default>'#e8e8e8'</default><summary>Cards</summary></key>
-    <key name="color-surface" type="s"><default>'#dcdcdc'</default><summary>OSD and switcher</summary></key>
     <key name="color-dash" type="s"><default>'#cecece'</default><summary>Dash, search and folders</summary></key>
-    <key name="color-overview" type="s"><default>'#e1e1e1'</default><summary>Overview and app grid</summary></key>
     <!-- Dark mode (empty = system default) -->
-    <key name="color-panel-dark" type="s"><default>'#36363a'</default><summary>Top bar</summary></key>
+    <key name="color-general-dark" type="s"><default>'#222226'</default><summary>General background</summary></key>
     <key name="color-panel-text-dark" type="s"><default>''</default><summary>Top bar text</summary></key>
     <key name="color-fg-dark" type="s"><default>''</default><summary>Text and icons</summary></key>
     <key name="color-fg-muted-dark" type="s"><default>''</default><summary>Secondary text</summary></key>
-    <key name="color-popup-dark" type="s"><default>''</default><summary>Menus and dialogs</summary></key>
     <key name="color-card-dark" type="s"><default>''</default><summary>Cards</summary></key>
-    <key name="color-surface-dark" type="s"><default>''</default><summary>OSD and switcher</summary></key>
     <key name="color-dash-dark" type="s"><default>''</default><summary>Dash, search and folders</summary></key>
-    <key name="color-overview-dark" type="s"><default>''</default><summary>Overview and app grid</summary></key>
   </schema>
 </schemalist>

@@ -13,15 +13,12 @@ const toCss = c => {
 // The Light mode and Dark mode tabs show exactly these rows.
 // [key name, title, subtitle, supports transparency]
 const COLOR_ROWS = [
-    ['panel', 'Top bar', 'Top bar background (supports transparency)', true],
+    ['general', 'General background', 'Top bar, menus and dialogs, OSD and switcher, overview (supports transparency)', true],
     ['panel-text', 'Top bar text', 'Top bar text and icon color', false],
     ['fg', 'Text and icons', 'Main text color', false],
     ['fg-muted', 'Secondary text', 'Dates, captions, subtitles', false],
-    ['popup', 'Menus and dialogs', 'Panel menus, dialog boxes, flat buttons', false],
     ['card', 'Cards', 'Notifications, calendar, quick settings', false],
-    ['surface', 'OSD and switcher', 'Alt+Tab, volume/brightness, screenshot UI', false],
     ['dash', 'Dash, search and folders', 'Overview dock, search results, app folders', false],
-    ['overview', 'Overview and app grid', 'Overview and icon background', false],
 ];
 
 export default class LightModeManagerPrefs extends ExtensionPreferences {

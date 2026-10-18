@@ -9,14 +9,15 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 const MARKER = '.login-dialog,\n.unlock-dialog {\n  color: #e1e1e1;';
 
 // [setting key, color used in templates/light.css, same color as "r, g, b"]
+// Several template colors can share one setting.
 const TOKENS = [
     ['color-fg', '#222226', '34, 34, 38'],
     ['color-fg-muted', '#767679', '118, 118, 121'],
     ['color-card', '#e8e8e8', '232, 232, 232'],
-    ['color-surface', '#dcdcdc', '220, 220, 220'],
+    ['color-general', '#dcdcdc', '220, 220, 220'],
     ['color-dash', '#cecece', '206, 206, 206'],
-    ['color-overview', '#e1e1e1', '225, 225, 225'],
-    ['color-popup', 'whitesmoke', '245, 245, 245'],
+    ['color-general', '#e1e1e1', '225, 225, 225'],
+    ['color-general', 'whitesmoke', '245, 245, 245'],
 ];
 
 // Matches every token color and its rgba() variants.
@@ -32,12 +33,12 @@ const PANEL_LOCK_SEL = '#panel.unlock-screen .panel-button, #panel.login-screen 
 // Dark mode has no template: each setting overrides a list of elements.
 // [selectors, property, setting key]
 const DARK_RULES = [
-    ['#panel', 'background-color', 'color-panel-dark'],
-    ['.popup-menu-content, .candidate-popup-content, .modal-dialog', 'background-color', 'color-popup-dark'],
+    [[
+        '#panel', '.popup-menu-content', '.candidate-popup-content', '.modal-dialog',
+        '.switcher-list', '.osd-window', '.workspace-switcher', '.resize-popup', '#overviewGroup',
+    ].join(', '), 'background-color', 'color-general-dark'],
     ['.message, .notification-banner, .quick-toggle-menu', 'background-color', 'color-card-dark'],
-    ['.switcher-list, .osd-window, .workspace-switcher, .resize-popup', 'background-color', 'color-surface-dark'],
     ['#dash .dash-background, .search-section-content, .app-folder-dialog', 'background-color', 'color-dash-dark'],
-    ['#overviewGroup', 'background-color', 'color-overview-dark'],
     [[
         'stage', '.popup-menu', '.popup-menu-item', '.popup-inactive-menu-item', '.message',
         '.quick-toggle-menu', '.events-button', '.world-clocks-button', '.weather-button',
@@ -130,8 +131,8 @@ export default class LightModeManagerExtension extends Extension {
             return byColor[m.toLowerCase()] ?? m;
         }) + this._templateTail;
 
-        // The top bar shares its template color with the menus, so it gets its own rule.
-        const panel = s.get_string('color-panel').trim();
+        // The top bar has no template color of its own, so it gets its own rule.
+        const panel = s.get_string('color-general').trim();
         if (panel)
             css += rule('#panel', 'background-color', panel);
 
