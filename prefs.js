@@ -1,5 +1,6 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 import Gdk from 'gi://Gdk';
 import Adw from 'gi://Adw';
@@ -313,6 +314,97 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             group.add(row);
         };
 
+        // ---------- Automatic switch ----------
+        // A time button ("07:00") bound to an integer setting in minutes since midnight;
+        // it opens hour and minute spin buttons in a popover.
+        const timeInput = key => {
+            const spin = max => {
+                const button = new Gtk.SpinButton({
+                    adjustment: new Gtk.Adjustment({lower: 0, upper: max, step_increment: 1, page_increment: 10}),
+                    wrap: true, numeric: true, width_chars: 2, orientation: Gtk.Orientation.VERTICAL,
+                });
+                // Always two digits: 07, not 7.
+                button.connect('output', () => {
+                    button.set_text(String(button.get_value_as_int()).padStart(2, '0'));
+                    return true;
+                });
+                return button;
+            };
+            const [hours, minutes] = [spin(23), spin(59)];
+            const picker = new Gtk.Box({spacing: 6, margin_top: 6, margin_bottom: 6, margin_start: 6, margin_end: 6});
+            picker.append(hours);
+            picker.append(new Gtk.Label({label: ':'}));
+            picker.append(minutes);
+            const button = new Gtk.MenuButton({popover: new Gtk.Popover({child: picker}), valign: Gtk.Align.CENTER});
+            button.add_css_class('numeric');
+
+            const text = value => `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
+            let loading = false;
+            const load = () => {
+                const value = s.get_int(key);
+                button.set_label(text(value));
+                loading = true;
+                hours.set_value(Math.floor(value / 60));
+                minutes.set_value(value % 60);
+                loading = false;
+            };
+            load();
+            const save = () => {
+                const value = hours.get_value_as_int() * 60 + minutes.get_value_as_int();
+                if (!loading && value !== s.get_int(key))
+                    s.set_int(key, value);
+            };
+            hours.connect('value-changed', save);
+            minutes.connect('value-changed', save);
+            watch(key, load);
+            return button;
+        };
+
+        // A drop-down of the general profiles bound to a string setting. A saved profile
+        // that was deleted stays listed, marked as deleted, until another one is chosen.
+        const profileDropDown = (key, general) => {
+            const dropDown = new Gtk.DropDown({valign: Gtk.Align.CENTER});
+            let names = [];
+            let loading = false;
+            const load = () => {
+                const saved = s.get_string(key);
+                names = general.all().map(p => p.name);
+                const labels = [...names];
+                if (!names.includes(saved)) {
+                    names.push(saved);
+                    labels.push(`${saved} (deleted)`);
+                }
+                loading = true;
+                dropDown.set_model(Gtk.StringList.new(labels));
+                dropDown.set_selected(names.indexOf(saved));
+                loading = false;
+            };
+            load();
+            dropDown.connect('notify::selected', () => {
+                const name = names[dropDown.get_selected()];
+                if (!loading && name !== undefined && name !== s.get_string(key))
+                    s.set_string(key, name);
+            });
+            watch(key, load);
+            watch('general-profiles', load);
+            return dropDown;
+        };
+
+        const autoSwitchGroup = general => {
+            const group = new Adw.PreferencesGroup({title: 'Automatic switch'});
+            const enable = new Adw.SwitchRow({title: 'Enable', subtitle: 'Apply a general profile at set times of day'});
+            s.bind('auto-switch', enable, 'active', Gio.SettingsBindFlags.DEFAULT);
+            group.add(enable);
+            for (const [i, title] of [[1, 'First switch'], [2, 'Second switch']]) {
+                const row = new Adw.ActionRow({title, subtitle: 'Time and general profile to apply'});
+                row.add_suffix(timeInput(`auto-switch-${i}-time`));
+                row.add_suffix(profileDropDown(`auto-switch-${i}-profile`, general));
+                enable.bind_property('active', row, 'sensitive', GObject.BindingFlags.SYNC_CREATE);
+                group.add(row);
+            }
+            return group;
+        };
+
         // ---------- Backup ----------
         const SETTINGS_FILE = 'light-mode-manager-settings.json';
         const toast = title => window.add_toast(new Adw.Toast({title}));
@@ -483,6 +575,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             sliderRow(effects, 'general-opacity', 'General background opacity',
                 'Applies to light and dark mode', 100, 1, '%');
             page.add(effects);
+
+            page.add(autoSwitchGroup(general));
 
             const panel = new Adw.PreferencesGroup({title: 'Panel'});
             const menuRow = new Adw.SwitchRow({

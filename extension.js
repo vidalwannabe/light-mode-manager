@@ -105,6 +105,11 @@ function withOpacity(value, opacity) {
 
 const PROFILE_ICON = 'preferences-desktop-appearance-symbolic';
 
+const AUTO_KEYS = ['auto-switch', 'auto-switch-1-time', 'auto-switch-1-profile', 'auto-switch-2-time', 'auto-switch-2-profile'];
+// How often the automatic switch checks the clock. A check is a few comparisons; checking
+// often (instead of one long timer) also catches up right after a suspend.
+const AUTO_CHECK_SECONDS = 30;
+
 // Quick Settings button: shows the applied general profile and switches it from its menu.
 const ProfileToggle = GObject.registerClass(
 class ProfileToggle extends QuickMenuToggle {
@@ -235,6 +240,49 @@ export default class LightModeManagerExtension extends Extension {
             this._indicator.destroy();
             this._indicator = null;
         }
+    }
+
+    // ---------- Automatic switch ----------
+    // The switch (1 or 2) whose time passed most recently at `minutes` past midnight,
+    // or 0 if both times are equal.
+    _currentSwitch(minutes) {
+        const [t1, t2] = [1, 2].map(i => this._settings.get_int(`auto-switch-${i}-time`));
+        if (t1 === t2)
+            return 0;
+        // Between the earlier and the later time, the earlier switch is the current one.
+        const [first, second] = t1 < t2 ? [1, 2] : [2, 1];
+        return minutes >= Math.min(t1, t2) && minutes < Math.max(t1, t2) ? first : second;
+    }
+
+    // Applies the current switch's general profile once each time a switch time passes,
+    // so a profile chosen by hand in between is kept until the next switch.
+    _checkAutoSwitch() {
+        const now = GLib.DateTime.new_now_local();
+        const current = this._currentSwitch(now.get_hour() * 60 + now.get_minute());
+        if (!current || current === this._lastSwitch)
+            return;
+        this._lastSwitch = current;
+        const name = this._settings.get_string(`auto-switch-${current}-profile`);
+        const general = this._profiles.general;
+        const profile = general.all().find(p => p.name === name);
+        if (profile)
+            general.apply(profile);
+    }
+
+    // Turning it on, or changing a time or profile, applies the current switch right away.
+    _syncAutoSwitch() {
+        if (this._autoId) {
+            GLib.Source.remove(this._autoId);
+            this._autoId = 0;
+        }
+        this._lastSwitch = 0;
+        if (!this._settings.get_boolean('auto-switch'))
+            return;
+        this._checkAutoSwitch();
+        this._autoId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, AUTO_CHECK_SECONDS, () => {
+            this._checkAutoSwitch();
+            return GLib.SOURCE_CONTINUE;
+        });
     }
 
     // ---------- Dash to Panel menu entry ----------
@@ -447,6 +495,8 @@ export default class LightModeManagerExtension extends Extension {
                 this._syncPanelMenu(this._settings.get_boolean(key));
             else if (key === 'quick-settings-profiles')
                 this._syncQuickSettings();
+            else if (AUTO_KEYS.includes(key))
+                this._syncAutoSwitch();
             else if ((this._isDark() ? DARK_THEME_KEYS : LIGHT_THEME_KEYS).includes(key))
                 this._scheduleApply();
         });
@@ -468,6 +518,8 @@ export default class LightModeManagerExtension extends Extension {
         this._syncQuickSettings();
 
         this._applyTheme();
+        this._profiles = createProfiles(this._settings);
+        this._syncAutoSwitch();
     }
 
     disable() {
@@ -483,6 +535,11 @@ export default class LightModeManagerExtension extends Extension {
         this._syncPanelMenu(false);
         this._indicator?.destroy();
         this._indicator = null;
+        if (this._autoId) {
+            GLib.Source.remove(this._autoId);
+            this._autoId = 0;
+        }
+        this._profiles = null;
         if (this._forcedDark) {
             Main.sessionMode.colorScheme = this._modeScheme;
             St.Settings.get().notify('color-scheme');
