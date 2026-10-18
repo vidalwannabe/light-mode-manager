@@ -612,7 +612,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             const effects = new Adw.PreferencesGroup({title: 'Visual effects'});
             sliderRow(effects, 'transition-duration', 'Transition',
                 'Fade when switching between light and dark mode', 2000, 100, ' ms');
-            sliderRow(effects, 'general-opacity', 'General background opacity',
+            sliderRow(effects, 'general-opacity', 'Opacity',
                 'Applies to light and dark mode', 100, 1, '%', 5);
             const ignoreRow = new Adw.SwitchRow({
                 title: 'Keep panel solid',

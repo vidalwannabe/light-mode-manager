@@ -34,8 +34,8 @@ Each tab has a profile selector to apply a set of colors in one click.
 
 - **General profile**: pairs a light mode profile with a dark mode profile and applies both at once. Built-in **Default** and **GNOME** general profiles are included.
 - **Transition**: duration of the fade when switching between light and dark mode, from 0 (instant) to 2000 ms. Default: 500 ms, like GNOME.
-- **General background opacity**: transparency of the general background (top bar, menus and dialogs, OSD and switcher), from 0 to 100%, in both modes. The overview stays opaque, and below 100% menu shadows are removed so translucent menus match the top bar.
-- **Keep panel solid**: the general background opacity applies to everything except the panel, which stays opaque.
+- **Opacity**: transparency of the general background (top bar, menus and dialogs, OSD and switcher), from 0 to 100%, in both modes. The overview stays opaque, and below 100% menu shadows are removed so translucent menus match the top bar.
+- **Keep panel solid**: the opacity applies to everything except the panel, which stays opaque.
 - **Hide borders**: removes the outline of Quick Settings, the calendar and other menus, in both modes.
 - **Matching arrow buttons**: the arrow (›) next to Quick Settings toggles such as Wi-Fi or Bluetooth uses the same color as its toggle, on and off, instead of GNOME's separate shade.
 - **Override Dash to Panel color settings**: Dash to Panel's panels use this extension's panel color and opacity instead of Dash to Panel's own color and transparency settings (which are left unchanged).
