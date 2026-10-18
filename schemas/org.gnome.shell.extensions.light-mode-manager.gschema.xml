@@ -22,6 +22,7 @@
     <!-- General tab -->
     <key name="transition-duration" type="i"><range min="0" max="2000"/><default>500</default><summary>Fade duration in ms when switching between light and dark mode</summary></key>
     <key name="general-opacity" type="i"><range min="0" max="100"/><default>100</default><summary>General background opacity in percent, both modes</summary></key>
+    <key name="quick-settings-profiles" type="b"><default>false</default><summary>Show a general profile switcher in Quick Settings</summary></key>
     <key name="panel-menu-entry" type="b"><default>false</default><summary>Add "Light Mode Manager" to the Dash to Panel right-click menu</summary></key>
   </schema>
 </schemalist>

@@ -1,10 +1,15 @@
 import Clutter from 'gi://Clutter';
+import GObject from 'gi://GObject';
 import St from 'gi://St';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import {QuickMenuToggle, SystemIndicator} from 'resource:///org/gnome/shell/ui/quickSettings.js';
+
+import {createProfiles} from './profiles.js';
 
 // Everything from this marker on (login/lock screen) is kept as is.
 const MARKER = '.login-dialog,\n.unlock-dialog {\n  color: #e1e1e1;';
@@ -98,6 +103,67 @@ function withOpacity(value, opacity) {
     return `rgba(${rgb}, ${opacity / 100})`;
 }
 
+const PROFILE_ICON = 'preferences-desktop-appearance-symbolic';
+
+// Quick Settings button: shows the applied general profile and switches it from its menu.
+const ProfileToggle = GObject.registerClass(
+class ProfileToggle extends QuickMenuToggle {
+    _init(settings) {
+        super._init({title: 'Profile', iconName: PROFILE_ICON, toggleMode: false});
+        this._profiles = createProfiles(settings).general;
+        this.menu.setHeader(PROFILE_ICON, 'General profile');
+        this._items = new PopupMenu.PopupMenuSection();
+        this.menu.addMenuItem(this._items);
+        this.connect('clicked', () => this.menu.open());
+
+        // Applying a profile changes several keys at once; rebuild only once.
+        for (const key of this._profiles.keys)
+            settings.connectObject(`changed::${key}`, () => this._queueSync(), this);
+        this._sync();
+    }
+
+    _queueSync() {
+        this._syncId ||= GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+            this._syncId = 0;
+            this._sync();
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
+    _sync() {
+        const profiles = this._profiles.all();
+        const applied = this._profiles.applied(profiles);
+        this.subtitle = applied?.name ?? 'Custom';
+        this._items.removeAll();
+        for (const profile of profiles) {
+            const item = new PopupMenu.PopupMenuItem(profile.name);
+            item.setOrnament(profile === applied ? PopupMenu.Ornament.CHECK : PopupMenu.Ornament.NONE);
+            item.connect('activate', () => this._profiles.apply(profile));
+            this._items.addMenuItem(item);
+        }
+    }
+
+    destroy() {
+        if (this._syncId)
+            GLib.Source.remove(this._syncId);
+        this._syncId = 0;
+        super.destroy();
+    }
+});
+
+const ProfileIndicator = GObject.registerClass(
+class ProfileIndicator extends SystemIndicator {
+    _init(settings) {
+        super._init();
+        this.quickSettingsItems.push(new ProfileToggle(settings));
+    }
+
+    destroy() {
+        this.quickSettingsItems.forEach(item => item.destroy());
+        super.destroy();
+    }
+});
+
 export default class LightModeManagerExtension extends Extension {
     // ---------- Color scheme ----------
     _getColorScheme() {
@@ -156,6 +222,19 @@ export default class LightModeManagerExtension extends Extension {
             mode: Clutter.AnimationMode.EASE_OUT_QUAD,
             onStopped: () => transition.hide(),
         });
+    }
+
+    // ---------- Quick Settings switcher ----------
+    // Shown when enabled, but never on the lock screen.
+    _syncQuickSettings() {
+        const show = this._settings.get_boolean('quick-settings-profiles') && !Main.sessionMode.isLocked;
+        if (show && !this._indicator) {
+            this._indicator = new ProfileIndicator(this._settings);
+            Main.panel.statusArea.quickSettings.addExternalIndicator(this._indicator);
+        } else if (!show && this._indicator) {
+            this._indicator.destroy();
+            this._indicator = null;
+        }
     }
 
     // ---------- Dash to Panel menu entry ----------
@@ -366,6 +445,8 @@ export default class LightModeManagerExtension extends Extension {
         this._settingsId = this._settings.connect('changed', (_s, key) => {
             if (key === 'panel-menu-entry')
                 this._syncPanelMenu(this._settings.get_boolean(key));
+            else if (key === 'quick-settings-profiles')
+                this._syncQuickSettings();
             else if ((this._isDark() ? DARK_THEME_KEYS : LIGHT_THEME_KEYS).includes(key))
                 this._scheduleApply();
         });
@@ -382,7 +463,9 @@ export default class LightModeManagerExtension extends Extension {
         this._sessionId = Main.sessionMode.connect('updated', () => {
             this._forcedDark = false;
             this._syncShellScheme();
+            this._syncQuickSettings();
         });
+        this._syncQuickSettings();
 
         this._applyTheme();
     }
@@ -398,6 +481,8 @@ export default class LightModeManagerExtension extends Extension {
 
         this._unloadTheme();
         this._syncPanelMenu(false);
+        this._indicator?.destroy();
+        this._indicator = null;
         if (this._forcedDark) {
             Main.sessionMode.colorScheme = this._modeScheme;
             St.Settings.get().notify('color-scheme');

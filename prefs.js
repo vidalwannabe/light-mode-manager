@@ -5,6 +5,8 @@ import Gdk from 'gi://Gdk';
 import Adw from 'gi://Adw';
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
+import {createProfiles} from './profiles.js';
+
 // The Light mode and Dark mode tabs show exactly these rows.
 // [key name, title, subtitle]. Transparency is set only in the General tab.
 const COLOR_ROWS = [
@@ -122,68 +124,6 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                     onConfirm();
             });
             dialog.present(window);
-        };
-
-        // The schema default of every row of a tab.
-        const defaults = suffix => Object.fromEntries(
-            COLOR_ROWS.map(([n]) => [n, s.get_default_value(`color-${n}${suffix}`).unpack()]));
-
-        // Profiles saved as JSON in `listKey`, after the fixed `builtins`, remembering the
-        // applied one by name in `activeKey` (so two equal profiles are never both marked).
-        // isValid(p) checks the fields of a saved profile.
-        const profileStore = (listKey, activeKey, builtins, isValid) => {
-            const reserved = new Set(builtins.map(p => p.name));
-            // The user's own profiles (a saved one can never shadow a built-in name).
-            const own = () => {
-                try {
-                    const list = JSON.parse(s.get_string(listKey));
-                    return Array.isArray(list)
-                        ? list.filter(p => typeof p?.name === 'string' && !reserved.has(p.name) && isValid(p))
-                        : [];
-                } catch {
-                    return [];
-                }
-            };
-            return {
-                builtins, own,
-                all: () => [...builtins, ...own()],
-                save: list => s.set_string(listKey, JSON.stringify(list)),
-                taken: name => reserved.has(name) || own().some(p => p.name === name),
-                activeName: () => s.get_string(activeKey),
-                setActive: name => s.set_string(activeKey, name),
-                keys: [listKey, activeKey],
-            };
-        };
-
-        // The profiles of the Light or Dark tab.
-        const modeProfiles = (suffix, builtins) => {
-            const store = profileStore(`profiles${suffix}`, `active-profile${suffix}`, builtins,
-                p => p.colors && typeof p.colors === 'object');
-            const colorKey = n => `color-${n}${suffix}`;
-            const defaultColors = defaults(suffix);
-            const matches = colors =>
-                COLOR_ROWS.every(([n]) => (colors[n] ?? defaultColors[n]) === s.get_string(colorKey(n)));
-            return {
-                ...store,
-                keys: [...store.keys, ...COLOR_ROWS.map(([n]) => colorKey(n))],
-                current: () => Object.fromEntries(COLOR_ROWS.map(([n]) => [n, s.get_string(colorKey(n))])),
-                // A row that is missing or equal to its default is reset, so dconf only keeps real changes.
-                apply(profile) {
-                    store.setActive(profile.name);
-                    for (const [n] of COLOR_ROWS) {
-                        const value = profile.colors[n];
-                        if (typeof value !== 'string' || value === defaultColors[n])
-                            s.reset(colorKey(n));
-                        else
-                            s.set_string(colorKey(n), value);
-                    }
-                },
-                // The applied profile; it stops counting once a color is changed.
-                applied(profiles = store.all()) {
-                    const p = profiles.find(q => q.name === store.activeName());
-                    return p && matches(p.colors) ? p : null;
-                },
-            };
         };
 
         // A "Profiles" group: one row with a selector (apply, delete) and the given add button.
@@ -307,34 +247,12 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         };
 
         // A general profile pairs a light and a dark profile and applies both.
-        const generalProfilesGroup = (light, dark) => {
-            const store = profileStore('general-profiles', 'active-general-profile', [
-                {name: 'Default', light: 'Default', dark: 'Default'},
-                {name: 'GNOME', light: 'GNOME', dark: 'GNOME'},
-            ], p => typeof p.light === 'string' && typeof p.dark === 'string');
-            const find = (mode, name) => mode.all().find(p => p.name === name);
-            const model = {
-                ...store,
-                keys: [...store.keys, ...light.keys, ...dark.keys],
-                // A side whose profile was deleted is left as it is.
-                apply(profile) {
-                    store.setActive(profile.name);
-                    const [l, d] = [find(light, profile.light), find(dark, profile.dark)];
-                    if (l)
-                        light.apply(l);
-                    if (d)
-                        dark.apply(d);
-                },
-                applied(profiles = store.all()) {
-                    const p = profiles.find(q => q.name === store.activeName());
-                    return p && light.applied()?.name === p.light && dark.applied()?.name === p.dark ? p : null;
-                },
-            };
-            const side = (mode, name) => find(mode, name) ? name : `${name} (deleted)`;
+        const generalProfilesGroup = (model, light, dark) => {
+            const side = (mode, name) => model.exists(mode, name) ? name : `${name} (deleted)`;
 
             const addButton = flatButton({icon_name: 'list-add-symbolic', tooltip_text: 'New general profile'});
-            addButton.connect('clicked', () => profileDialog(store.taken, (name, l, d) => {
-                store.save([...store.own(), {name, light: l, dark: d}]);
+            addButton.connect('clicked', () => profileDialog(model.taken, (name, l, d) => {
+                model.save([...model.own(), {name, light: l, dark: d}]);
                 model.apply({name, light: l, dark: d});
             }, [
                 {title: 'Light mode profile', names: light.all().map(p => p.name), selected: 'Default'},
@@ -395,9 +313,103 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             group.add(row);
         };
 
-        const addGeneralTab = (light, dark) => {
+        // ---------- Backup ----------
+        const SETTINGS_FILE = 'light-mode-manager-settings.json';
+        const toast = title => window.add_toast(new Adw.Toast({title}));
+        const jsonFilter = () => {
+            const filter = new Gtk.FileFilter({name: 'JSON files'});
+            filter.add_pattern('*.json');
+            const filters = new Gio.ListStore({item_type: Gtk.FileFilter});
+            filters.append(filter);
+            return filters;
+        };
+        // Cancelling a file dialog is not an error worth reporting.
+        const dismissed = e => e.matches?.(Gtk.DialogError, Gtk.DialogError.DISMISSED);
+
+        // Every setting as GVariant text, so types survive the round trip.
+        const exportSettings = () => {
+            const dialog = new Gtk.FileDialog({title: 'Export settings', initial_name: SETTINGS_FILE, filters: jsonFilter()});
+            dialog.save(window, null, (_d, res) => {
+                try {
+                    const file = dialog.save_finish(res);
+                    const settings = Object.fromEntries(
+                        s.settings_schema.list_keys().map(k => [k, s.get_value(k).print(true)]));
+                    const json = JSON.stringify({extension: this.uuid, version: 1, settings}, null, 2);
+                    file.replace_contents(new TextEncoder().encode(json), null, false,
+                        Gio.FileCreateFlags.REPLACE_DESTINATION, null);
+                    toast('Settings exported');
+                } catch (e) {
+                    if (!dismissed(e))
+                        toast(`Export failed: ${e.message}`);
+                }
+            });
+        };
+
+        // Replaces every setting; keys missing from the file go back to their default.
+        const importFile = file => {
+            const [, bytes] = file.load_contents(null);
+            const data = JSON.parse(new TextDecoder().decode(bytes));
+            if (data?.extension !== this.uuid || typeof data.settings !== 'object')
+                throw new Error('not a Light Mode Manager settings file');
+            const schema = s.settings_schema;
+            // Parse everything first, so a bad value changes nothing.
+            const values = schema.list_keys().map(k => {
+                const text = data.settings[k];
+                if (typeof text !== 'string')
+                    return [k, null];
+                const type = schema.get_key(k).get_value_type();
+                const value = GLib.Variant.parse(type, text, null, null);
+                if (!schema.get_key(k).range_check(value))
+                    throw new Error(`invalid value for ${k}`);
+                return [k, value];
+            });
+            s.delay();
+            for (const [k, value] of values) {
+                if (value)
+                    s.set_value(k, value);
+                else
+                    s.reset(k);
+            }
+            s.apply();
+        };
+        const importSettings = () => {
+            const dialog = new Gtk.FileDialog({title: 'Import settings', filters: jsonFilter()});
+            dialog.open(window, null, (_d, res) => {
+                let file;
+                try {
+                    file = dialog.open_finish(res);
+                } catch (e) {
+                    if (!dismissed(e))
+                        toast(`Import failed: ${e.message}`);
+                    return;
+                }
+                confirm('Import settings?', 'All current colors, profiles and options will be replaced.', 'Import', () => {
+                    try {
+                        importFile(file);
+                        toast('Settings imported');
+                    } catch (e) {
+                        toast(`Import failed: ${e.message}`);
+                    }
+                });
+            });
+        };
+
+        const backupGroup = () => {
+            const group = new Adw.PreferencesGroup({title: 'Backup'});
+            const row = new Adw.ActionRow({title: 'Settings', subtitle: 'Colors, profiles and options, as a JSON file'});
+            const importButton = new Gtk.Button({label: 'Import', valign: Gtk.Align.CENTER});
+            importButton.connect('clicked', importSettings);
+            const exportButton = new Gtk.Button({label: 'Export', valign: Gtk.Align.CENTER});
+            exportButton.connect('clicked', exportSettings);
+            row.add_suffix(importButton);
+            row.add_suffix(exportButton);
+            group.add(row);
+            return group;
+        };
+
+        const addGeneralTab = ({general, light, dark}) => {
             const page = new Adw.PreferencesPage({title: 'General', icon_name: 'preferences-other-symbolic'});
-            page.add(generalProfilesGroup(light, dark));
+            page.add(generalProfilesGroup(general, light, dark));
 
             const effects = new Adw.PreferencesGroup({title: 'Visual effects'});
             sliderRow(effects, 'transition-duration', 'Transition',
@@ -413,22 +425,22 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             });
             s.bind('panel-menu-entry', menuRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             panel.add(menuRow);
+            const quickRow = new Adw.SwitchRow({
+                title: 'Quick Settings switcher',
+                subtitle: 'Adds a button to Quick Settings to switch the general profile',
+            });
+            s.bind('quick-settings-profiles', quickRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+            panel.add(quickRow);
             page.add(panel);
+
+            page.add(backupGroup());
 
             window.add(page);
         };
 
-        // "Default": the schema defaults. "GNOME": every row on system default.
-        // "Oled": the dark Default with a pure black general background.
-        const gnome = {name: 'GNOME', colors: Object.fromEntries(COLOR_ROWS.map(([n]) => [n, '']))};
-        const light = modeProfiles('', [{name: 'Default', colors: defaults('')}, gnome]);
-        const dark = modeProfiles('-dark', [
-            {name: 'Default', colors: defaults('-dark')},
-            gnome,
-            {name: 'Oled', colors: {...defaults('-dark'), general: '#000000'}},
-        ]);
-        addTab('Light mode', 'weather-clear-symbolic', '', light);
-        addTab('Dark mode', 'weather-clear-night-symbolic', '-dark', dark);
-        addGeneralTab(light, dark);
+        const profiles = createProfiles(s);
+        addTab('Light mode', 'weather-clear-symbolic', '', profiles.light);
+        addTab('Dark mode', 'weather-clear-night-symbolic', '-dark', profiles.dark);
+        addGeneralTab(profiles);
     }
 }
