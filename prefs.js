@@ -128,7 +128,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         };
 
         // A "Profiles" group: one row with a selector (apply, delete) and the given add button.
-        const selectorGroup = ({title, subtitle, model, describe, addButton, onRefresh}) => {
+        const selectorGroup = ({groupTitle = 'Profiles', title, subtitle, model, describe, addButton, onRefresh}) => {
             const list = new Gtk.ListBox({selection_mode: Gtk.SelectionMode.NONE});
             list.add_css_class('boxed-list');
             const popover = new Gtk.Popover({child: new Gtk.ScrolledWindow({
@@ -192,7 +192,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             const row = new Adw.ActionRow({title, subtitle});
             row.add_suffix(selector);
             row.add_suffix(addButton);
-            const group = new Adw.PreferencesGroup({title: 'Profiles'});
+            const group = new Adw.PreferencesGroup({title: groupTitle});
             group.add(row);
             return group;
         };
@@ -261,7 +261,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             ], 'New general profile'));
 
             return selectorGroup({
-                title: 'General profile', subtitle: 'Applies a light and a dark mode profile together',
+                groupTitle: 'General profiles', title: 'Profile',
+                subtitle: 'Applies a light and a dark mode profile together',
                 model, addButton,
                 describe: p => `Light: ${side(light, p.light)} · Dark: ${side(dark, p.dark)}`,
             });
