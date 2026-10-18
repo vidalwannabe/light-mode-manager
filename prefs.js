@@ -113,16 +113,20 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         };
 
         // Profile selector and "+" button at the top of a tab.
-        const profilesGroup = suffix => {
+        // builtins: fixed profiles listed first; they cannot be deleted or overwritten.
+        const profilesGroup = (suffix, builtins) => {
             const listKey = `profiles${suffix}`;
             const activeKey = `active-profile${suffix}`;
             const colorKey = name => `color-${name}${suffix}`;
 
+            const reserved = new Set(builtins.map(p => p.name));
+            // The user's own profiles (a saved one can never shadow a built-in name).
             const load = () => {
                 try {
                     const list = JSON.parse(s.get_string(listKey));
                     return Array.isArray(list)
-                        ? list.filter(p => p && typeof p.name === 'string' && p.colors && typeof p.colors === 'object')
+                        ? list.filter(p => p && typeof p.name === 'string' && !reserved.has(p.name) &&
+                            p.colors && typeof p.colors === 'object')
                         : [];
                 } catch {
                     return [];
@@ -130,6 +134,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             };
             const save = list => s.set_string(listKey, JSON.stringify(list));
             const current = () => Object.fromEntries(COLOR_ROWS.map(([n]) => [n, s.get_string(colorKey(n))]));
+            // A profile without a value for a row resets that row to its default.
             const apply = colors => {
                 for (const [n] of COLOR_ROWS) {
                     if (typeof colors[n] === 'string')
@@ -160,7 +165,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             const newAction = new Gio.SimpleAction({name: 'new'});
             newAction.connect('activate', () => nameDialog({
                 heading: 'New profile', confirm: 'Save',
-                taken: n => load().some(p => p.name === n),
+                taken: n => reserved.has(n) || load().some(p => p.name === n),
                 onConfirm: name => {
                     save([...load(), {name, colors: current()}]);
                     setActive(name);
@@ -219,24 +224,31 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             });
 
             const refresh = () => {
-                const profiles = load();
-                buildAddMenu(profiles);
+                const own = load();
+                buildAddMenu(own);
+                const profiles = [...builtins, ...own];
                 const applied = active(profiles);
                 selector.set_label(applied?.name ?? 'No profile');
                 list.remove_all();
-                if (profiles.length === 0) {
-                    list.append(new Adw.ActionRow({title: 'No saved profiles', subtitle: 'Use + to save the current colors'}));
-                    return;
-                }
                 profiles.forEach(profile => {
-                    const row = new Adw.ActionRow({title: profile.name, activatable: true, tooltip_text: 'Apply'});
+                    const row = new Adw.ActionRow({
+                        title: profile.name, subtitle: profile.builtin ? 'Built-in' : '',
+                        activatable: true, tooltip_text: 'Apply',
+                    });
                     // Every row gets the check icon so names stay aligned; only the applied one shows it.
                     row.add_prefix(new Gtk.Image({icon_name: 'object-select-symbolic', opacity: profile === applied ? 1 : 0}));
                     row.connect('activated', () => {
                         popover.popdown();
                         setActive(profile.name);
-                        apply(profile.colors);
+                        if (profile.reset)
+                            apply({});
+                        else
+                            apply(profile.colors);
                     });
+                    if (profile.builtin) {
+                        list.append(row);
+                        return;
+                    }
 
                     const del = new Gtk.Button({icon_name: 'user-trash-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Delete'});
                     del.add_css_class('flat');
@@ -256,7 +268,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             for (const [n] of COLOR_ROWS)
                 watch(colorKey(n), queueRefresh);
 
-            const row = new Adw.ActionRow({title: 'Profile', subtitle: 'Apply or delete saved color sets'});
+            const row = new Adw.ActionRow({title: 'Profile', subtitle: 'Apply a built-in or saved color set'});
             row.add_suffix(selector);
             row.add_suffix(addButton);
             const group = new Adw.PreferencesGroup({title: 'Profiles'});
@@ -264,9 +276,20 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             return group;
         };
 
-        const addTab = (title, icon, description, suffix, emptyLabel) => {
+        // "Default": the schema defaults (rows are reset). "GNOME": every row on system default.
+        const defaultProfile = suffix => ({
+            name: 'Default', builtin: true,
+            colors: Object.fromEntries(COLOR_ROWS.map(([n]) => {
+                const key = `color-${n}${suffix}`;
+                return [n, s.get_default_value(key).unpack()];
+            })),
+            reset: true,
+        });
+        const gnomeProfile = {name: 'GNOME', builtin: true, colors: Object.fromEntries(COLOR_ROWS.map(([n]) => [n, '']))};
+
+        const addTab = (title, icon, description, suffix, emptyLabel, builtins) => {
             const page = new Adw.PreferencesPage({title, icon_name: icon});
-            page.add(profilesGroup(suffix));
+            page.add(profilesGroup(suffix, builtins));
             const group = new Adw.PreferencesGroup({title: 'Colors', description});
             page.add(group);
             const keys = [];
@@ -289,8 +312,10 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         };
 
         addTab('Light mode', 'weather-clear-symbolic',
-            'Hover, focus and active states are derived automatically from these colors.', '', null);
+            'Hover, focus and active states are derived automatically from these colors.', '', null,
+            [defaultProfile('')]);
         addTab('Dark mode', 'weather-clear-night-symbolic',
-            'These colors are applied over the native GNOME dark style.', '-dark', 'System default');
+            'These colors are applied over the native GNOME dark style.', '-dark', 'System default',
+            [defaultProfile('-dark'), gnomeProfile]);
     }
 }
