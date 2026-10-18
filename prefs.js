@@ -615,7 +615,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             sliderRow(effects, 'general-opacity', 'Opacity',
                 'Applies to light and dark mode', 100, 1, '%', 5);
             const panelOpacityRow = new Adw.SwitchRow({
-                title: 'Apply opacity to panel',
+                title: 'Enable panel opacity',
                 subtitle: 'The panel also gets the opacity above; otherwise it stays solid',
             });
             s.bind('panel-opacity', panelOpacityRow, 'active', Gio.SettingsBindFlags.DEFAULT);

@@ -342,7 +342,7 @@ export default class LightModeManagerExtension extends Extension {
     // settings and code are never changed.
 
     // The background the loaded stylesheets give #panel: this extension's color, opacity and
-    // "Apply opacity to panel", or GNOME's own with the GNOME profile. Read from a hidden probe,
+    // "Enable panel opacity", or GNOME's own with the GNOME profile. Read from a hidden probe,
     // as Dash to Panel does, so no inline style is involved.
     _themePanelColor() {
         const probe = new St.Bin({name: 'panel'});
@@ -439,7 +439,7 @@ export default class LightModeManagerExtension extends Extension {
     }
 
     // Opacity on GNOME's own general backgrounds, for a general background on system
-    // default. The panel only gets it with "Apply opacity to panel".
+    // default. The panel only gets it with "Enable panel opacity".
     _nativeOpacityCss() {
         const opacity = this._settings.get_int('general-opacity');
         if (opacity >= 100)
