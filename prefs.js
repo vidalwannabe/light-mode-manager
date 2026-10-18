@@ -287,10 +287,10 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         });
         const gnomeProfile = {name: 'GNOME', builtin: true, colors: Object.fromEntries(COLOR_ROWS.map(([n]) => [n, '']))};
 
-        const addTab = (title, icon, description, suffix, emptyLabel, builtins) => {
+        const addTab = (title, icon, suffix, emptyLabel, builtins) => {
             const page = new Adw.PreferencesPage({title, icon_name: icon});
             page.add(profilesGroup(suffix, builtins));
-            const group = new Adw.PreferencesGroup({title: 'Colors', description});
+            const group = new Adw.PreferencesGroup({title: 'Colors'});
             page.add(group);
             for (const [name, label, subtitle, alpha] of COLOR_ROWS)
                 colorRow(group, `color-${name}${suffix}`, label, subtitle, alpha, emptyLabel);
@@ -298,11 +298,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             window.add(page);
         };
 
-        addTab('Light mode', 'weather-clear-symbolic',
-            'Hover, focus and active states are derived automatically from these colors.', '', null,
-            [defaultProfile('')]);
-        addTab('Dark mode', 'weather-clear-night-symbolic',
-            'These colors are applied over the native GNOME dark style.', '-dark', 'System default',
+        addTab('Light mode', 'weather-clear-symbolic', '', null, [defaultProfile('')]);
+        addTab('Dark mode', 'weather-clear-night-symbolic', '-dark', 'System default',
             [defaultProfile('-dark'), gnomeProfile]);
     }
 }
