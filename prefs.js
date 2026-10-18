@@ -9,10 +9,12 @@ import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/ex
 import {createProfiles} from './profiles.js';
 
 // The Light mode and Dark mode tabs show exactly these rows.
-// [key name, title, subtitle]. Transparency is set only in the General tab.
+// [key name, title, subtitle, row it follows when empty]. Transparency is set only in the
+// General tab.
 const COLOR_ROWS = [
     ['general', 'General background', 'Top bar, menus, dialogs, OSD and switcher, overview'],
-    ['fg', 'Text and icons', 'Main text and icons, including the top bar'],
+    ['fg', 'Text and icons', 'Menus, Quick Settings, notifications and dialogs'],
+    ['panel-fg', 'Top bar text and icons', 'Clock, indicators, overview and app grid buttons', 'fg'],
     ['fg-muted', 'Secondary text', 'Dates, captions and subtitles'],
     ['card', 'Cards, dash and search', 'Notifications, calendar, slider buttons, dock, search, app folders'],
     ['qs-button', 'Inactive Quick Settings buttons', 'Toggles that are off, round buttons at the top, and their menus'],
@@ -46,7 +48,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             return false;
         });
 
-        const colorRow = (group, key, title, subtitle) => {
+        // `follows`: the key whose color this row shows and uses while it is empty.
+        const colorRow = (group, key, title, subtitle, follows) => {
             const row = new Adw.ActionRow({title});
             const button = new Gtk.ColorDialogButton({
                 dialog: new Gtk.ColorDialog({with_alpha: false}),
@@ -54,11 +57,15 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             });
             let loading = false;
             const load = () => {
-                // Empty or unreadable: the shell uses the system default.
+                // Empty or unreadable: the followed row's color, or the system default.
                 const color = new Gdk.RGBA();
                 const valid = color.parse(s.get_string(key).trim());
-                row.set_subtitle(valid ? subtitle : 'System default');
-                if (!valid)
+                const followed = !valid && follows && color.parse(s.get_string(follows).trim());
+                if (valid)
+                    row.set_subtitle(subtitle);
+                else
+                    row.set_subtitle(follows ? 'Same as Text and icons' : 'System default');
+                if (!valid && !followed)
                     color.parse('#808080');
                 loading = true;
                 button.set_rgba(color);
@@ -70,6 +77,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                     s.set_string(key, toHex(button.get_rgba()));
             });
             watch(key, load);
+            if (follows)
+                watch(follows, load);
 
             const reset = flatButton({icon_name: 'edit-undo-symbolic', tooltip_text: 'Restore the Default profile color'});
             reset.connect('clicked', () => s.reset(key));
@@ -275,8 +284,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             const page = new Adw.PreferencesPage({title, icon_name: icon});
             page.add(modeProfilesGroup(model));
             const group = new Adw.PreferencesGroup({title: 'Colors'});
-            for (const [name, label, subtitle] of COLOR_ROWS)
-                colorRow(group, `color-${name}${suffix}`, label, subtitle);
+            for (const [name, label, subtitle, follows] of COLOR_ROWS)
+                colorRow(group, `color-${name}${suffix}`, label, subtitle, follows && `color-${follows}${suffix}`);
             page.add(group);
             window.add(page);
         };

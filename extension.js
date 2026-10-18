@@ -32,9 +32,14 @@ const TOKEN_RE = new RegExp(
     `rgba\\((${TOKENS.map(([, , rgb]) => rgb).join('|')}), ([\\d.]+)\\)`,
     'gi');
 
-// Top bar text. The lock/login screen keeps its white text.
+// Top bar text and icons. The lock/login screen keeps its white text.
 const PANEL_TEXT_SEL = '#panel .panel-button, #panel .panel-button.clock-display, ' +
     '#panel:overview .panel-button, #panel:overview .panel-button.clock-display';
+// The overview button's workspace dots (drawn with a background color), and Dash to
+// Panel's app grid button, whose own stylesheet makes it white (the #panel id outranks it).
+const PANEL_DOTS_SEL = '#panel .panel-button#panelActivities .workspace-dot, ' +
+    '#panel:overview .panel-button#panelActivities .workspace-dot';
+const PANEL_SHOW_APPS_SEL = '#panel .show-apps .overview-icon';
 const PANEL_LOCK_SEL = '#panel.unlock-screen .panel-button, #panel.login-screen .panel-button, ' +
     '#panel.unlock-screen .panel-button.clock-display, #panel.login-screen .panel-button.clock-display';
 
@@ -76,13 +81,13 @@ const SLIDER_BUTTONS = '.quick-slider .icon-button';
 const DARK_CARD_BUTTONS = ['.quick-toggle-menu', SLIDER_BUTTONS, ...CARD_BUTTONS];
 
 // Color settings of each mode.
-const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button'];
+const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button', 'color-panel-fg'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and General tab options);
 // other keys (profiles...) never do.
 const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'hide-borders', 'match-arrow-buttons', 'calendar-background'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
-const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', ...EFFECT_KEYS];
+const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark', ...EFFECT_KEYS];
 
 // Accepted color values: #rgb, #rrggbb, rgb()/rgba() or a name. Anything else (edited in
 // dconf or imported) counts as system default, so it can never break the stylesheet.
@@ -193,7 +198,8 @@ const MENU_TITLE = 'Light Mode Manager';
 
 const rule = (selector, prop, value) => `${selector} {\n  ${prop}: ${value};\n}\n`;
 const noShadowCss = rule(SHADOW_SEL, 'box-shadow', 'none');
-const panelTextCss = color => rule(PANEL_TEXT_SEL, 'color', color) + rule(PANEL_LOCK_SEL, 'color', '#ffffff');
+const panelTextCss = color => rule(PANEL_TEXT_SEL, 'color', color) + rule(PANEL_LOCK_SEL, 'color', '#ffffff') +
+    rule(PANEL_DOTS_SEL, 'background-color', color) + rule(PANEL_SHOW_APPS_SEL, 'color', color);
 
 // "r, g, b" of a #rgb, #rrggbb, rgb() or rgba() color, so hover/active variants follow it.
 function colorToRgb(value) {
@@ -709,10 +715,10 @@ export default class LightModeManagerExtension extends Extension {
         } else {
             css += this._nativeOpacityCss();
         }
-        // The top bar text follows "Text and icons".
-        const fg = values[DARK_KEYS.indexOf('color-fg-dark')];
-        if (fg)
-            css += panelTextCss(fg);
+        // The top bar: "Top bar text and icons", or "Text and icons" when empty.
+        const panelFg = this._values(['color-panel-fg-dark'])[0] || values[DARK_KEYS.indexOf('color-fg-dark')];
+        if (panelFg)
+            css += panelTextCss(panelFg);
         css += this._darkCardsCss(values[DARK_KEYS.indexOf('color-card-dark')],
             this._values(['color-qs-button-dark'])[0]);
         return css + this._borderCss('color-border-dark');
@@ -819,9 +825,10 @@ export default class LightModeManagerExtension extends Extension {
         const panel = byKey['color-general'] || TEMPLATE_PANEL;
         css += rule('#panel', 'background-color',
             withOpacity(panel, this._settings.get_boolean('panel-opacity') ? opacity : 100));
-        // The top bar text follows "Text and icons".
-        if (byKey['color-fg'])
-            css += panelTextCss(byKey['color-fg']);
+        // The top bar: "Top bar text and icons", or "Text and icons" when empty.
+        const panelFg = byKey['color-panel-fg'] || byKey['color-fg'];
+        if (panelFg)
+            css += panelTextCss(panelFg);
         // Cards (the template's own color when empty), inactive Quick Settings buttons and
         // calendar background. GNOME's light expressions get the template's tokens filled in;
         // the color settings are used as they are.
