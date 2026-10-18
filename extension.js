@@ -69,7 +69,11 @@ const DARK_RULES = [
 // Dark mode cards that are buttons: Quick Settings menus, notifications and the cards
 // below the calendar. They get every state, as GNOME draws them (see buttonCss).
 const CARD_BUTTONS = ['.message', '.events-button', '.world-clocks-button', '.weather-button'];
-const DARK_CARD_BUTTONS = ['.quick-toggle-menu', ...CARD_BUTTONS];
+// The buttons of the Quick Settings sliders (volume icon and "›", brightness icon). GNOME
+// draws them as flat buttons in the menu's own color, a pill that shows on a translucent
+// menu; they get the Cards color instead, in both modes.
+const SLIDER_BUTTONS = '.quick-slider .icon-button';
+const DARK_CARD_BUTTONS = ['.quick-toggle-menu', SLIDER_BUTTONS, ...CARD_BUTTONS];
 
 // Color settings of each mode.
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button'];
@@ -815,6 +819,7 @@ export default class LightModeManagerExtension extends Extension {
         const cardOpacity = this._cardOpacity();
         if (cardOpacity < 100)
             css += buttonCss(CARD_BUTTONS, translucent(card, cardOpacity), false);
+        css += buttonCss(SLIDER_BUTTONS, translucent(card, cardOpacity), false);
         const token = expression => fill(expression, faded);
         css += this._quickSettingsCss(false, byKey['color-qs-button'], {
             toggle: token(toggleOff(false)), arrow: token(arrowOff(false)),

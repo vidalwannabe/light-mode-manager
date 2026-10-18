@@ -15,7 +15,7 @@ Each tab has six colors:
 | General background | Top bar, menus and dialogs, OSD and window switcher, overview |
 | Text and icons | Main text color, including the top bar |
 | Secondary text | Dates, captions, subtitles |
-| Cards, dash and search | Notifications, calendar, dock, search results, app folders |
+| Cards, dash and search | Notifications, calendar, Quick Settings slider buttons, dock, search results, app folders |
 | Inactive Quick Settings buttons | Quick Settings toggles that are off, their arrows, the round buttons at the top and the menus they open |
 | Borders | Outline of Quick Settings, the calendar and other menus |
 
@@ -36,7 +36,7 @@ Each tab has a profile selector to apply a set of colors in one click.
 - **General profile**: pairs a light mode profile with a dark mode profile and applies both at once. Built-in **Default** and **GNOME** general profiles are included.
 - **Transition**: duration of the fade when switching between light and dark mode, from 0 (instant) to 2000 ms. Default: 500 ms, like GNOME.
 - **General opacity**: transparency of the general background (top bar, menus, OSD and switcher), from 0 to 100%, in both modes. The overview and dialogs (Power Off, passwords, "not responding"…) stay opaque so they are easy to read, and below 100% menu shadows are removed so they do not darken translucent menus. Also works with the GNOME profile, on GNOME's own colors.
-- **Cards opacity**: transparency of the notification cards (calendar, Today, World Clocks, Weather, notifications) and of the inactive Quick Settings buttons with their menus, from 0 to 100%, in both modes. Also works with the GNOME profile.
+- **Cards opacity**: transparency of the notification cards (calendar, Today, World Clocks, Weather, notifications) and of the inactive Quick Settings buttons with their menus and the slider buttons, from 0 to 100%, in both modes. Also works with the GNOME profile.
 - **Enable panel opacity**: the panel stays solid by default; when on, it also gets the general opacity.
 - **Hide borders**: removes the outline of Quick Settings, the calendar and other menus, in both modes.
 - **Match arrow buttons**: the arrow (›) next to Quick Settings toggles such as Wi-Fi or Bluetooth uses the same color as its toggle, on and off, instead of GNOME's separate shade.
