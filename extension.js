@@ -119,6 +119,15 @@ export default class LightModeManagerExtension extends Extension {
         return this._getColorScheme() === 'prefer-dark';
     }
 
+    // Light mode with every color on system default (the GNOME profile) looks like vanilla
+    // GNOME: the shell keeps its own dark style. Otherwise the shell follows light mode.
+    _syncShellScheme() {
+        const vanilla = !this._isDark() && [...LIGHT_KEYS].every(key => !this._settings.get_string(key).trim());
+        const scheme = vanilla ? 'force-dark' : 'prefer-light';
+        if (Main.sessionMode.colorScheme !== scheme)
+            this._setDefaultColorScheme(scheme);
+    }
+
     // ---------- Stylesheet ----------
     _darkCss() {
         const s = this._settings;
@@ -170,6 +179,7 @@ export default class LightModeManagerExtension extends Extension {
 
     _applyTheme() {
         try {
+            this._syncShellScheme();
             const css = this._isDark() ? this._darkCss() : this._lightCss();
             // Nothing changed: skip writing and reloading the stylesheet.
             if (css === this._lastCss)
@@ -260,7 +270,6 @@ export default class LightModeManagerExtension extends Extension {
         const current = this._getColorScheme();
         if (current === 'default')
             this._setColorScheme('prefer-light', false);
-        this._setDefaultColorScheme('prefer-light');
         this._setLegacyColorScheme(current);
 
         // Connected after the initial setup so it does not apply the theme twice.
