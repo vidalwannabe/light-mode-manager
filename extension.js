@@ -46,8 +46,7 @@ const DARK_RULES = [
         '.switcher-list', '.osd-window', '.workspace-switcher', '.resize-popup',
     ], 'background-color', 'color-general-dark'],
     [[
-        '.message', '.notification-banner', '.quick-toggle-menu',
-        '#dash .dash-background', '.search-section-content', '.app-folder-dialog',
+        '.notification-banner', '#dash .dash-background', '.search-section-content', '.app-folder-dialog',
     ], 'background-color', 'color-card-dark'],
     [[
         'stage', '.popup-menu', '.popup-menu-item', '.popup-inactive-menu-item', '.message',
@@ -66,6 +65,10 @@ const DARK_RULES = [
         '.list-search-result .list-search-result-description', '.device-subtitle',
     ], 'color', 'color-fg-muted-dark'],
 ].map(([selectors, prop, key]) => [selectors.join(', '), prop, key]);
+
+// Dark mode cards that are buttons: Quick Settings menus, notifications and the cards
+// below the calendar. They get every state, as GNOME draws them (see buttonCss).
+const DARK_CARD_BUTTONS = ['.quick-toggle-menu', '.message', '.events-button', '.world-clocks-button', '.weather-button'];
 
 // Color settings of each mode.
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border'];
@@ -101,8 +104,10 @@ const SHADOW_SEL = '.popup-menu-content, .candidate-popup-content, .switcher-lis
 const shade = dark => dark ? 'st-lighten' : 'st-darken';
 const focusTint = dark => dark ? 'st-mix(-st-accent-color, #ffffff, 60%)' : '-st-accent-color';
 
-// The background of a button in every state, with the expressions GNOME 48 uses.
-function buttonCss(selector, base, dark) {
+// The background of a button (one selector or a list) in every state, with the expressions
+// GNOME 48 uses. Extension stylesheets rank above GNOME's whatever the specificity, so a
+// plain rule would also replace GNOME's hover and active colors.
+function buttonCss(selectors, base, dark) {
     const adjust = shade(dark);
     const focus = focusTint(dark);
     return [
@@ -113,7 +118,9 @@ function buttonCss(selector, base, dark) {
         [':focus', `st-mix(${focus}, ${base}, 5%)`],
         [':focus:hover', `st-mix(${focus}, ${adjust}(${base}, 4%), 5%)`],
         [':active:focus', `st-mix(${focus}, ${adjust}(${base}, 9%), 5%)`],
-    ].map(([state, color]) => rule(`${selector}${state}`, 'background-color', color)).join('');
+        [':insensitive', `${shade(!dark)}(${base}, 3%)`],
+    ].map(([state, color]) => rule([selectors].flat().map(sel => sel + state).join(', '),
+        'background-color', color)).join('');
 }
 
 // Quick Settings arrow buttons ("›") in the same color as their toggle, in every state.
@@ -136,8 +143,7 @@ const CALENDAR_FLAT = [
     '.calendar-month-header .calendar-month-label', '.calendar-month-header .pager-button',
 ].map(sel => `.calendar ${sel}`);
 const CALENDAR_TODAY = '.calendar .calendar-day.calendar-today';
-// GNOME 48's dark card color: the cards below the calendar keep it in dark mode and with
-// the GNOME profile.
+// GNOME 48's dark card color, for cards on system default (GNOME profile).
 const NATIVE_CARD = '#47474c';
 function calendarCss(card, dark) {
     const adjust = shade(dark);
@@ -582,8 +588,11 @@ export default class LightModeManagerExtension extends Extension {
             css += panelTextCss(fg);
         if (this._settings.get_boolean('match-arrow-buttons'))
             css += arrowCss(true);
+        const card = values[DARK_KEYS.indexOf('color-card-dark')];
+        if (card)
+            css += buttonCss(DARK_CARD_BUTTONS, card, true);
         if (this._settings.get_boolean('calendar-background'))
-            css += calendarCss(NATIVE_CARD, true);
+            css += calendarCss(card || NATIVE_CARD, true);
         return css + this._borderCss('color-border-dark');
     }
 
