@@ -71,13 +71,13 @@ const DARK_RULES = [
 const DARK_CARD_BUTTONS = ['.quick-toggle-menu', '.message', '.events-button', '.world-clocks-button', '.weather-button'];
 
 // Color settings of each mode.
-const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border'];
+const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and General tab options);
 // other keys (profiles...) never do.
 const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'hide-borders', 'match-arrow-buttons', 'calendar-background'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
-const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', ...EFFECT_KEYS];
+const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', ...EFFECT_KEYS];
 
 // Accepted color values: #rgb, #rrggbb, rgb()/rgba() or a name. Anything else (edited in
 // dconf or imported) counts as system default, so it can never break the stylesheet.
@@ -123,15 +123,22 @@ function buttonCss(selectors, base, dark) {
         'background-color', color)).join('');
 }
 
-// Quick Settings arrow buttons ("›") in the same color as their toggle, in every state.
-// GNOME gives them a shade of their own; these are the expressions GNOME 48 uses for the
-// toggle itself (.button when off, .quick-toggle:checked when on). Light mode uses the
-// template's tokens, filled in like the rest of the template.
+// Inactive Quick Settings buttons: toggles that are off and the round buttons at the top.
+// Checked toggles get GNOME's accent states again after them, and the Background Apps
+// item (also a toggle) its transparent background, which still gives way to the hover.
+const QS_BUTTONS = ['.quick-toggle', '.quick-settings-system-item .icon-button'];
+const QS_CHECKED = '.quick-toggle:checked';
+const QS_FLAT = '.background-apps-quick-toggle';
+
+// Quick Settings arrow buttons ("›"). GNOME 48 draws them a shade apart from their toggle,
+// off and on; "Match arrow buttons" gives them the toggle's own color. Light mode
+// expressions use the template's tokens, filled in like the rest of the template.
 const ARROW_SEL = '.quick-toggle-has-menu .quick-toggle-menu-button';
-function arrowCss(dark) {
-    const off = dark ? 'st-mix(#ffffff, #36363a, 9%)' : 'st-mix(#222226, whitesmoke, 12%)';
-    return buttonCss(ARROW_SEL, off, dark) + buttonCss(`${ARROW_SEL}:checked`, '-st-accent-color', dark);
-}
+// GNOME's toggle color when off, and its own arrow color when on.
+const toggleOff = dark => dark ? 'st-mix(#ffffff, #36363a, 9%)' : 'st-mix(#222226, whitesmoke, 12%)';
+const arrowChecked = dark => dark ? 'st-mix(-st-accent-color, #ffffff, 85%)' : 'st-mix(-st-accent-color, #222226, 92%)';
+// How far GNOME's arrow is from its toggle when off (lighter in dark mode, darker in light).
+const ARROW_SHADE = {dark: 8, light: 5};
 
 // Calendar background: the month calendar gets the color of the cards below it (Today,
 // World Clocks, Weather). Its days, headings, month and arrows are flat buttons painted
@@ -586,14 +593,33 @@ export default class LightModeManagerExtension extends Extension {
         const fg = values[DARK_KEYS.indexOf('color-fg-dark')];
         if (fg)
             css += panelTextCss(fg);
-        if (this._settings.get_boolean('match-arrow-buttons'))
-            css += arrowCss(true);
+        css += this._quickSettingsCss(true, this._values(['color-qs-button-dark'])[0]);
         const card = values[DARK_KEYS.indexOf('color-card-dark')];
         if (card)
             css += buttonCss(DARK_CARD_BUTTONS, card, true);
         if (this._settings.get_boolean('calendar-background'))
             css += calendarCss(card || NATIVE_CARD, true);
         return css + this._borderCss('color-border-dark');
+    }
+
+    // Inactive Quick Settings buttons (empty color: GNOME's own) and the arrow buttons.
+    // `fill` fills in the template tokens of GNOME's light expressions; the color setting
+    // itself is used as is.
+    _quickSettingsCss(dark, color, fill = text => text) {
+        const match = this._settings.get_boolean('match-arrow-buttons');
+        if (!color && !match)
+            return '';
+        let css = '';
+        if (color) {
+            css += buttonCss(QS_BUTTONS, color, dark) + buttonCss(QS_CHECKED, '-st-accent-color', dark) +
+                rule(QS_FLAT, 'background-color', 'transparent');
+            const amount = ARROW_SHADE[dark ? 'dark' : 'light'];
+            css += buttonCss(ARROW_SEL, match ? color : `${shade(dark)}(${color}, ${amount}%)`, dark);
+        } else {
+            css += fill(buttonCss(ARROW_SEL, toggleOff(dark), dark));
+        }
+        // Set again after the off colors, which would otherwise also cover the checked arrow.
+        return css + fill(buttonCss(`${ARROW_SEL}:checked`, match ? '-st-accent-color' : arrowChecked(dark), dark));
     }
 
     // The template is only read when light mode first needs it.
@@ -618,7 +644,7 @@ export default class LightModeManagerExtension extends Extension {
         // Every color on system default (GNOME profile): the shell keeps its own dark style
         // (see _syncShellScheme), so only the General tab options apply, on GNOME's colors.
         if (values.every(v => !v))
-            return (this._settings.get_boolean('match-arrow-buttons') ? arrowCss(true) : '') +
+            return this._quickSettingsCss(true, '') +
                 (this._settings.get_boolean('calendar-background') ? calendarCss(NATIVE_CARD, true) : '') +
                 this._borderCss(null) + this._nativeOpacityCss();
 
@@ -657,8 +683,7 @@ export default class LightModeManagerExtension extends Extension {
         // The top bar text follows "Text and icons".
         if (byKey['color-fg'])
             css += panelTextCss(byKey['color-fg']);
-        if (this._settings.get_boolean('match-arrow-buttons'))
-            css += fill(arrowCss(false), faded);
+        css += this._quickSettingsCss(false, byKey['color-qs-button'], text => fill(text, faded));
         // The template's card color, filled in like the rest of the template.
         if (this._settings.get_boolean('calendar-background'))
             css += fill(calendarCss('#e8e8e8', false), faded);

@@ -15,6 +15,7 @@ const COLOR_ROWS = [
     ['fg', 'Text and icons', 'Main text color, including the top bar'],
     ['fg-muted', 'Secondary text', 'Dates, captions, subtitles'],
     ['card', 'Cards, dash and search', 'Notifications, calendar, quick settings, dock, search results, app folders'],
+    ['qs-button', 'Inactive Quick Settings buttons', 'Toggles that are off and the round buttons at the top'],
     ['border', 'Borders', 'Outline of Quick Settings, the calendar and other menus'],
 ];
 

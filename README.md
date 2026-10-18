@@ -8,7 +8,7 @@ It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 app
 
 ### Light mode and Dark mode tabs
 
-Each tab has five colors:
+Each tab has six colors:
 
 | Color | What it paints |
 | --- | --- |
@@ -16,6 +16,7 @@ Each tab has five colors:
 | Text and icons | Main text color, including the top bar |
 | Secondary text | Dates, captions, subtitles |
 | Cards, dash and search | Notifications, calendar, quick settings, dock, search results, app folders |
+| Inactive Quick Settings buttons | Quick Settings toggles that are off, their arrows and the round buttons at the top |
 | Borders | Outline of Quick Settings, the calendar and other menus |
 
 Hover, focus and active states follow these colors automatically. Every color has a button to restore its Default profile value.
