@@ -614,20 +614,16 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             const effects = new Adw.PreferencesGroup({title: 'Visual tweaks'});
             sliderRow(effects, 'transition-duration', 'Transition',
                 'Fade when switching between light and dark mode', 2000, 100, ' ms');
-            sliderRow(effects, 'general-opacity', 'Opacity',
-                'Applies to light and dark mode', 100, 1, '%', 5);
+            sliderRow(effects, 'general-opacity', 'General opacity',
+                'Top bar, menus, OSD and switcher, in light and dark mode', 100, 1, '%', 5);
+            sliderRow(effects, 'card-opacity', 'Cards opacity',
+                'Cards, notifications and inactive Quick Settings buttons', 100, 1, '%', 5);
             const panelOpacityRow = new Adw.SwitchRow({
                 title: 'Enable panel opacity',
-                subtitle: 'The panel also gets the opacity above; otherwise it stays solid',
+                subtitle: 'The panel also gets the general opacity; otherwise it stays solid',
             });
             s.bind('panel-opacity', panelOpacityRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(panelOpacityRow);
-            const cardsOpacityRow = new Adw.SwitchRow({
-                title: 'Enable cards opacity',
-                subtitle: 'Notification cards and inactive Quick Settings buttons get half the transparency above',
-            });
-            s.bind('cards-opacity', cardsOpacityRow, 'active', Gio.SettingsBindFlags.DEFAULT);
-            effects.add(cardsOpacityRow);
             const bordersRow = new Adw.SwitchRow({
                 title: 'Hide borders',
                 subtitle: 'Removes the outline of Quick Settings, the calendar and other menus',

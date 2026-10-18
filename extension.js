@@ -76,7 +76,7 @@ const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'col
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and General tab options);
 // other keys (profiles...) never do.
-const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'cards-opacity', 'hide-borders', 'match-arrow-buttons', 'calendar-background'];
+const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'hide-borders', 'match-arrow-buttons', 'calendar-background'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', ...EFFECT_KEYS];
 
@@ -704,12 +704,9 @@ export default class LightModeManagerExtension extends Extension {
         return css + this._borderCss('color-border-dark');
     }
 
-    // "Enable cards opacity": cards and inactive Quick Settings buttons get half the
-    // transparency of the general background, rounded up (general 50% → 75%, 49% → 74%).
+    // "Cards opacity": cards, notifications and inactive Quick Settings buttons.
     _cardOpacity() {
-        if (!this._settings.get_boolean('cards-opacity'))
-            return 100;
-        return 100 - Math.ceil((100 - this._settings.get_int('general-opacity')) / 2);
+        return this._settings.get_int('card-opacity');
     }
 
     // Cards, inactive Quick Settings buttons and calendar background on GNOME's dark style;
