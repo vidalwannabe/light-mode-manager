@@ -35,7 +35,7 @@ Each tab has a profile selector to apply a set of colors in one click.
 
 - **General profile**: pairs a light mode profile with a dark mode profile and applies both at once. Built-in **Default** and **GNOME** general profiles are included.
 - **Transition**: duration of the fade when switching between light and dark mode, from 0 (instant) to 2000 ms. Default: 500 ms, like GNOME.
-- **Opacity**: transparency of the general background (top bar, menus and dialogs, OSD and switcher), from 0 to 100%, in both modes. The overview stays opaque, and below 100% menu shadows are removed so they do not darken translucent menus. Also works with the GNOME profile, on GNOME's own colors.
+- **Opacity**: transparency of the general background (top bar, menus, OSD and switcher), from 0 to 100%, in both modes. The overview and dialogs (Power Off, passwords, "not responding"…) stay opaque so they are easy to read, and below 100% menu shadows are removed so they do not darken translucent menus. Also works with the GNOME profile, on GNOME's own colors.
 - **Enable panel opacity**: the panel stays solid by default; when on, it also gets the opacity.
 - **Enable cards opacity**: notification cards (calendar, Today, World Clocks, Weather, notifications) and inactive Quick Settings buttons with their menus get half the transparency of the general background, rounded up: Opacity 50% gives them 75%, 49% gives 74%.
 - **Hide borders**: removes the outline of Quick Settings, the calendar and other menus, in both modes.

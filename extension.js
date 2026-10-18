@@ -91,10 +91,12 @@ const TEMPLATE_PANEL = '#f5f5f5';
 // The menus' border: Quick Settings, the calendar and notifications, panel and context menus.
 const BORDER_SEL = '.popup-menu-content, .candidate-popup-content';
 
-// The overview keeps an opaque general background, whatever the general opacity.
-const DARK_OVERVIEW_SEL = '#overviewGroup';
-// Light template rules of the overview that use the general background.
-const LIGHT_OVERVIEW_RE = /overview|app-folder|grid-search-result/;
+// The overview and modal dialogs (Power Off, passwords, "not responding"...) keep an
+// opaque general background, whatever the general opacity: dialogs ask for attention, so
+// they stay easy to read.
+const DARK_OPAQUE_SEL = '#overviewGroup, .modal-dialog';
+// Light template rules of the overview and dialogs that use the general background.
+const LIGHT_OPAQUE_RE = /overview|app-folder|grid-search-result|modal-dialog|audio-device-selection-dialog/;
 
 // GNOME draws a shadow under the whole menu, so a translucent menu showed it through
 // and looked darker than the panel. Below 100% opacity these shadows are removed.
@@ -170,10 +172,10 @@ function calendarCss(card, dark) {
 
 // GNOME 48's own (dark) backgrounds of the general background elements. With the general
 // background on system default (GNOME profile) the shell uses this dark style in both
-// modes, so the opacity is applied to these colors.
+// modes, so the opacity is applied to these colors. Dialogs are left out: always opaque.
 const NATIVE_GENERAL = [
     ['#panel', '#000000'],
-    ['.popup-menu-content, .candidate-popup-content, .modal-dialog', '#36363a'],
+    ['.popup-menu-content, .candidate-popup-content', '#36363a'],
     ['.switcher-list, .osd-window, .workspace-switcher, .resize-popup', '#2e2e33'],
 ];
 
@@ -683,9 +685,9 @@ export default class LightModeManagerExtension extends Extension {
             if (values[i])
                 css += rule(selector, prop, values[i]);
         });
-        // The overview stays opaque, and the panel too unless "Enable panel opacity".
+        // The overview and dialogs stay opaque, and the panel too unless "Enable panel opacity".
         if (opaque) {
-            css += rule(DARK_OVERVIEW_SEL, 'background-color', opaque);
+            css += rule(DARK_OPAQUE_SEL, 'background-color', opaque);
             if (!this._settings.get_boolean('panel-opacity'))
                 css += rule('#panel', 'background-color', opaque);
             if (opacity < 100)
@@ -758,13 +760,13 @@ export default class LightModeManagerExtension extends Extension {
             const idx = template.indexOf(MARKER);
             this._templateHead = idx >= 0 ? template.slice(0, idx) : template;
             this._templateTail = idx >= 0 ? template.slice(idx) : '';
-            // The overview rules that use the general background, to repeat them opaque.
-            this._templateOverview = [...this._templateHead.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
-                .filter(([, selector, body]) => LIGHT_OVERVIEW_RE.test(selector) &&
+            // The overview and dialog rules that use the general background, to repeat them opaque.
+            this._templateOpaque = [...this._templateHead.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+                .filter(([, selector, body]) => LIGHT_OPAQUE_RE.test(selector) &&
                     TOKENS.some(([key, color]) => key === 'color-general' && body.toLowerCase().includes(color)))
                 .map(([text]) => text.trim()).join('\n') + '\n';
         }
-        return [this._templateHead, this._templateTail, this._templateOverview];
+        return [this._templateHead, this._templateTail, this._templateOpaque];
     }
 
     _lightCss() {
@@ -796,11 +798,11 @@ export default class LightModeManagerExtension extends Extension {
             return (propertyAt(text, offset) === 'color' ? solid : colors)[m.toLowerCase()];
         });
 
-        const [head, tail, overview] = this._template();
+        const [head, tail, opaque] = this._template();
         let css = fill(head, faded) + tail;
-        // Translucent general background: the overview stays opaque and shadows are removed.
+        // Translucent general background: the overview and dialogs stay opaque and shadows are removed.
         if (opacity < 100)
-            css += fill(overview, solid) + noShadowCss;
+            css += fill(opaque, solid) + noShadowCss;
 
         // The template's top bar color is not a token, so it gets its own rule.
         const panel = byKey['color-general'] || TEMPLATE_PANEL;
@@ -1011,6 +1013,6 @@ export default class LightModeManagerExtension extends Extension {
 
         this._settings = this._interface = this._cacheDir = null;
         this._lastCss = this._modeScheme = this._dtpColor = this._overrides = null;
-        this._templateHead = this._templateTail = this._templateOverview = null;
+        this._templateHead = this._templateTail = this._templateOpaque = null;
     }
 }
