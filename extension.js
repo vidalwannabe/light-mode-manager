@@ -5,6 +5,7 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+import {ExtensionState} from 'resource:///org/gnome/shell/misc/extensionUtils.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import {QuickMenuToggle, SystemIndicator} from 'resource:///org/gnome/shell/ui/quickSettings.js';
@@ -184,6 +185,23 @@ class ProfileIndicator extends SystemIndicator {
     }
 });
 
+// Moves our entry right above Dash to Panel's settings entry: the last item of the
+// menu, or of the part before "Show Desktop" when the menu opens on the panel itself.
+function moveMenuEntry(menu) {
+    const items = menu.box.get_children();
+    const ours = items.find(item => item.label?.text === MENU_TITLE);
+    if (!ours)
+        return;
+    let end = items.length - 1;
+    if (menu.sourceActor === Main.layoutManager.dummyCursor)
+        end = items.findLastIndex(item => item instanceof PopupMenu.PopupSeparatorMenuItem) - 1;
+    const settingsItem = items[end];
+    if (!settingsItem || settingsItem === ours)
+        return;
+    const from = items.indexOf(ours);
+    menu.box.set_child_at_index(ours, from < end ? end - 1 : end);
+}
+
 export default class LightModeManagerExtension extends Extension {
     // ---------- Color scheme ----------
     _getColorScheme() {
@@ -309,6 +327,34 @@ export default class LightModeManagerExtension extends Extension {
             dir.get_path(), Gio.SettingsSchemaSource.get_default(), false);
         const schema = source.lookup(DTP_SCHEMA, false);
         return schema ? new Gio.Settings({settings_schema: schema}) : null;
+    }
+
+    // Dash to Panel always lists entries from its settings in the middle of the menu. It
+    // rebuilds the menu in MyShowAppsIconMenu.updateItems() each time it opens; this wraps
+    // that method to move our entry right above Dash to Panel's own settings entry.
+    // If Dash to Panel changes, nothing is wrapped and the entry stays in the middle.
+    async _patchDtpMenu() {
+        const dtp = Main.extensionManager.lookup(DTP_UUID);
+        if (this._dtpUnpatch || dtp?.state !== ExtensionState.ACTIVE)
+            return;
+        try {
+            // The same module instance Dash to Panel itself uses.
+            const module = await import(dtp.dir.get_child('src').get_child('appIcons.js').get_uri());
+            const proto = module.MyShowAppsIconMenu?.prototype;
+            if (!proto?.updateItems || !this._settings || this._dtpUnpatch)
+                return;
+            const original = proto.updateItems;
+            proto.updateItems = function (...args) {
+                const result = original.apply(this, args);
+                moveMenuEntry(this);
+                return result;
+            };
+            this._dtpUnpatch = () => {
+                proto.updateItems = original;
+            };
+        } catch (e) {
+            console.error(`[LightModeManager] ${e.message}`);
+        }
     }
 
     // Adds or removes our entry in Dash to Panel's own list of extra menu entries.
@@ -530,8 +576,10 @@ export default class LightModeManagerExtension extends Extension {
 
         this._settings = this.getSettings();
         this._settingsId = this._settings.connect('changed', (_s, key) => {
-            if (key === 'panel-menu-entry')
+            if (key === 'panel-menu-entry') {
                 this._syncPanelMenu(this._settings.get_boolean(key));
+                this._patchDtpMenu();
+            }
             else if (key === 'quick-settings-profiles')
                 this._syncQuickSettings();
             else if (AUTO_KEYS.includes(key))
@@ -540,6 +588,12 @@ export default class LightModeManagerExtension extends Extension {
                 this._scheduleApply();
         });
         this._syncPanelMenu(this._settings.get_boolean('panel-menu-entry'));
+        // Dash to Panel may be enabled after this extension.
+        this._patchDtpMenu();
+        Main.extensionManager.connectObject('extension-state-changed', (_m, ext) => {
+            if (ext.uuid === DTP_UUID)
+                this._patchDtpMenu();
+        }, this);
 
         this._interface = Gio.Settings.new('org.gnome.desktop.interface');
         const current = this._getColorScheme();
@@ -572,6 +626,9 @@ export default class LightModeManagerExtension extends Extension {
 
         this._unloadTheme();
         this._syncPanelMenu(false);
+        Main.extensionManager.disconnectObject(this);
+        this._dtpUnpatch?.();
+        this._dtpUnpatch = null;
         this._indicator?.destroy();
         this._indicator = null;
         if (this._autoId) {
