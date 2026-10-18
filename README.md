@@ -36,7 +36,7 @@ Each tab has a profile selector to apply a set of colors in one click.
 - **General background opacity**: transparency of the general background, from 0 to 100%, in both modes.
 - **Panel menu entry**: adds a "Light Mode Manager" entry that opens these preferences to the right-click menu of the panel. Requires [Dash to Panel](https://github.com/home-sweet-gnome/dash-to-panel).
 - **Quick Settings switcher**: adds a button to Quick Settings that shows the applied general profile and switches it from its menu. Hidden on the lock screen.
-- **Backup**: exports all colors, profiles and options to a JSON file, and imports them back.
+- **Backup**: exports all colors, profiles and options to a JSON file. When importing, you can either replace all current settings or only add the profiles from the file, without changing anything you have.
 
 ## Installation from source
 

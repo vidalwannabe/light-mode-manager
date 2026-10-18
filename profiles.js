@@ -25,7 +25,7 @@ function profileStore(settings, listKey, activeKey, builtins, isValid) {
         }
     };
     return {
-        builtins, own,
+        builtins, own, isValid,
         all: () => [...builtins, ...own()],
         save: list => settings.set_string(listKey, JSON.stringify(list)),
         taken: name => reserved.has(name) || own().some(p => p.name === name),

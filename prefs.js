@@ -345,24 +345,27 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             });
         };
 
-        // Replaces every setting; keys missing from the file go back to their default.
-        const importFile = file => {
+        // Reads and validates a settings file: every key of the schema as a GVariant,
+        // or null when the file lacks it. Throws on anything invalid, before any change.
+        const readSettingsFile = file => {
             const [, bytes] = file.load_contents(null);
             const data = JSON.parse(new TextDecoder().decode(bytes));
             if (data?.extension !== this.uuid || typeof data.settings !== 'object')
                 throw new Error('not a Light Mode Manager settings file');
             const schema = s.settings_schema;
-            // Parse everything first, so a bad value changes nothing.
-            const values = schema.list_keys().map(k => {
+            return new Map(schema.list_keys().map(k => {
                 const text = data.settings[k];
                 if (typeof text !== 'string')
                     return [k, null];
-                const type = schema.get_key(k).get_value_type();
-                const value = GLib.Variant.parse(type, text, null, null);
+                const value = GLib.Variant.parse(schema.get_key(k).get_value_type(), text, null, null);
                 if (!schema.get_key(k).range_check(value))
                     throw new Error(`invalid value for ${k}`);
                 return [k, value];
-            });
+            }));
+        };
+
+        // Replaces every setting; keys missing from the file go back to their default.
+        const replaceAll = values => {
             s.delay();
             for (const [k, value] of values) {
                 if (value)
@@ -372,25 +375,88 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             }
             s.apply();
         };
+
+        // Adds the file's own profiles without removing or overwriting anything. A profile
+        // already saved with the same name and content is skipped; a different one with a name
+        // in use gets a number, and general profiles follow those renamed light/dark profiles.
+        // Returns how many profiles were added.
+        const addProfiles = values => {
+            const listIn = key => {
+                try {
+                    const list = JSON.parse(values.get(key)?.unpack() ?? '[]');
+                    return Array.isArray(list) ? list : [];
+                } catch {
+                    return [];
+                }
+            };
+            const numbered = (name, base) => name.startsWith(`${base} (`) && /\(\d+\)$/.test(name);
+            const merge = (model, key, content) => {
+                const own = model.own();
+                const added = [];
+                const names = new Map();
+                for (const p of listIn(key)) {
+                    if (typeof p?.name !== 'string' || !p.name.trim() || !model.isValid(p))
+                        continue;
+                    const entry = {name: p.name.trim(), ...content(p)};
+                    // Already there, under its name or a numbered copy of it ("Name (2)").
+                    const key = JSON.stringify(content(entry));
+                    const same = own.find(q => (q.name === entry.name || numbered(q.name, entry.name)) &&
+                        JSON.stringify(content(q)) === key);
+                    if (same) {
+                        names.set(p.name, same.name);
+                        continue;
+                    }
+                    let name = entry.name;
+                    for (let i = 2; model.taken(name) || added.some(q => q.name === name); i++)
+                        name = `${entry.name} (${i})`;
+                    names.set(p.name, name);
+                    added.push({...entry, name});
+                }
+                if (added.length)
+                    model.save([...own, ...added]);
+                return {count: added.length, names};
+            };
+            const light = merge(profiles.light, 'profiles', p => ({colors: p.colors}));
+            const dark = merge(profiles.dark, 'profiles-dark', p => ({colors: p.colors}));
+            const general = merge(profiles.general, 'general-profiles', p => ({
+                light: light.names.get(p.light) ?? p.light,
+                dark: dark.names.get(p.dark) ?? p.dark,
+            }));
+            return light.count + dark.count + general.count;
+        };
+
         const importSettings = () => {
             const dialog = new Gtk.FileDialog({title: 'Import settings', filters: jsonFilter()});
             dialog.open(window, null, (_d, res) => {
-                let file;
+                let values;
                 try {
-                    file = dialog.open_finish(res);
+                    values = readSettingsFile(dialog.open_finish(res));
                 } catch (e) {
                     if (!dismissed(e))
                         toast(`Import failed: ${e.message}`);
                     return;
                 }
-                confirm('Import settings?', 'All current colors, profiles and options will be replaced.', 'Import', () => {
-                    try {
-                        importFile(file);
-                        toast('Settings imported');
-                    } catch (e) {
-                        toast(`Import failed: ${e.message}`);
+                const choice = new Adw.AlertDialog({
+                    heading: 'Import settings',
+                    body: 'Add the profiles from this file to yours, or replace all current settings with it?',
+                });
+                choice.add_response('cancel', 'Cancel');
+                choice.add_response('replace', 'Replace all');
+                choice.add_response('add', 'Add profiles');
+                choice.set_response_appearance('replace', Adw.ResponseAppearance.DESTRUCTIVE);
+                choice.set_response_appearance('add', Adw.ResponseAppearance.SUGGESTED);
+                choice.set_default_response('add');
+                choice.set_close_response('cancel');
+                choice.connect('response', (_c, response) => {
+                    if (response === 'replace') {
+                        replaceAll(values);
+                        toast('Settings replaced');
+                    } else if (response === 'add') {
+                        const count = addProfiles(values);
+                        toast(count ? `${count} profile${count > 1 ? 's' : ''} added` : 'No new profiles to add');
                     }
                 });
+                choice.present(window);
             });
         };
 
