@@ -68,14 +68,15 @@ const DARK_RULES = [
 
 // Dark mode cards that are buttons: Quick Settings menus, notifications and the cards
 // below the calendar. They get every state, as GNOME draws them (see buttonCss).
-const DARK_CARD_BUTTONS = ['.quick-toggle-menu', '.message', '.events-button', '.world-clocks-button', '.weather-button'];
+const CARD_BUTTONS = ['.message', '.events-button', '.world-clocks-button', '.weather-button'];
+const DARK_CARD_BUTTONS = ['.quick-toggle-menu', ...CARD_BUTTONS];
 
 // Color settings of each mode.
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and General tab options);
 // other keys (profiles...) never do.
-const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'hide-borders', 'match-arrow-buttons', 'calendar-background'];
+const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'cards-opacity', 'hide-borders', 'match-arrow-buttons', 'calendar-background'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', ...EFFECT_KEYS];
 
@@ -136,8 +137,9 @@ const QS_FLAT = '.background-apps-quick-toggle';
 // off and on; "Match arrow buttons" gives them the toggle's own color. Light mode
 // expressions use the template's tokens, filled in like the rest of the template.
 const ARROW_SEL = '.quick-toggle-has-menu .quick-toggle-menu-button';
-// GNOME's toggle color when off, and its own arrow color when on.
+// GNOME's toggle color when off, and its own arrow color off and on.
 const toggleOff = dark => dark ? 'st-mix(#ffffff, #36363a, 9%)' : 'st-mix(#222226, whitesmoke, 12%)';
+const arrowOff = dark => dark ? 'st-mix(#ffffff, #4a4a4f, 9%)' : 'st-mix(#222226, #e8e8e8, 12%)';
 const arrowChecked = dark => dark ? 'st-mix(-st-accent-color, #ffffff, 85%)' : 'st-mix(-st-accent-color, #222226, 92%)';
 // How far GNOME's arrow is from its toggle when off (lighter in dark mode, darker in light).
 const ARROW_SHADE = {dark: 8, light: 5};
@@ -206,6 +208,12 @@ function withOpacity(value, opacity) {
     if (!rgb || (opacity >= 100 && !/^rgba/i.test(value)))
         return value;
     return `rgba(${rgb}, ${opacity / 100})`;
+}
+
+// `color` at `opacity` percent, for any CSS color expression: st-transparentize() lowers
+// only the alpha, and St's shades (st-darken/st-lighten) keep it.
+function translucent(color, opacity) {
+    return opacity >= 100 ? color : `st-transparentize(${color}, ${(100 - opacity) / 100})`;
 }
 
 // The CSS property of the value at `offset` in `css`.
@@ -689,34 +697,57 @@ export default class LightModeManagerExtension extends Extension {
         const fg = values[DARK_KEYS.indexOf('color-fg-dark')];
         if (fg)
             css += panelTextCss(fg);
-        const card = values[DARK_KEYS.indexOf('color-card-dark')];
-        if (card)
-            css += buttonCss(DARK_CARD_BUTTONS, card, true);
-        // After the cards, so the Quick Settings menus take the inactive buttons color.
-        css += this._quickSettingsCss(true, this._values(['color-qs-button-dark'])[0]);
-        if (this._settings.get_boolean('calendar-background'))
-            css += calendarCss(card || NATIVE_CARD, true);
+        css += this._darkCardsCss(values[DARK_KEYS.indexOf('color-card-dark')],
+            this._values(['color-qs-button-dark'])[0]);
         return css + this._borderCss('color-border-dark');
     }
 
-    // Inactive Quick Settings buttons (empty color: GNOME's own) and the arrow buttons.
-    // `fill` fills in the template tokens of GNOME's light expressions; the color setting
-    // itself is used as is.
-    _quickSettingsCss(dark, color, fill = text => text) {
+    // "Enable cards opacity": cards and inactive Quick Settings buttons get half the
+    // transparency of the general background, rounded up (general 50% → 75%, 49% → 74%).
+    _cardOpacity() {
+        if (!this._settings.get_boolean('cards-opacity'))
+            return 100;
+        return 100 - Math.ceil((100 - this._settings.get_int('general-opacity')) / 2);
+    }
+
+    // Cards, inactive Quick Settings buttons and calendar background on GNOME's dark style;
+    // an empty color is GNOME's own.
+    _darkCardsCss(card, qsButtons) {
+        const opacity = this._cardOpacity();
+        const base = card || NATIVE_CARD;
+        let css = card || opacity < 100 ? buttonCss(DARK_CARD_BUTTONS, translucent(base, opacity), true) : '';
+        // After the cards, so the Quick Settings menus take the inactive buttons color.
+        css += this._quickSettingsCss(true, qsButtons, {
+            toggle: toggleOff(true), arrow: arrowOff(true), arrowChecked: arrowChecked(true), menu: base,
+        });
+        if (this._settings.get_boolean('calendar-background'))
+            css += calendarCss(translucent(base, opacity), true);
+        return css;
+    }
+
+    // Inactive Quick Settings buttons, the menus they open and the arrow buttons. An empty
+    // color uses `native`: GNOME's own toggle, arrow (off, checked) and menu colors.
+    _quickSettingsCss(dark, color, native) {
         const match = this._settings.get_boolean('match-arrow-buttons');
-        if (!color && !match)
-            return '';
-        let css = '';
-        if (color) {
-            css += buttonCss(QS_BUTTONS, color, dark) + buttonCss(QS_CHECKED, '-st-accent-color', dark) +
-                rule(QS_FLAT, 'background-color', 'transparent') + buttonCss(QS_MENU, color, dark);
+        const opacity = this._cardOpacity();
+        let css;
+        if (color || opacity < 100) {
             const amount = ARROW_SHADE[dark ? 'dark' : 'light'];
-            css += buttonCss(ARROW_SEL, match ? color : `${shade(dark)}(${color}, ${amount}%)`, dark);
+            let arrow = color ? `${shade(dark)}(${color}, ${amount}%)` : native.arrow;
+            if (match)
+                arrow = color || native.toggle;
+            css = buttonCss(QS_BUTTONS, translucent(color || native.toggle, opacity), dark) +
+                buttonCss(QS_CHECKED, '-st-accent-color', dark) +
+                rule(QS_FLAT, 'background-color', 'transparent') +
+                buttonCss(QS_MENU, translucent(color || native.menu, opacity), dark) +
+                buttonCss(ARROW_SEL, translucent(arrow, opacity), dark);
+        } else if (match) {
+            css = buttonCss(ARROW_SEL, native.toggle, dark);
         } else {
-            css += fill(buttonCss(ARROW_SEL, toggleOff(dark), dark));
+            return '';
         }
         // Set again after the off colors, which would otherwise also cover the checked arrow.
-        return css + fill(buttonCss(`${ARROW_SEL}:checked`, match ? '-st-accent-color' : arrowChecked(dark), dark));
+        return css + buttonCss(`${ARROW_SEL}:checked`, match ? '-st-accent-color' : native.arrowChecked, dark);
     }
 
     // The template is only read when light mode first needs it.
@@ -741,9 +772,7 @@ export default class LightModeManagerExtension extends Extension {
         // Every color on system default (GNOME profile): the shell keeps its own dark style
         // (see _syncShellScheme), so only the General tab options apply, on GNOME's colors.
         if (values.every(v => !v))
-            return this._quickSettingsCss(true, '') +
-                (this._settings.get_boolean('calendar-background') ? calendarCss(NATIVE_CARD, true) : '') +
-                this._borderCss(null) + this._nativeOpacityCss();
+            return this._darkCardsCss('', '') + this._borderCss(null) + this._nativeOpacityCss();
 
         // An empty color keeps the template's original one.
         const byKey = Object.fromEntries(LIGHT_KEYS.map((key, i) => [key, values[i]]));
@@ -780,10 +809,20 @@ export default class LightModeManagerExtension extends Extension {
         // The top bar text follows "Text and icons".
         if (byKey['color-fg'])
             css += panelTextCss(byKey['color-fg']);
-        css += this._quickSettingsCss(false, byKey['color-qs-button'], text => fill(text, faded));
-        // The template's card color, filled in like the rest of the template.
+        // Cards (the template's own color when empty), inactive Quick Settings buttons and
+        // calendar background. GNOME's light expressions get the template's tokens filled in;
+        // the color settings are used as they are.
+        const card = byKey['color-card'] || '#e8e8e8';
+        const cardOpacity = this._cardOpacity();
+        if (cardOpacity < 100)
+            css += buttonCss(CARD_BUTTONS, translucent(card, cardOpacity), false);
+        const token = expression => fill(expression, faded);
+        css += this._quickSettingsCss(false, byKey['color-qs-button'], {
+            toggle: token(toggleOff(false)), arrow: token(arrowOff(false)),
+            arrowChecked: token(arrowChecked(false)), menu: card,
+        });
         if (this._settings.get_boolean('calendar-background'))
-            css += fill(calendarCss('#e8e8e8', false), faded);
+            css += calendarCss(translucent(card, cardOpacity), false);
         return css + this._borderCss('color-border');
     }
 

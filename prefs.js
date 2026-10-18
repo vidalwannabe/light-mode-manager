@@ -622,6 +622,12 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             });
             s.bind('panel-opacity', panelOpacityRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(panelOpacityRow);
+            const cardsOpacityRow = new Adw.SwitchRow({
+                title: 'Enable cards opacity',
+                subtitle: 'Notification cards and inactive Quick Settings buttons get half the transparency above',
+            });
+            s.bind('cards-opacity', cardsOpacityRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+            effects.add(cardsOpacityRow);
             const bordersRow = new Adw.SwitchRow({
                 title: 'Hide borders',
                 subtitle: 'Removes the outline of Quick Settings, the calendar and other menus',
