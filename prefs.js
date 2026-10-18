@@ -34,7 +34,7 @@ const flatButton = props => {
 export default class LightModeManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
-        window.set_default_size(600, 930);
+        window.set_default_size(600, 925);
         window.set_search_enabled(false);
 
         // Settings handlers and pending idles are dropped when the window closes,
