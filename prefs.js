@@ -625,6 +625,12 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             followRow.bind_property('active', borderRow, 'sensitive',
                 GObject.BindingFlags.SYNC_CREATE | GObject.BindingFlags.INVERT_BOOLEAN);
             effects.add(followRow);
+            const arrowRow = new Adw.SwitchRow({
+                title: 'Matching arrow buttons',
+                subtitle: 'The arrow next to Quick Settings toggles uses the toggle\'s color',
+            });
+            s.bind('match-arrow-buttons', arrowRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+            effects.add(arrowRow);
             page.add(effects);
 
             page.add(autoSwitchGroup(general));

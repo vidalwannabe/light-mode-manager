@@ -71,7 +71,7 @@ const DARK_RULES = [
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode; other keys (profiles...) never do.
-const OPACITY_KEYS = ['general-opacity', 'border-opacity', 'border-follow-opacity'];
+const OPACITY_KEYS = ['general-opacity', 'border-opacity', 'border-follow-opacity', 'match-arrow-buttons'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...OPACITY_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', ...OPACITY_KEYS];
 
@@ -86,6 +86,27 @@ const LIGHT_OVERVIEW_RE = /overview|app-folder|grid-search-result/;
 // GNOME draws a shadow under the whole menu, so a translucent menu showed it through
 // and looked darker than the panel. Below 100% opacity these shadows are removed.
 const SHADOW_SEL = '.popup-menu-content, .candidate-popup-content, .switcher-list';
+
+// Quick Settings arrow buttons ("›") in the same color as their toggle, in every state.
+// GNOME gives them a shade of their own; these are the expressions GNOME 48 uses for the
+// toggle itself (.button when off, .quick-toggle:checked when on). Light mode uses the
+// template's tokens, filled in like the rest of the template.
+const ARROW_SEL = '.quick-toggle-has-menu .quick-toggle-menu-button';
+function arrowCss(dark) {
+    const adjust = dark ? 'st-lighten' : 'st-darken';
+    const focus = dark ? 'st-mix(-st-accent-color, #ffffff, 60%)' : '-st-accent-color';
+    const states = (prefix, base) => [
+        ['', base],
+        [':hover', `${adjust}(${base}, 4%)`],
+        [':active', `${adjust}(${base}, 9%)`],
+        [':active:hover', `${adjust}(${adjust}(${base}, 9%), 4%)`],
+        [':focus', `st-mix(${focus}, ${base}, 5%)`],
+        [':focus:hover', `st-mix(${focus}, ${adjust}(${base}, 4%), 5%)`],
+        [':active:focus', `st-mix(${focus}, ${adjust}(${base}, 9%), 5%)`],
+    ].map(([state, color]) => rule(`${ARROW_SEL}${prefix}${state}`, 'background-color', color)).join('');
+    const off = dark ? 'st-mix(#ffffff, #36363a, 9%)' : 'st-mix(#222226, whitesmoke, 12%)';
+    return states('', off) + states(':checked', '-st-accent-color');
+}
 
 // GNOME's own delay before fading out the snapshot of the old screen.
 const TRANSITION_DELAY = 250;
@@ -390,6 +411,8 @@ export default class LightModeManagerExtension extends Extension {
         const fg = values[DARK_KEYS.indexOf('color-fg-dark')];
         if (fg)
             css += panelTextCss(fg);
+        if (this._settings.get_boolean('match-arrow-buttons'))
+            css += arrowCss(true);
         return css + this._borderCss('color-border-dark');
     }
 
@@ -412,9 +435,10 @@ export default class LightModeManagerExtension extends Extension {
 
     _lightCss() {
         const values = this._values(LIGHT_KEYS);
-        // Every color on system default: no stylesheet (see _syncShellScheme).
+        // Every color on system default: no stylesheet (see _syncShellScheme), where the
+        // shell keeps its own dark style, so the arrow buttons follow that one.
         if (values.every(v => !v))
-            return '';
+            return this._settings.get_boolean('match-arrow-buttons') ? arrowCss(true) : '';
 
         // An empty color keeps the template's original one.
         const byKey = Object.fromEntries(LIGHT_KEYS.map((key, i) => [key, values[i]]));
@@ -448,6 +472,8 @@ export default class LightModeManagerExtension extends Extension {
         // The top bar text follows "Text and icons".
         if (byKey['color-fg'])
             css += panelTextCss(byKey['color-fg']);
+        if (this._settings.get_boolean('match-arrow-buttons'))
+            css += fill(arrowCss(false), byColor);
         return css + this._borderCss('color-border');
     }
 
