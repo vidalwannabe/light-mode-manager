@@ -89,8 +89,8 @@ function colorToRgb(value) {
     return m ? m.slice(1).join(', ') : null;
 }
 
-// The general background with the opacity from the Tuning tab. Any alpha already in the
-// color (older settings or profiles) is ignored: the Tuning tab is the only source.
+// The general background with the opacity from the General tab. Any alpha already in the
+// color (older settings or profiles) is ignored: the General tab is the only source.
 function withOpacity(value, opacity) {
     const rgb = value ? colorToRgb(value) : null;
     if (!rgb || (opacity >= 100 && value.startsWith('#')))
@@ -133,7 +133,7 @@ export default class LightModeManagerExtension extends Extension {
 
     // When the style is toggled, GNOME fades out a snapshot of the old screen. Rebuilding the
     // theme blocks the shell long enough for that fade to be skipped, so it is restarted
-    // once the new theme is in place, with the duration chosen in the Tuning tab.
+    // once the new theme is in place, with the duration chosen in the General tab.
     _restartTransition() {
         const transition = Main.layoutManager.screenTransition;
         const snapshot = transition.visible ? transition.content : null;

@@ -6,7 +6,7 @@ import Adw from 'gi://Adw';
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 // The Light mode and Dark mode tabs show exactly these rows.
-// [key name, title, subtitle]. Transparency is set only in the Tuning tab.
+// [key name, title, subtitle]. Transparency is set only in the General tab.
 const COLOR_ROWS = [
     ['general', 'General background', 'Top bar, menus and dialogs, OSD and switcher, overview'],
     ['fg', 'Text and icons', 'Main text color, including the top bar'],
@@ -313,8 +313,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             group.add(row);
         };
 
-        const addTuningTab = () => {
-            const page = new Adw.PreferencesPage({title: 'Tuning', icon_name: 'preferences-other-symbolic'});
+        const addGeneralTab = () => {
+            const page = new Adw.PreferencesPage({title: 'General', icon_name: 'preferences-other-symbolic'});
 
             const effects = new Adw.PreferencesGroup({title: 'Visual effects'});
             sliderRow(effects, 'transition-duration', 'Transition',
@@ -345,6 +345,6 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             gnome,
             {name: 'Oled', colors: {...defaults('-dark'), general: '#000000'}},
         ]);
-        addTuningTab();
+        addGeneralTab();
     }
 }
