@@ -16,9 +16,9 @@ Each tab has eight colors:
 | Top bar content | Top bar text and icons: clock, indicators, the overview button and Dash to Panel's app grid button |
 | Main text and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, menus, dialogs, Quick Settings |
 | Secondary text | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday, toggle subtitles |
-| Cards, dash and search background | Notifications, calendar, Quick Settings slider buttons, dock, search results, app folders |
+| Cards, dash and search background | Notifications, calendar, dock, search results, app folders |
 | Active buttons text and icons | Quick Settings toggles that are on (Wi-Fi, Dark Style…), their arrows and subtitles. Empty: the accent's text color |
-| Idle Quick Settings buttons | Quick Settings toggles that are off, their arrows, the round buttons at the top and the menus they open |
+| Idle Quick Settings buttons | Quick Settings toggles that are off, their arrows, the round buttons at the top, the slider buttons (volume, "›", brightness) and the menus toggles open |
 | Borders | Outline of Quick Settings, the calendar and other menus |
 
 Hover, focus and active states follow these colors automatically. Every color has a button to restore its Default profile value.
@@ -38,7 +38,7 @@ Each tab has a profile selector to apply a set of colors in one click.
 - **General profile**: pairs a light mode profile with a dark mode profile and applies both at once. Built-in **Default** and **GNOME** general profiles are included.
 - **Transition**: duration of the fade when switching between light and dark mode, from 0 (instant) to 2000 ms. Default: 500 ms, like GNOME.
 - **Shell opacity**: transparency of the general background (top bar, menus, OSD and switcher), from 0 to 100%, in both modes. The overview and dialogs (Power Off, passwords, "not responding"…) stay opaque so they are easy to read, and below 100% menu shadows are removed so they do not darken translucent menus. Also works with the GNOME profile, on GNOME's own colors.
-- **Card opacity**: transparency of the notification cards (calendar, Today, World Clocks, Weather, notifications) and of the inactive Quick Settings buttons with their menus and the slider buttons, from 0 to 100%, in both modes. Also works with the GNOME profile.
+- **Card opacity**: transparency of the notification cards (calendar, Today, World Clocks, Weather, notifications) and of the idle Quick Settings buttons with their menus and the slider buttons, from 0 to 100%, in both modes. Also works with the GNOME profile.
 - **Enable panel opacity**: the panel stays solid by default; when on, it also gets the shell opacity.
 - **Disable menu borders**: removes the outline of Quick Settings, the calendar and other menus, in both modes.
 - **Disable Quick Settings dimming**: Quick Settings is no longer darkened while one of its menus (Wi-Fi, Power Off…) is open.

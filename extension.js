@@ -74,11 +74,7 @@ const DARK_RULES = [
 // Dark mode cards that are buttons: Quick Settings menus, notifications and the cards
 // below the calendar. They get every state, as GNOME draws them (see buttonCss).
 const CARD_BUTTONS = ['.message', '.events-button', '.world-clocks-button', '.weather-button'];
-// The buttons of the Quick Settings sliders (volume icon and "›", brightness icon). GNOME
-// draws them as flat buttons in the menu's own color, a pill that shows on a translucent
-// menu; they get the Cards color instead, in both modes.
-const SLIDER_BUTTONS = '.quick-slider .icon-button';
-const DARK_CARD_BUTTONS = ['.quick-toggle-menu', SLIDER_BUTTONS, ...CARD_BUTTONS];
+const DARK_CARD_BUTTONS = ['.quick-toggle-menu', ...CARD_BUTTONS];
 
 // Color settings of each mode.
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button', 'color-panel-fg',
@@ -141,7 +137,9 @@ function buttonCss(selectors, base, dark) {
 // the menus they expand (Wi-Fi, Power Off...) use the same color. Checked toggles get
 // GNOME's accent states again after them, and the Background Apps item (also a toggle)
 // its transparent background, which still gives way to the hover.
-const QS_BUTTONS = ['.quick-toggle', '.quick-settings-system-item .icon-button'];
+// The slider buttons (volume icon and "›", brightness icon) are flat buttons GNOME paints in
+// the menu's own color, a pill that shows on a translucent menu: they join them.
+const QS_BUTTONS = ['.quick-toggle', '.quick-settings-system-item .icon-button', '.quick-slider .icon-button'];
 const QS_MENU = '.quick-toggle-menu';
 const QS_CHECKED = '.quick-toggle:checked';
 const QS_FLAT = '.background-apps-quick-toggle';
@@ -924,7 +922,6 @@ export default class LightModeManagerExtension extends Extension {
         const cardOpacity = this._cardOpacity();
         if (cardOpacity < 100)
             css += buttonCss(CARD_BUTTONS, translucent(card, cardOpacity), false);
-        css += buttonCss(SLIDER_BUTTONS, translucent(card, cardOpacity), false);
         const token = expression => fill(expression, faded);
         css += this._quickSettingsCss(false, byKey['color-qs-button'], {
             toggle: token(toggleOff(false)), arrow: token(arrowOff(false)),

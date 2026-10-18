@@ -16,9 +16,9 @@ const COLOR_ROWS = [
     ['panel-fg', 'Top bar content', 'Clock, indicators, overview button and Dash to Panel app grid icon'],
     ['fg', 'Main text and icons', 'Titles and icons of notifications, widgets, menus, dialogs and Quick Settings'],
     ['fg-muted', 'Secondary text', 'Text under titles: notification body, times, locations and subtitles'],
-    ['card', 'Cards, dash and search background', 'Notifications, calendar widgets, slider buttons, dock, search and app folders'],
+    ['card', 'Cards, dash and search background', 'Notifications, calendar widgets, dock, search and app folders'],
     ['qs-active-fg', 'Active buttons text and icons', 'Text, icons and arrows of Quick Settings toggles that are on', 'Accent text color', '#ffffff'],
-    ['qs-button', 'Idle Quick Settings buttons', 'Toggles that are off, top round buttons and toggle menus'],
+    ['qs-button', 'Idle Quick Settings buttons', 'Toggles that are off, top round buttons, slider buttons and toggle menus'],
     ['border', 'Borders', 'Outline of Quick Settings, the calendar and other menus'],
 ];
 
@@ -34,7 +34,7 @@ const flatButton = props => {
 export default class LightModeManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
-        window.set_default_size(600, 845);
+        window.set_default_size(600, 870);
         window.set_search_enabled(false);
 
         // Settings handlers and pending idles are dropped when the window closes,
