@@ -24,7 +24,7 @@ const COLOR_ROWS = [
 export default class LightModeManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
-        window.set_default_size(600, 740);
+        window.set_default_size(600, 600);
 
         const resetButton = key => {
             const b = new Gtk.Button({
