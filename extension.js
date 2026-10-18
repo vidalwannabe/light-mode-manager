@@ -198,6 +198,20 @@ const MENU_TITLE = 'Light Mode Manager';
 
 const rule = (selector, prop, value) => `${selector} {\n  ${prop}: ${value};\n}\n`;
 const noShadowCss = rule(SHADOW_SEL, 'box-shadow', 'none');
+// Quick Settings text and icons on GNOME's dark style, which keeps them white: toggles and
+// their arrows, the round buttons at the top and the slider buttons. Checked toggles and
+// arrows keep the accent's text color.
+const QS_TEXT_SEL = '.quick-settings .button, .quick-settings .icon-button';
+const QS_TEXT_CHECKED_SEL = '.quick-settings .quick-toggle:checked, ' +
+    '.quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked';
+function quickSettingsTextCss(color) {
+    const insensitive = sel => sel.split(', ').map(s => `${s}:insensitive`).join(', ');
+    return rule(QS_TEXT_SEL, 'color', color) +
+        rule(insensitive(QS_TEXT_SEL), 'color', `st-transparentize(${color}, 0.5)`) +
+        rule(QS_TEXT_CHECKED_SEL, 'color', '-st-accent-fg-color') +
+        rule(insensitive(QS_TEXT_CHECKED_SEL), 'color', 'st-transparentize(-st-accent-fg-color, 0.5)');
+}
+
 const panelTextCss = color => rule(PANEL_TEXT_SEL, 'color', color) + rule(PANEL_LOCK_SEL, 'color', '#ffffff') +
     rule(PANEL_DOTS_SEL, 'background-color', color) + rule(PANEL_SHOW_APPS_SEL, 'color', color);
 
@@ -715,10 +729,14 @@ export default class LightModeManagerExtension extends Extension {
         } else {
             css += this._nativeOpacityCss();
         }
-        // The top bar: "Top bar text and icons", or "Text and icons" when empty.
-        const panelFg = this._values(['color-panel-fg-dark'])[0] || values[DARK_KEYS.indexOf('color-fg-dark')];
+        // The top bar: "Top bar content".
+        const [panelFg] = this._values(['color-panel-fg-dark']);
         if (panelFg)
             css += panelTextCss(panelFg);
+        // Quick Settings text and icons: "Text and icons".
+        const fg = values[DARK_KEYS.indexOf('color-fg-dark')];
+        if (fg)
+            css += quickSettingsTextCss(fg);
         css += this._darkCardsCss(values[DARK_KEYS.indexOf('color-card-dark')],
             this._values(['color-qs-button-dark'])[0]);
         return css + this._borderCss('color-border-dark');
@@ -825,10 +843,9 @@ export default class LightModeManagerExtension extends Extension {
         const panel = byKey['color-general'] || TEMPLATE_PANEL;
         css += rule('#panel', 'background-color',
             withOpacity(panel, this._settings.get_boolean('panel-opacity') ? opacity : 100));
-        // The top bar: "Top bar text and icons", or "Text and icons" when empty.
-        const panelFg = byKey['color-panel-fg'] || byKey['color-fg'];
-        if (panelFg)
-            css += panelTextCss(panelFg);
+        // The top bar: "Top bar content".
+        if (byKey['color-panel-fg'])
+            css += panelTextCss(byKey['color-panel-fg']);
         // Cards (the template's own color when empty), inactive Quick Settings buttons and
         // calendar background. GNOME's light expressions get the template's tokens filled in;
         // the color settings are used as they are.

@@ -13,8 +13,8 @@ Each tab has seven colors:
 | Color | What it paints |
 | --- | --- |
 | General background | Top bar, menus and dialogs, OSD and window switcher, overview |
-| Text and icons | Main text and icons: menus, Quick Settings, notifications, dialogs, and the top bar unless set below |
-| Top bar text and icons | Clock, indicators, the overview button and Dash to Panel's app grid button. Empty: same as Text and icons |
+| Top bar content | Top bar text and icons: clock, indicators, the overview button and Dash to Panel's app grid button |
+| Text and icons | Main text and icons: menus, Quick Settings (toggles, their arrows and buttons), notifications, dialogs |
 | Secondary text | Dates, captions, subtitles |
 | Cards, dash and search | Notifications, calendar, Quick Settings slider buttons, dock, search results, app folders |
 | Inactive Quick Settings buttons | Quick Settings toggles that are off, their arrows, the round buttons at the top and the menus they open |

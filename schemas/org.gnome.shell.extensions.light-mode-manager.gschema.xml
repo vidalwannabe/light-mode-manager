@@ -4,7 +4,7 @@
     <!-- Light mode (empty = system default) -->
     <key name="color-general" type="s"><default>'#fafafb'</default><summary>General background (top bar, menus and dialogs, OSD and switcher, overview)</summary></key>
     <key name="color-fg" type="s"><default>'#000000'</default><summary>Text and icons</summary></key>
-    <key name="color-panel-fg" type="s"><default>''</default><summary>Top bar text and icons (empty: Text and icons)</summary></key>
+    <key name="color-panel-fg" type="s"><default>'#000000'</default><summary>Top bar content: text and icons</summary></key>
     <key name="color-fg-muted" type="s"><default>'#77767b'</default><summary>Secondary text</summary></key>
     <key name="color-card" type="s"><default>'#ebebed'</default><summary>Cards, dash and search</summary></key>
     <key name="color-qs-button" type="s"><default>'#ebebed'</default><summary>Inactive Quick Settings buttons</summary></key>
@@ -12,7 +12,7 @@
     <!-- Dark mode (empty = system default) -->
     <key name="color-general-dark" type="s"><default>'#222226'</default><summary>General background</summary></key>
     <key name="color-fg-dark" type="s"><default>'#ffffff'</default><summary>Text and icons</summary></key>
-    <key name="color-panel-fg-dark" type="s"><default>''</default><summary>Top bar text and icons (empty: Text and icons)</summary></key>
+    <key name="color-panel-fg-dark" type="s"><default>'#ffffff'</default><summary>Top bar content: text and icons</summary></key>
     <key name="color-fg-muted-dark" type="s"><default>'#c0bfbc'</default><summary>Secondary text</summary></key>
     <key name="color-card-dark" type="s"><default>'#343437'</default><summary>Cards, dash and search</summary></key>
     <key name="color-qs-button-dark" type="s"><default>'#343437'</default><summary>Inactive Quick Settings buttons</summary></key>

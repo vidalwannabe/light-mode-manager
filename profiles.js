@@ -2,7 +2,12 @@
 // Only uses Gio.Settings, so it runs in both the shell and the preferences process.
 
 // The color rows of the Light mode and Dark mode tabs.
-export const ROW_NAMES = ['general', 'fg', 'panel-fg', 'fg-muted', 'card', 'qs-button', 'border'];
+export const ROW_NAMES = ['general', 'panel-fg', 'fg', 'fg-muted', 'card', 'qs-button', 'border'];
+
+// Rows added later: a profile saved before them takes the value of the row they came
+// from, so it keeps its look (the top bar used to follow "Text and icons").
+const LEGACY_ROWS = {'panel-fg': 'fg'};
+const rowColor = (colors, n) => colors[n] ?? colors[LEGACY_ROWS[n]];
 
 // The schema default of every row of a mode ('' for light, '-dark' for dark).
 const defaults = (settings, suffix) => Object.fromEntries(
@@ -42,7 +47,7 @@ function modeProfiles(settings, suffix, builtins) {
     const colorKey = n => `color-${n}${suffix}`;
     const defaultColors = defaults(settings, suffix);
     const matches = colors =>
-        ROW_NAMES.every(n => (colors[n] ?? defaultColors[n]) === settings.get_string(colorKey(n)));
+        ROW_NAMES.every(n => (rowColor(colors, n) ?? defaultColors[n]) === settings.get_string(colorKey(n)));
     return {
         ...store,
         keys: [...store.keys, ...ROW_NAMES.map(colorKey)],
@@ -51,7 +56,7 @@ function modeProfiles(settings, suffix, builtins) {
         apply(profile) {
             store.setActive(profile.name);
             for (const n of ROW_NAMES) {
-                const value = profile.colors[n];
+                const value = rowColor(profile.colors, n);
                 if (typeof value !== 'string' || value === defaultColors[n])
                     settings.reset(colorKey(n));
                 else
