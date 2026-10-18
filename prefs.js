@@ -24,7 +24,7 @@ const COLOR_ROWS = [
 export default class LightModeManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
-        window.set_default_size(600, 600);
+        window.set_default_size(600, 500);
 
         // Settings handlers are dropped when the window closes, so they never run on dead widgets.
         const handlerIds = [];
