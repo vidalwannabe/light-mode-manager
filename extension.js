@@ -43,7 +43,7 @@ const PANEL_LOCK_SEL = '#panel.unlock-screen .panel-button, #panel.login-screen 
 const DARK_RULES = [
     [[
         '#panel', '.popup-menu-content', '.candidate-popup-content', '.modal-dialog',
-        '.switcher-list', '.osd-window', '.workspace-switcher', '.resize-popup', '#overviewGroup',
+        '.switcher-list', '.osd-window', '.workspace-switcher', '.resize-popup',
     ], 'background-color', 'color-general-dark'],
     [[
         '.message', '.notification-banner', '.quick-toggle-menu',
@@ -74,6 +74,19 @@ const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, 'general-opacity'];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'general-opacity'];
 
+// The overview keeps an opaque general background, whatever the general opacity.
+const DARK_OVERVIEW_SEL = '#overviewGroup';
+// Light template rules of the overview that use the general background.
+const LIGHT_OVERVIEW_RE = /overview|app-folder|grid-search-result/;
+
+// GNOME draws a shadow under the whole menu, so a translucent menu showed it through
+// and looked darker than the panel. These shadows fade with the general opacity.
+// [selectors, shadow geometry, light alpha, dark alpha], as in GNOME 48's stylesheets.
+const SHADOWS = [
+    ['.popup-menu-content, .candidate-popup-content', '0 2px 4px 0', 0.05, 0.2],
+    ['.switcher-list', '0 8px 8px 0', 0.05, 0.2],
+];
+
 // GNOME's own delay before fading out the snapshot of the old screen.
 const TRANSITION_DELAY = 250;
 
@@ -83,6 +96,8 @@ const DTP_SCHEMA = 'org.gnome.shell.extensions.dash-to-panel';
 const MENU_TITLE = 'Light Mode Manager';
 
 const rule = (selector, prop, value) => `${selector} {\n  ${prop}: ${value};\n}\n`;
+const shadowCss = (opacity, dark) => SHADOWS.map(([selector, geometry, light, darkAlpha]) =>
+    rule(selector, 'box-shadow', `${geometry} rgba(0, 0, 0, ${+((dark ? darkAlpha : light) * opacity / 100).toFixed(3)})`)).join('');
 const panelTextCss = color => rule(PANEL_TEXT_SEL, 'color', color) + rule(PANEL_LOCK_SEL, 'color', '#ffffff');
 
 // "r, g, b" of a #rrggbb, rgb() or rgba() color, so hover/active variants follow it.
@@ -347,13 +362,20 @@ export default class LightModeManagerExtension extends Extension {
     // ---------- Stylesheet ----------
     _darkCss() {
         const values = this._values(DARK_KEYS);
+        const opacity = this._settings.get_int('general-opacity');
         const general = DARK_KEYS.indexOf('color-general-dark');
-        values[general] = withOpacity(values[general], this._settings.get_int('general-opacity'));
+        const opaque = withOpacity(values[general], 100);
+        values[general] = withOpacity(values[general], opacity);
         let css = '';
         DARK_RULES.forEach(([selector, prop], i) => {
             if (values[i])
                 css += rule(selector, prop, values[i]);
         });
+        if (opaque) {
+            css += rule(DARK_OVERVIEW_SEL, 'background-color', opaque);
+            if (opacity < 100)
+                css += shadowCss(opacity, true);
+        }
         // The top bar text follows "Text and icons".
         const fg = values[DARK_KEYS.indexOf('color-fg-dark')];
         if (fg)
@@ -369,8 +391,13 @@ export default class LightModeManagerExtension extends Extension {
             const idx = template.indexOf(MARKER);
             this._templateHead = idx >= 0 ? template.slice(0, idx) : template;
             this._templateTail = idx >= 0 ? template.slice(idx) : '';
+            // The overview rules that use the general background, to repeat them opaque.
+            this._templateOverview = [...this._templateHead.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+                .filter(([, selector, body]) => LIGHT_OVERVIEW_RE.test(selector) &&
+                    TOKENS.some(([key, color]) => key === 'color-general' && body.toLowerCase().includes(color)))
+                .map(([text]) => text.trim()).join('\n') + '\n';
         }
-        return [this._templateHead, this._templateTail];
+        return [this._templateHead, this._templateTail, this._templateOverview];
     }
 
     _lightCss() {
@@ -381,17 +408,29 @@ export default class LightModeManagerExtension extends Extension {
 
         // An empty color keeps the template's original one.
         const byKey = Object.fromEntries(LIGHT_KEYS.map((key, i) => [key, values[i]]));
-        byKey['color-general'] = withOpacity(byKey['color-general'], this._settings.get_int('general-opacity'));
+        const opacity = this._settings.get_int('general-opacity');
+        const opaque = withOpacity(byKey['color-general'], 100);
+        byKey['color-general'] = withOpacity(byKey['color-general'], opacity);
         const byColor = {};
         const byRgb = {};
         for (const [key, color, rgb] of TOKENS) {
             byColor[color] = byKey[key] || color;
             byRgb[rgb] = colorToRgb(byKey[key]) ?? rgb;
         }
+        const fill = (text, colors) => text.replace(TOKEN_RE, (m, rgb, alpha) =>
+            rgb ? `rgba(${byRgb[rgb]}, ${alpha})` : colors[m.toLowerCase()]);
 
-        const [head, tail] = this._template();
-        let css = head.replace(TOKEN_RE, (m, rgb, alpha) =>
-            rgb ? `rgba(${byRgb[rgb]}, ${alpha})` : byColor[m.toLowerCase()]) + tail;
+        const [head, tail, overview] = this._template();
+        let css = fill(head, byColor) + tail;
+        // Translucent general background: the overview stays opaque and shadows fade.
+        if (opaque && opacity < 100) {
+            const opaqueColors = {...byColor};
+            for (const [key, color] of TOKENS) {
+                if (key === 'color-general')
+                    opaqueColors[color] = opaque;
+            }
+            css += fill(overview, opaqueColors) + shadowCss(opacity, false);
+        }
 
         // The top bar has no template color of its own, so it gets its own rule.
         if (byKey['color-general'])
@@ -548,6 +587,7 @@ export default class LightModeManagerExtension extends Extension {
             this._interface.set_string('color-scheme', 'default');
         this._setLegacyColorScheme('default');
 
-        this._settings = this._interface = this._cacheDir = this._templateHead = this._templateTail = null;
+        this._settings = this._interface = this._cacheDir = null;
+        this._templateHead = this._templateTail = this._templateOverview = null;
     }
 }
