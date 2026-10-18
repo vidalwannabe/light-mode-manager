@@ -609,7 +609,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             const page = new Adw.PreferencesPage({title: 'General', icon_name: 'preferences-other-symbolic'});
             page.add(generalProfilesGroup(general, light, dark));
 
-            const effects = new Adw.PreferencesGroup({title: 'Visual effects'});
+            const effects = new Adw.PreferencesGroup({title: 'Visual tweaks'});
             sliderRow(effects, 'transition-duration', 'Transition',
                 'Fade when switching between light and dark mode', 2000, 100, ' ms');
             sliderRow(effects, 'general-opacity', 'Opacity',
