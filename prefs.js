@@ -627,7 +627,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             s.bind('hide-borders', bordersRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(bordersRow);
             const arrowRow = new Adw.SwitchRow({
-                title: 'Matching arrow buttons',
+                title: 'Match arrow buttons',
                 subtitle: 'The arrow next to Quick Settings toggles uses the toggle\'s color',
             });
             s.bind('match-arrow-buttons', arrowRow, 'active', Gio.SettingsBindFlags.DEFAULT);
