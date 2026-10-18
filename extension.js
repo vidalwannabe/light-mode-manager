@@ -1,3 +1,4 @@
+import Clutter from 'gi://Clutter';
 import St from 'gi://St';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
@@ -61,9 +62,20 @@ const DARK_RULES = [
     ], 'color', 'color-fg-muted-dark'],
 ].map(([selectors, prop, key]) => [selectors.join(', '), prop, key]);
 
-// Settings that affect each mode; other keys (profiles...) never rebuild the theme.
+// Color settings of each mode.
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key))];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
+// Settings that rebuild the theme of each mode; other keys (profiles...) never do.
+const LIGHT_THEME_KEYS = [...LIGHT_KEYS, 'general-opacity'];
+const DARK_THEME_KEYS = [...DARK_KEYS, 'general-opacity'];
+
+// GNOME's own delay before fading out the snapshot of the old screen.
+const TRANSITION_DELAY = 250;
+
+// Dash to Panel offers its own settings for extra entries in its panel right-click menu.
+const DTP_UUID = 'dash-to-panel@jderose9.github.com';
+const DTP_SCHEMA = 'org.gnome.shell.extensions.dash-to-panel';
+const MENU_TITLE = 'Light Mode Manager';
 
 const rule = (selector, prop, value) => `${selector} {\n  ${prop}: ${value};\n}\n`;
 const panelTextCss = color => rule(PANEL_TEXT_SEL, 'color', color) + rule(PANEL_LOCK_SEL, 'color', '#ffffff');
@@ -75,6 +87,15 @@ function colorToRgb(value) {
         return m.slice(1).map(h => parseInt(h, 16)).join(', ');
     m = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*[,)]/i.exec(value);
     return m ? m.slice(1).join(', ') : null;
+}
+
+// The color with the general opacity (percent) applied on top of its own alpha.
+function withOpacity(value, opacity) {
+    const rgb = value && opacity < 100 ? colorToRgb(value) : null;
+    if (!rgb)
+        return value;
+    const alpha = /^rgba\(.*,\s*([\d.]+)\s*\)$/i.exec(value)?.[1] ?? 1;
+    return `rgba(${rgb}, ${+(alpha * opacity / 100).toFixed(3)})`;
 }
 
 export default class LightModeManagerExtension extends Extension {
@@ -107,6 +128,71 @@ export default class LightModeManagerExtension extends Extension {
         }
         this._setLegacyColorScheme(scheme);
         this._applyTheme();
+        this._restartTransition();
+    }
+
+    // When the style is toggled, GNOME fades out a snapshot of the old screen. Rebuilding the
+    // theme blocks the shell long enough for that fade to be skipped, so it is restarted
+    // once the new theme is in place, with the duration chosen in the Tuning tab.
+    _restartTransition() {
+        const transition = Main.layoutManager.screenTransition;
+        const snapshot = transition.visible ? transition.content : null;
+        if (!snapshot)
+            return;
+        // Stopping GNOME's fade hides the actor and drops the snapshot; it is put back below.
+        transition.remove_all_transitions();
+        const duration = this._settings.get_int('transition-duration');
+        if (!duration) {
+            transition.hide();
+            return;
+        }
+        transition.content = snapshot;
+        transition.opacity = 255;
+        transition.show();
+        transition.ease({
+            opacity: 0,
+            duration,
+            delay: TRANSITION_DELAY,
+            mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+            onStopped: () => transition.hide(),
+        });
+    }
+
+    // ---------- Dash to Panel menu entry ----------
+    _dtpSettings() {
+        const dir = Main.extensionManager.lookup(DTP_UUID)?.dir.get_child('schemas');
+        if (!dir?.query_exists(null))
+            return null;
+        const source = Gio.SettingsSchemaSource.new_from_directory(
+            dir.get_path(), Gio.SettingsSchemaSource.get_default(), false);
+        const schema = source.lookup(DTP_SCHEMA, false);
+        return schema ? new Gio.Settings({settings_schema: schema}) : null;
+    }
+
+    // Adds or removes our entry in Dash to Panel's own list of extra menu entries.
+    _syncPanelMenu(show) {
+        try {
+            const dtp = this._dtpSettings();
+            if (!dtp)
+                return;
+            const commands = dtp.get_strv('panel-context-menu-commands');
+            const titles = dtp.get_strv('panel-context-menu-titles');
+            const command = `gnome-extensions prefs ${this.uuid}`;
+            const i = commands.indexOf(command);
+            if (show === (i >= 0) || commands.length !== titles.length)
+                return;
+            if (show) {
+                commands.push(command);
+                titles.push(MENU_TITLE);
+            } else {
+                commands.splice(i, 1);
+                titles.splice(i, 1);
+            }
+            dtp.set_strv('panel-context-menu-commands', commands);
+            dtp.set_strv('panel-context-menu-titles', titles);
+        } catch (e) {
+            console.error(`[LightModeManager] ${e.message}`);
+        }
     }
 
     // The value strings of the given keys; empty means system default.
@@ -134,6 +220,8 @@ export default class LightModeManagerExtension extends Extension {
     // ---------- Stylesheet ----------
     _darkCss() {
         const values = this._values(DARK_KEYS);
+        const general = DARK_KEYS.indexOf('color-general-dark');
+        values[general] = withOpacity(values[general], this._settings.get_int('general-opacity'));
         let css = '';
         DARK_RULES.forEach(([selector, prop], i) => {
             if (values[i])
@@ -166,6 +254,7 @@ export default class LightModeManagerExtension extends Extension {
 
         // An empty color keeps the template's original one.
         const byKey = Object.fromEntries(LIGHT_KEYS.map((key, i) => [key, values[i]]));
+        byKey['color-general'] = withOpacity(byKey['color-general'], this._settings.get_int('general-opacity'));
         const byColor = {};
         const byRgb = {};
         for (const [key, color, rgb] of TOKENS) {
@@ -275,9 +364,12 @@ export default class LightModeManagerExtension extends Extension {
 
         this._settings = this.getSettings();
         this._settingsId = this._settings.connect('changed', (_s, key) => {
-            if ((this._isDark() ? DARK_KEYS : LIGHT_KEYS).includes(key))
+            if (key === 'panel-menu-entry')
+                this._syncPanelMenu(this._settings.get_boolean(key));
+            else if ((this._isDark() ? DARK_THEME_KEYS : LIGHT_THEME_KEYS).includes(key))
                 this._scheduleApply();
         });
+        this._syncPanelMenu(this._settings.get_boolean('panel-menu-entry'));
 
         this._interface = Gio.Settings.new('org.gnome.desktop.interface');
         const current = this._getColorScheme();
@@ -305,6 +397,7 @@ export default class LightModeManagerExtension extends Extension {
         this._interface.disconnect(this._schemeId);
 
         this._unloadTheme();
+        this._syncPanelMenu(false);
         if (this._forcedDark) {
             Main.sessionMode.colorScheme = this._modeScheme;
             St.Settings.get().notify('color-scheme');

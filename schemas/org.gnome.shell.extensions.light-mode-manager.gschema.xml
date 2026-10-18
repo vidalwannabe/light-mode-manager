@@ -16,5 +16,9 @@
     <key name="profiles-dark" type="s"><default>'[]'</default><summary>Dark mode profiles</summary></key>
     <key name="active-profile" type="s"><default>'Default'</default><summary>Last applied light mode profile</summary></key>
     <key name="active-profile-dark" type="s"><default>'Default'</default><summary>Last applied dark mode profile</summary></key>
+    <!-- Tuning -->
+    <key name="transition-duration" type="i"><range min="0" max="2000"/><default>500</default><summary>Fade duration in ms when switching between light and dark mode</summary></key>
+    <key name="general-opacity" type="i"><range min="0" max="100"/><default>100</default><summary>General background opacity in percent, both modes</summary></key>
+    <key name="panel-menu-entry" type="b"><default>false</default><summary>Add "Light Mode Manager" to the Dash to Panel right-click menu</summary></key>
   </schema>
 </schemalist>

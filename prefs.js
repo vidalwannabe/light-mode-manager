@@ -280,6 +280,65 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             window.add(page);
         };
 
+        // A slider row bound to an integer setting, snapped to `step`.
+        const sliderRow = (group, key, title, subtitle, max, step, unit) => {
+            const row = new Adw.ActionRow({title, subtitle});
+            const scale = new Gtk.Scale({
+                adjustment: new Gtk.Adjustment({lower: 0, upper: max, step_increment: step, page_increment: step}),
+                draw_value: false, width_request: 200, valign: Gtk.Align.CENTER,
+            });
+            for (let v = 0; v <= max; v += max / 4)
+                scale.add_mark(v, Gtk.PositionType.BOTTOM, null);
+            // Fixed-width value label, so the sliders of all rows line up.
+            const label = new Gtk.Label({width_chars: 7, xalign: 1, valign: Gtk.Align.CENTER});
+            label.add_css_class('numeric');
+            let loading = false;
+            const load = () => {
+                const value = s.get_int(key);
+                label.set_label(`${value}${unit}`);
+                loading = true;
+                scale.set_value(value);
+                loading = false;
+            };
+            load();
+            scale.connect('value-changed', () => {
+                const value = Math.round(scale.get_value() / step) * step;
+                label.set_label(`${value}${unit}`);
+                if (!loading && value !== s.get_int(key))
+                    s.set_int(key, value);
+            });
+            watch(key, load);
+
+            const reset = flatButton({icon_name: 'edit-undo-symbolic', tooltip_text: 'Restore default'});
+            reset.connect('clicked', () => s.reset(key));
+            row.add_suffix(label);
+            row.add_suffix(scale);
+            row.add_suffix(reset);
+            group.add(row);
+        };
+
+        const addTuningTab = () => {
+            const page = new Adw.PreferencesPage({title: 'Tuning', icon_name: 'preferences-other-symbolic'});
+
+            const fade = new Adw.PreferencesGroup({title: 'Fade'});
+            sliderRow(fade, 'transition-duration', 'Transition',
+                'Fade when switching between light and dark mode', 2000, 100, ' ms');
+            sliderRow(fade, 'general-opacity', 'General background opacity',
+                'Applies to light and dark mode', 100, 1, '%');
+            page.add(fade);
+
+            const panel = new Adw.PreferencesGroup({title: 'Panel'});
+            const menuRow = new Adw.SwitchRow({
+                title: 'Panel menu entry',
+                subtitle: 'Adds "Light Mode Manager" to the Dash to Panel right-click menu',
+            });
+            s.bind('panel-menu-entry', menuRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+            panel.add(menuRow);
+            page.add(panel);
+
+            window.add(page);
+        };
+
         // "Default": the schema defaults. "GNOME": every row on system default.
         // "Oled": the dark Default with a pure black general background.
         const gnome = {name: 'GNOME', colors: Object.fromEntries(COLOR_ROWS.map(([n]) => [n, '']))};
@@ -290,5 +349,6 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             gnome,
             {name: 'Oled', colors: {...defaults('-dark'), general: '#000000'}},
         ]);
+        addTuningTab();
     }
 }
