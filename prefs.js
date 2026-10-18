@@ -66,8 +66,156 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             group.add(row);
         };
 
+        // Asks for a profile name. taken(name) says whether the name is already used.
+        const nameDialog = ({heading, confirm, name = '', taken, replaceOption, onConfirm}) => {
+            const box = new Gtk.Box({orientation: Gtk.Orientation.VERTICAL, spacing: 12});
+            const entry = new Gtk.Entry({text: name, placeholder_text: 'Profile name', activates_default: true});
+            box.append(entry);
+            let replace = null;
+            if (replaceOption) {
+                replace = new Gtk.CheckButton({label: 'Replace its colors with the current ones'});
+                box.append(replace);
+            }
+            const dialog = new Adw.AlertDialog({heading, extra_child: box});
+            dialog.add_response('cancel', 'Cancel');
+            dialog.add_response('ok', confirm);
+            dialog.set_response_appearance('ok', Adw.ResponseAppearance.SUGGESTED);
+            dialog.set_default_response('ok');
+            dialog.set_close_response('cancel');
+            const validate = () => {
+                const n = entry.get_text().trim();
+                dialog.set_response_enabled('ok', n !== '' && !taken(n));
+            };
+            entry.connect('changed', validate);
+            validate();
+            dialog.connect('response', (_d, response) => {
+                if (response === 'ok')
+                    onConfirm(entry.get_text().trim(), replace?.get_active() ?? false);
+            });
+            dialog.present(window);
+            entry.grab_focus();
+        };
+
+        const confirmDelete = (name, onConfirm) => {
+            const dialog = new Adw.AlertDialog({heading: `Delete "${name}"?`, body: 'This profile will be removed.'});
+            dialog.add_response('cancel', 'Cancel');
+            dialog.add_response('delete', 'Delete');
+            dialog.set_response_appearance('delete', Adw.ResponseAppearance.DESTRUCTIVE);
+            dialog.set_close_response('cancel');
+            dialog.connect('response', (_d, response) => {
+                if (response === 'delete')
+                    onConfirm();
+            });
+            dialog.present(window);
+        };
+
+        // Profile selector and "+" button at the top of a tab.
+        const profilesGroup = suffix => {
+            const listKey = `profiles${suffix}`;
+            const colorKey = name => `color-${name}${suffix}`;
+
+            const load = () => {
+                try {
+                    const list = JSON.parse(s.get_string(listKey));
+                    return Array.isArray(list)
+                        ? list.filter(p => p && typeof p.name === 'string' && p.colors && typeof p.colors === 'object')
+                        : [];
+                } catch {
+                    return [];
+                }
+            };
+            const save = list => s.set_string(listKey, JSON.stringify(list));
+            const current = () => Object.fromEntries(COLOR_ROWS.map(([n]) => [n, s.get_string(colorKey(n))]));
+            const apply = colors => {
+                for (const [n] of COLOR_ROWS) {
+                    if (typeof colors[n] === 'string')
+                        s.set_string(colorKey(n), colors[n]);
+                    else
+                        s.reset(colorKey(n));
+                }
+            };
+            const matches = colors => COLOR_ROWS.every(([n]) => colors[n] === s.get_string(colorKey(n)));
+
+            const list = new Gtk.ListBox({selection_mode: Gtk.SelectionMode.NONE});
+            list.add_css_class('boxed-list');
+            const popover = new Gtk.Popover({child: new Gtk.ScrolledWindow({
+                child: list, propagate_natural_height: true, max_content_height: 360,
+                hscrollbar_policy: Gtk.PolicyType.NEVER, width_request: 300,
+            })});
+            const selector = new Gtk.MenuButton({popover, valign: Gtk.Align.CENTER, tooltip_text: 'Saved profiles'});
+
+            const addButton = new Gtk.Button({
+                icon_name: 'list-add-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Save current colors as a profile',
+            });
+            addButton.add_css_class('flat');
+            addButton.connect('clicked', () => nameDialog({
+                heading: 'New profile', confirm: 'Save',
+                taken: n => load().some(p => p.name === n),
+                onConfirm: name => save([...load(), {name, colors: current()}]),
+            }));
+
+            const refresh = () => {
+                const profiles = load();
+                selector.set_label(profiles.find(p => matches(p.colors))?.name ?? 'No profile');
+                list.remove_all();
+                if (profiles.length === 0) {
+                    list.append(new Adw.ActionRow({title: 'No saved profiles', subtitle: 'Use + to save the current colors'}));
+                    return;
+                }
+                profiles.forEach((profile, i) => {
+                    const row = new Adw.ActionRow({title: profile.name, activatable: true, tooltip_text: 'Apply'});
+                    if (matches(profile.colors))
+                        row.add_prefix(new Gtk.Image({icon_name: 'object-select-symbolic'}));
+                    row.connect('activated', () => {
+                        popover.popdown();
+                        apply(profile.colors);
+                    });
+
+                    const edit = new Gtk.Button({icon_name: 'document-edit-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Edit'});
+                    edit.add_css_class('flat');
+                    edit.connect('clicked', () => {
+                        popover.popdown();
+                        nameDialog({
+                            heading: 'Edit profile', confirm: 'Save', name: profile.name, replaceOption: true,
+                            taken: n => load().some((p, j) => j !== i && p.name === n),
+                            onConfirm: (name, replace) => {
+                                const all = load();
+                                if (!all[i])
+                                    return;
+                                all[i] = {name, colors: replace ? current() : all[i].colors};
+                                save(all);
+                            },
+                        });
+                    });
+
+                    const del = new Gtk.Button({icon_name: 'user-trash-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Delete'});
+                    del.add_css_class('flat');
+                    del.connect('clicked', () => {
+                        popover.popdown();
+                        confirmDelete(profile.name, () => save(load().filter((_p, j) => j !== i)));
+                    });
+
+                    row.add_suffix(edit);
+                    row.add_suffix(del);
+                    list.append(row);
+                });
+            };
+            refresh();
+            s.connect(`changed::${listKey}`, refresh);
+            for (const [n] of COLOR_ROWS)
+                s.connect(`changed::${colorKey(n)}`, refresh);
+
+            const row = new Adw.ActionRow({title: 'Profile', subtitle: 'Apply, edit or delete saved color sets'});
+            row.add_suffix(selector);
+            row.add_suffix(addButton);
+            const group = new Adw.PreferencesGroup({title: 'Profiles'});
+            group.add(row);
+            return group;
+        };
+
         const addTab = (title, icon, description, suffix, emptyFor) => {
             const page = new Adw.PreferencesPage({title, icon_name: icon});
+            page.add(profilesGroup(suffix));
             const group = new Adw.PreferencesGroup({title: 'Colors', description});
             page.add(group);
             const keys = [];
