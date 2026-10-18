@@ -68,11 +68,15 @@ const DARK_RULES = [
 ].map(([selectors, prop, key]) => [selectors.join(', '), prop, key]);
 
 // Color settings of each mode.
-const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key))];
+const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode; other keys (profiles...) never do.
-const LIGHT_THEME_KEYS = [...LIGHT_KEYS, 'general-opacity'];
-const DARK_THEME_KEYS = [...DARK_KEYS, 'general-opacity'];
+const OPACITY_KEYS = ['general-opacity', 'border-opacity', 'border-follow-opacity'];
+const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...OPACITY_KEYS];
+const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', ...OPACITY_KEYS];
+
+// The menus' border: Quick Settings, the calendar and notifications, panel and context menus.
+const BORDER_SEL = '.popup-menu-content, .candidate-popup-content';
 
 // The overview keeps an opaque general background, whatever the general opacity.
 const DARK_OVERVIEW_SEL = '#overviewGroup';
@@ -355,6 +359,17 @@ export default class LightModeManagerExtension extends Extension {
     }
 
     // ---------- Stylesheet ----------
+    // The menu border rule for the given border color setting, with its opacity.
+    _borderCss(key) {
+        const [color] = this._values([key]);
+        if (!color)
+            return '';
+        const opacity = this._settings.get_boolean('border-follow-opacity')
+            ? this._settings.get_int('general-opacity')
+            : this._settings.get_int('border-opacity');
+        return rule(BORDER_SEL, 'border-color', withOpacity(color, opacity));
+    }
+
     _darkCss() {
         const values = this._values(DARK_KEYS);
         const opacity = this._settings.get_int('general-opacity');
@@ -375,7 +390,7 @@ export default class LightModeManagerExtension extends Extension {
         const fg = values[DARK_KEYS.indexOf('color-fg-dark')];
         if (fg)
             css += panelTextCss(fg);
-        return css;
+        return css + this._borderCss('color-border-dark');
     }
 
     // The template is only read when light mode first needs it.
@@ -433,7 +448,7 @@ export default class LightModeManagerExtension extends Extension {
         // The top bar text follows "Text and icons".
         if (byKey['color-fg'])
             css += panelTextCss(byKey['color-fg']);
-        return css;
+        return css + this._borderCss('color-border');
     }
 
     _applyTheme() {

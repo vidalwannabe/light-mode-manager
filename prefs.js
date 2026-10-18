@@ -15,6 +15,7 @@ const COLOR_ROWS = [
     ['fg', 'Text and icons', 'Main text color, including the top bar'],
     ['fg-muted', 'Secondary text', 'Dates, captions, subtitles'],
     ['card', 'Cards, dash and search', 'Notifications, calendar, quick settings, dock, search results, app folders'],
+    ['border', 'Borders', 'Outline of Quick Settings, the calendar and other menus'],
 ];
 
 const toHex = c => `#${[c.red, c.green, c.blue]
@@ -278,8 +279,9 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             window.add(page);
         };
 
-        // A slider row bound to an integer setting, snapped to `step`.
-        const sliderRow = (group, key, title, subtitle, max, step, unit) => {
+        // A slider row bound to an integer setting, snapped to `step`. Each mouse wheel
+        // notch moves it by `wheelStep`. Returns the row.
+        const sliderRow = (group, key, title, subtitle, max, step, unit, wheelStep = step) => {
             const row = new Adw.ActionRow({title, subtitle});
             const scale = new Gtk.Scale({
                 adjustment: new Gtk.Adjustment({lower: 0, upper: max, step_increment: step, page_increment: step}),
@@ -307,12 +309,27 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             });
             watch(key, load);
 
+            // Handled before GTK's own scrolling, which moves by an uneven amount.
+            const wheel = new Gtk.EventControllerScroll({
+                flags: Gtk.EventControllerScrollFlags.VERTICAL | Gtk.EventControllerScrollFlags.DISCRETE,
+                propagation_phase: Gtk.PropagationPhase.CAPTURE,
+            });
+            // Goes to the next multiple of wheelStep: 43 becomes 45 up, 40 down.
+            wheel.connect('scroll', (_c, _dx, dy) => {
+                const steps = scale.get_value() / wheelStep;
+                const value = (dy < 0 ? Math.floor(steps) + 1 : Math.ceil(steps) - 1) * wheelStep;
+                scale.set_value(Math.min(max, Math.max(0, value)));
+                return true;
+            });
+            scale.add_controller(wheel);
+
             const reset = flatButton({icon_name: 'edit-undo-symbolic', tooltip_text: 'Restore default'});
             reset.connect('clicked', () => s.reset(key));
             row.add_suffix(label);
             row.add_suffix(scale);
             row.add_suffix(reset);
             group.add(row);
+            return row;
         };
 
         // ---------- Automatic switch ----------
@@ -597,7 +614,17 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             sliderRow(effects, 'transition-duration', 'Transition',
                 'Fade when switching between light and dark mode', 2000, 100, ' ms');
             sliderRow(effects, 'general-opacity', 'General background opacity',
-                'Applies to light and dark mode', 100, 1, '%');
+                'Applies to light and dark mode', 100, 1, '%', 5);
+            const borderRow = sliderRow(effects, 'border-opacity', 'Border opacity',
+                'Outline of Quick Settings, the calendar and other menus', 100, 1, '%', 5);
+            const followRow = new Adw.SwitchRow({
+                title: 'Follow background opacity',
+                subtitle: 'Borders use the general background opacity',
+            });
+            s.bind('border-follow-opacity', followRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+            followRow.bind_property('active', borderRow, 'sensitive',
+                GObject.BindingFlags.SYNC_CREATE | GObject.BindingFlags.INVERT_BOOLEAN);
+            effects.add(followRow);
             page.add(effects);
 
             page.add(autoSwitchGroup(general));

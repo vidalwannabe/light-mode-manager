@@ -2,7 +2,7 @@
 // Only uses Gio.Settings, so it runs in both the shell and the preferences process.
 
 // The color rows of the Light mode and Dark mode tabs.
-export const ROW_NAMES = ['general', 'fg', 'fg-muted', 'card'];
+export const ROW_NAMES = ['general', 'fg', 'fg-muted', 'card', 'border'];
 
 // The schema default of every row of a mode ('' for light, '-dark' for dark).
 const defaults = (settings, suffix) => Object.fromEntries(
