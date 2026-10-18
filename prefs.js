@@ -316,12 +316,12 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         const addTuningTab = () => {
             const page = new Adw.PreferencesPage({title: 'Tuning', icon_name: 'preferences-other-symbolic'});
 
-            const fade = new Adw.PreferencesGroup({title: 'Fade'});
-            sliderRow(fade, 'transition-duration', 'Transition',
+            const effects = new Adw.PreferencesGroup({title: 'Visual effects'});
+            sliderRow(effects, 'transition-duration', 'Transition',
                 'Fade when switching between light and dark mode', 2000, 100, ' ms');
-            sliderRow(fade, 'general-opacity', 'General background opacity',
+            sliderRow(effects, 'general-opacity', 'General background opacity',
                 'Applies to light and dark mode', 100, 1, '%');
-            page.add(fade);
+            page.add(effects);
 
             const panel = new Adw.PreferencesGroup({title: 'Panel'});
             const menuRow = new Adw.SwitchRow({
