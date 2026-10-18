@@ -328,15 +328,19 @@ export default class LightModeManagerExtension extends Extension {
     // ---------- Dash to Panel colors ----------
     // Dash to Panel paints each of its panels with an inline style from its own color and
     // opacity settings, and St always ranks inline styles above stylesheets. With
-    // override-dtp-colors, that inline background is replaced with this extension's panel
-    // color each time Dash to Panel sets it, and restored when turned off. Dash to Panel's
+    // override-dtp-colors, that inline background is replaced with the theme's panel color
+    // each time Dash to Panel sets it, and restored when turned off. Dash to Panel's
     // settings and code are never changed.
 
-    // This extension's panel color in the current mode, or '' for the system's.
-    _panelColor() {
-        const [value] = this._values([this._isDark() ? 'color-general-dark' : 'color-general']);
-        const opacity = this._settings.get_boolean('ignore-panel') ? 100 : this._settings.get_int('general-opacity');
-        return value ? withOpacity(value, opacity) : '';
+    // The background the loaded stylesheets give #panel: this extension's color, opacity and
+    // "Keep panel solid", or GNOME's own with the GNOME profile. Read from a hidden probe,
+    // as Dash to Panel does, so no inline style is involved.
+    _themePanelColor() {
+        const probe = new St.Bin({name: 'panel'});
+        Main.uiGroup.add_child(probe);
+        const c = probe.get_theme_node().get_background_color();
+        probe.destroy();
+        return `rgba(${c.red}, ${c.green}, ${c.blue}, ${+(c.alpha / 255).toFixed(3)})`;
     }
 
     _syncDtpPanels() {
@@ -347,6 +351,7 @@ export default class LightModeManagerExtension extends Extension {
         // Dash to Panel recreates its panels on monitor or layout changes.
         this._dtp = dtp;
         this._dtpCreatedId = dtp.connect('panels-created', () => this._syncDtpPanels());
+        this._dtpColor = this._themePanelColor();
         this._dtpPanels = new Map();
         for (const panel of dtp.panels ?? []) {
             this._dtpPanels.set(panel, {original: panel.get_style() ?? '', ours: null});
@@ -358,7 +363,7 @@ export default class LightModeManagerExtension extends Extension {
         }
     }
 
-    // Keeps Dash to Panel's own style (transition...) with this extension's background.
+    // Keeps Dash to Panel's own style (transition...) with the theme's background.
     _overrideDtpPanel(panel) {
         const state = this._dtpPanels?.get(panel);
         if (!state)
@@ -366,10 +371,7 @@ export default class LightModeManagerExtension extends Extension {
         const style = panel.get_style() ?? '';
         if (style !== state.ours)
             state.original = style;
-        const color = this._panelColor();
-        const next = color
-            ? `background-color: ${color}; ${state.original.replace(/background-color:[^;]*;?\s*/g, '')}`
-            : state.original;
+        const next = `background-color: ${this._dtpColor}; ${state.original.replace(/background-color:[^;]*;?\s*/g, '')}`;
         state.ours = next;
         if (style !== next)
             panel.set_style(next);
@@ -554,7 +556,10 @@ export default class LightModeManagerExtension extends Extension {
         try {
             this._applyStylesheet();
         } finally {
-            this._dtpPanels?.forEach((_s, panel) => this._overrideDtpPanel(panel));
+            if (this._dtpPanels) {
+                this._dtpColor = this._themePanelColor();
+                this._dtpPanels.forEach((_s, panel) => this._overrideDtpPanel(panel));
+            }
         }
     }
 
