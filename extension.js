@@ -51,7 +51,7 @@ const DARK_RULES = [
         '.switcher-list', '.osd-window', '.workspace-switcher', '.resize-popup',
     ], 'background-color', 'color-general-dark'],
     [[
-        '.notification-banner', '#dash .dash-background', '.search-section-content', '.app-folder-dialog',
+        '.notification-banner',
     ], 'background-color', 'color-card-dark'],
     [[
         'stage', '.popup-menu', '.popup-menu-item', '.popup-inactive-menu-item', '.message',
@@ -82,7 +82,7 @@ const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'col
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and General tab options);
 // other keys (profiles...) never do.
-const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'hide-borders', 'match-arrow-buttons', 'calendar-background'];
+const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'disable-grid-colors', 'hide-borders', 'match-arrow-buttons', 'calendar-background'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark',
     'color-qs-active-fg-dark', ...EFFECT_KEYS];
@@ -104,8 +104,15 @@ const BORDER_SEL = '.popup-menu-content, .candidate-popup-content';
 const DARK_OPAQUE_SEL = '#overviewGroup, .modal-dialog';
 // Light template rules of the overview and dialogs that use the general background.
 const LIGHT_OPAQUE_RE = /overview|grid-search-result|modal-dialog|audio-device-selection-dialog/;
-// App folder icons in the app grid: buttons in the Cards color, in every state (the dialog
-// a folder opens already uses it). GNOME paints them from the text and general colors.
+// The overview's grid: dash, search results, app folder icons and the dialog a folder opens.
+// They take the Cards color unless "Disable grid custom colors", which keeps the system's.
+const GRID_CARDS = ['#dash .dash-background', '.search-section-content', '.app-folder-dialog'];
+const GRID_RE = /#dash|search|app-folder/;
+// Template card colors, as "r, g, b" too, kept as they are for the grid.
+const CARD_TOKENS = TOKENS.filter(([key]) => key === 'color-card');
+
+// App folder icons in the app grid: buttons in the Cards color, in every state. GNOME paints
+// them from the text and general colors.
 const FOLDER_ICON = '.app-folder';
 function folderCss(card, dark) {
     const adjust = shade(dark);
@@ -830,8 +837,8 @@ export default class LightModeManagerExtension extends Extension {
         const opacity = this._cardOpacity();
         const base = card || NATIVE_CARD;
         let css = card || opacity < 100 ? buttonCss(DARK_CARD_BUTTONS, translucent(base, opacity), true) : '';
-        if (card)
-            css += folderCss(card, true);
+        if (card && !this._settings.get_boolean('disable-grid-colors'))
+            css += rule(GRID_CARDS.join(', '), 'background-color', card) + folderCss(card, true);
         // After the cards, so the Quick Settings menus take the inactive buttons color.
         css += this._quickSettingsCss(true, qsButtons, {
             toggle: toggleOff(true), arrow: arrowOff(true), arrowChecked: arrowChecked(true), menu: base,
@@ -879,8 +886,16 @@ export default class LightModeManagerExtension extends Extension {
                 .filter(([, selector, body]) => LIGHT_OPAQUE_RE.test(selector) &&
                     TOKENS.some(([key, color]) => key === 'color-general' && body.toLowerCase().includes(color)))
                 .map(([text]) => text.trim()).join('\n') + '\n';
+            // The grid rules painted with the card color, reduced to their backgrounds.
+            this._templateGrid = [...this._templateHead.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+                .filter(([, selector, body]) => selector.replace(/\/\*[^]*?\*\//g, '').split(',')
+                    .every(part => GRID_RE.test(part)) &&
+                    CARD_TOKENS.some(([, color, rgb]) => body.toLowerCase().includes(color) || body.includes(rgb)))
+                .map(([, selector, body]) => [...body.matchAll(/(?:^|[^-])background-color:\s*([^;]+);/g)]
+                    .map(([, value]) => rule(selector.trim(), 'background-color', value.trim())).join(''))
+                .join('');
         }
-        return [this._templateHead, this._templateTail, this._templateOpaque];
+        return [this._templateHead, this._templateTail, this._templateOpaque, this._templateGrid];
     }
 
     _lightCss() {
@@ -912,7 +927,7 @@ export default class LightModeManagerExtension extends Extension {
             return (propertyAt(text, offset) === 'color' ? solid : colors)[m.toLowerCase()];
         });
 
-        const [head, tail, opaque] = this._template();
+        const [head, tail, opaque, grid] = this._template();
         let css = fill(head, faded) + tail;
         // Translucent general background: the overview and dialogs stay opaque and shadows are removed.
         if (opacity < 100)
@@ -936,7 +951,17 @@ export default class LightModeManagerExtension extends Extension {
         const cardOpacity = this._cardOpacity();
         if (cardOpacity < 100)
             css += buttonCss(CARD_BUTTONS, translucent(card, cardOpacity), false);
-        css += folderCss(card, false);
+        if (this._settings.get_boolean('disable-grid-colors')) {
+            // The grid gets the template's own card colors back; other colors still filled in.
+            const cardColors = new Set(CARD_TOKENS.flatMap(([, color, rgb]) => [color, rgb]));
+            css += grid.replace(TOKEN_RE, (m, rgb, alpha) => {
+                if (rgb)
+                    return `rgba(${cardColors.has(rgb) ? rgb : byRgb[rgb]}, ${alpha})`;
+                return cardColors.has(m.toLowerCase()) ? m : solid[m.toLowerCase()];
+            });
+        } else {
+            css += folderCss(card, false);
+        }
         const token = expression => fill(expression, faded);
         css += this._quickSettingsCss(false, byKey['color-qs-button'], {
             toggle: token(toggleOff(false)), arrow: token(arrowOff(false)),
@@ -1129,6 +1154,6 @@ export default class LightModeManagerExtension extends Extension {
 
         this._settings = this._interface = this._cacheDir = null;
         this._lastCss = this._modeScheme = this._dtpColor = this._overrides = null;
-        this._templateHead = this._templateTail = this._templateOpaque = null;
+        this._templateHead = this._templateTail = this._templateOpaque = this._templateGrid = null;
     }
 }

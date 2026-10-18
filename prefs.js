@@ -34,7 +34,7 @@ const flatButton = props => {
 export default class LightModeManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
-        window.set_default_size(600, 870);
+        window.set_default_size(600, 930);
         window.set_search_enabled(false);
 
         // Settings handlers and pending idles are dropped when the window closes,
@@ -657,6 +657,12 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             });
             s.bind('fix-qs-menu-height', menuHeightRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(menuHeightRow);
+            const gridRow = new Adw.SwitchRow({
+                title: 'Disable grid custom colors',
+                subtitle: 'Dash, search, folder icons and open folders keep the system background',
+            });
+            s.bind('disable-grid-colors', gridRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+            effects.add(gridRow);
             const dtpRow = new Adw.SwitchRow({
                 title: 'Override Dash to Panel colors',
                 subtitle: "Dash to Panel and its window previews use this extension's color and opacity",
