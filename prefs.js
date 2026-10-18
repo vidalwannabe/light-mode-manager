@@ -630,18 +630,18 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             });
             s.bind('hide-borders', bordersRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(bordersRow);
-            const arrowRow = new Adw.SwitchRow({
-                title: 'Uniform button colors',
-                subtitle: 'The arrow next to Quick Settings toggles uses the toggle\'s color',
-            });
-            s.bind('match-arrow-buttons', arrowRow, 'active', Gio.SettingsBindFlags.DEFAULT);
-            effects.add(arrowRow);
             const dimRow = new Adw.SwitchRow({
                 title: 'Disable Quick Settings dimming',
                 subtitle: 'Quick Settings is not darkened while one of its menus is open',
             });
             s.bind('no-qs-dimming', dimRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(dimRow);
+            const arrowRow = new Adw.SwitchRow({
+                title: 'Uniform button colors',
+                subtitle: 'The arrow next to Quick Settings toggles uses the toggle\'s color',
+            });
+            s.bind('match-arrow-buttons', arrowRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+            effects.add(arrowRow);
             const calendarRow = new Adw.SwitchRow({
                 title: 'Calendar as card',
                 subtitle: 'The calendar gets the color of the cards below it, without a pill behind each day',
