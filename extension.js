@@ -51,7 +51,7 @@ const DARK_RULES = [
         '.switcher-list', '.osd-window', '.workspace-switcher', '.resize-popup',
     ], 'background-color', 'color-general-dark'],
     [[
-        '.notification-banner', '#dash .dash-background', '.search-section-content', '.app-folder-dialog',
+        '.notification-banner', '#dash .dash-background', '.search-section-content',
     ], 'background-color', 'color-card-dark'],
     [[
         'stage', '.popup-menu', '.popup-menu-item', '.popup-inactive-menu-item', '.message',
@@ -103,7 +103,10 @@ const BORDER_SEL = '.popup-menu-content, .candidate-popup-content';
 // they stay easy to read.
 const DARK_OPAQUE_SEL = '#overviewGroup, .modal-dialog';
 // Light template rules of the overview and dialogs that use the general background.
-const LIGHT_OPAQUE_RE = /overview|app-folder|grid-search-result|modal-dialog|audio-device-selection-dialog/;
+const LIGHT_OPAQUE_RE = /overview|grid-search-result|modal-dialog|audio-device-selection-dialog/;
+// App folders (the folder tiles of the app grid and the dialog they open) keep the system's
+// own backgrounds, whatever the colors and opacity set here.
+const FOLDER_RE = /app-folder/;
 
 // GNOME draws a shadow under the whole menu, so a translucent menu showed it through
 // and looked darker than the panel. Below 100% opacity these shadows are removed.
@@ -865,8 +868,16 @@ export default class LightModeManagerExtension extends Extension {
                 .filter(([, selector, body]) => LIGHT_OPAQUE_RE.test(selector) &&
                     TOKENS.some(([key, color]) => key === 'color-general' && body.toLowerCase().includes(color)))
                 .map(([text]) => text.trim()).join('\n') + '\n';
+            // The app folder rules, reduced to their background with the template's own color.
+            this._templateFolders = [...this._templateHead.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+                .filter(([, selector]) => selector.replace(/\/\*[^]*?\*\//g, '').split(',')
+                    .every(part => FOLDER_RE.test(part)))
+                .map(([, selector, body]) => {
+                    const background = [...body.matchAll(/(?:^|[^-])background-color:\s*([^;]+);/g)].at(-1);
+                    return background ? rule(selector.trim(), 'background-color', background[1].trim()) : '';
+                }).join('');
         }
-        return [this._templateHead, this._templateTail, this._templateOpaque];
+        return [this._templateHead, this._templateTail, this._templateOpaque, this._templateFolders];
     }
 
     _lightCss() {
@@ -898,11 +909,12 @@ export default class LightModeManagerExtension extends Extension {
             return (propertyAt(text, offset) === 'color' ? solid : colors)[m.toLowerCase()];
         });
 
-        const [head, tail, opaque] = this._template();
+        const [head, tail, opaque, folders] = this._template();
         let css = fill(head, faded) + tail;
         // Translucent general background: the overview and dialogs stay opaque and shadows are removed.
         if (opacity < 100)
             css += fill(opaque, solid) + noShadowCss;
+        css += folders;
 
         // The template's top bar color is not a token, so it gets its own rule.
         const panel = byKey['color-general'] || TEMPLATE_PANEL;
@@ -1114,6 +1126,6 @@ export default class LightModeManagerExtension extends Extension {
 
         this._settings = this._interface = this._cacheDir = null;
         this._lastCss = this._modeScheme = this._dtpColor = this._overrides = null;
-        this._templateHead = this._templateTail = this._templateOpaque = null;
+        this._templateHead = this._templateTail = this._templateOpaque = this._templateFolders = null;
     }
 }
