@@ -637,7 +637,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             s.bind('no-qs-dimming', dimRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(dimRow);
             const arrowRow = new Adw.SwitchRow({
-                title: 'Uniform button colors',
+                title: 'Uniform Quick Settings button colors',
                 subtitle: 'The arrow next to Quick Settings toggles uses the toggle\'s color',
             });
             s.bind('match-arrow-buttons', arrowRow, 'active', Gio.SettingsBindFlags.DEFAULT);

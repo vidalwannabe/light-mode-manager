@@ -140,7 +140,7 @@ const QS_CHECKED = '.quick-toggle:checked';
 const QS_FLAT = '.background-apps-quick-toggle';
 
 // Quick Settings arrow buttons ("›"). GNOME 48 draws them a shade apart from their toggle,
-// off and on; "Uniform button colors" gives them the toggle's own color. Light mode
+// off and on; "Uniform Quick Settings button colors" gives them the toggle's own color. Light mode
 // expressions use the template's tokens, filled in like the rest of the template.
 const ARROW_SEL = '.quick-toggle-has-menu .quick-toggle-menu-button';
 // GNOME's toggle color when off, and its own arrow color off and on.
