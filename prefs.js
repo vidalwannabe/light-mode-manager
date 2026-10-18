@@ -614,24 +614,24 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             const effects = new Adw.PreferencesGroup({title: 'Visual tweaks'});
             sliderRow(effects, 'transition-duration', 'Transition',
                 'Fade when switching between light and dark mode', 2000, 100, ' ms');
-            sliderRow(effects, 'general-opacity', 'General opacity',
+            sliderRow(effects, 'general-opacity', 'Shell opacity',
                 'Top bar, menus, OSD and switcher, in light and dark mode', 100, 1, '%', 5);
-            sliderRow(effects, 'card-opacity', 'Cards opacity',
+            sliderRow(effects, 'card-opacity', 'Card opacity',
                 'Cards, notifications and inactive Quick Settings buttons', 100, 1, '%', 5);
             const panelOpacityRow = new Adw.SwitchRow({
                 title: 'Enable panel opacity',
-                subtitle: 'The panel also gets the general opacity; otherwise it stays solid',
+                subtitle: 'The panel also gets the shell opacity; otherwise it stays solid',
             });
             s.bind('panel-opacity', panelOpacityRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(panelOpacityRow);
             const bordersRow = new Adw.SwitchRow({
-                title: 'Hide borders',
+                title: 'Disable menu borders',
                 subtitle: 'Removes the outline of Quick Settings, the calendar and other menus',
             });
             s.bind('hide-borders', bordersRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(bordersRow);
             const arrowRow = new Adw.SwitchRow({
-                title: 'Match arrow buttons',
+                title: 'Uniform button colors',
                 subtitle: 'The arrow next to Quick Settings toggles uses the toggle\'s color',
             });
             s.bind('match-arrow-buttons', arrowRow, 'active', Gio.SettingsBindFlags.DEFAULT);
@@ -643,19 +643,19 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             s.bind('no-qs-dimming', dimRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(dimRow);
             const calendarRow = new Adw.SwitchRow({
-                title: 'Calendar background',
+                title: 'Calendar as card',
                 subtitle: 'The calendar gets the color of the cards below it, without a pill behind each day',
             });
             s.bind('calendar-background', calendarRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(calendarRow);
             const menuHeightRow = new Adw.SwitchRow({
-                title: 'Prevent expanded menus from overlapping',
+                title: 'Fix menu overlap',
                 subtitle: 'Quick Settings menus with wrapped text (like Bluetooth when off) no longer cover the buttons below',
             });
             s.bind('fix-qs-menu-height', menuHeightRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(menuHeightRow);
             const dtpRow = new Adw.SwitchRow({
-                title: 'Override Dash to Panel color settings',
+                title: 'Override Dash to Panel colors',
                 subtitle: 'Dash to Panel uses this extension\'s panel color and opacity',
             });
             s.bind('override-dtp-colors', dtpRow, 'active', Gio.SettingsBindFlags.DEFAULT);

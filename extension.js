@@ -96,7 +96,7 @@ const TEMPLATE_PANEL = '#f5f5f5';
 const BORDER_SEL = '.popup-menu-content, .candidate-popup-content';
 
 // The overview and modal dialogs (Power Off, passwords, "not responding"...) keep an
-// opaque general background, whatever the general opacity: dialogs ask for attention, so
+// opaque general background, whatever the shell opacity: dialogs ask for attention, so
 // they stay easy to read.
 const DARK_OPAQUE_SEL = '#overviewGroup, .modal-dialog';
 // Light template rules of the overview and dialogs that use the general background.
@@ -140,7 +140,7 @@ const QS_CHECKED = '.quick-toggle:checked';
 const QS_FLAT = '.background-apps-quick-toggle';
 
 // Quick Settings arrow buttons ("›"). GNOME 48 draws them a shade apart from their toggle,
-// off and on; "Match arrow buttons" gives them the toggle's own color. Light mode
+// off and on; "Uniform button colors" gives them the toggle's own color. Light mode
 // expressions use the template's tokens, filled in like the rest of the template.
 const ARROW_SEL = '.quick-toggle-has-menu .quick-toggle-menu-button';
 // GNOME's toggle color when off, and its own arrow color off and on.
@@ -150,7 +150,7 @@ const arrowChecked = dark => dark ? 'st-mix(-st-accent-color, #ffffff, 85%)' : '
 // How far GNOME's arrow is from its toggle when off (lighter in dark mode, darker in light).
 const ARROW_SHADE = {dark: 8, light: 5};
 
-// Calendar background: the month calendar gets the color of the cards below it (Today,
+// Calendar as card: the month calendar gets the color of the cards below it (Today,
 // World Clocks, Weather). Its days, headings, month and arrows are flat buttons painted
 // with the menu's color (a pill that only shows on another background), so they become
 // transparent and keep their hover. Extension stylesheets rank above GNOME's whatever the
@@ -708,7 +708,7 @@ export default class LightModeManagerExtension extends Extension {
         return css + this._borderCss('color-border-dark');
     }
 
-    // "Cards opacity": cards, notifications and inactive Quick Settings buttons.
+    // "Card opacity": cards, notifications and inactive Quick Settings buttons.
     _cardOpacity() {
         return this._settings.get_int('card-opacity');
     }

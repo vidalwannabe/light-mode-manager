@@ -35,15 +35,15 @@ Each tab has a profile selector to apply a set of colors in one click.
 
 - **General profile**: pairs a light mode profile with a dark mode profile and applies both at once. Built-in **Default** and **GNOME** general profiles are included.
 - **Transition**: duration of the fade when switching between light and dark mode, from 0 (instant) to 2000 ms. Default: 500 ms, like GNOME.
-- **General opacity**: transparency of the general background (top bar, menus, OSD and switcher), from 0 to 100%, in both modes. The overview and dialogs (Power Off, passwords, "not responding"…) stay opaque so they are easy to read, and below 100% menu shadows are removed so they do not darken translucent menus. Also works with the GNOME profile, on GNOME's own colors.
-- **Cards opacity**: transparency of the notification cards (calendar, Today, World Clocks, Weather, notifications) and of the inactive Quick Settings buttons with their menus and the slider buttons, from 0 to 100%, in both modes. Also works with the GNOME profile.
-- **Enable panel opacity**: the panel stays solid by default; when on, it also gets the general opacity.
-- **Hide borders**: removes the outline of Quick Settings, the calendar and other menus, in both modes.
-- **Match arrow buttons**: the arrow (›) next to Quick Settings toggles such as Wi-Fi or Bluetooth uses the same color as its toggle, on and off, instead of GNOME's separate shade.
+- **Shell opacity**: transparency of the general background (top bar, menus, OSD and switcher), from 0 to 100%, in both modes. The overview and dialogs (Power Off, passwords, "not responding"…) stay opaque so they are easy to read, and below 100% menu shadows are removed so they do not darken translucent menus. Also works with the GNOME profile, on GNOME's own colors.
+- **Card opacity**: transparency of the notification cards (calendar, Today, World Clocks, Weather, notifications) and of the inactive Quick Settings buttons with their menus and the slider buttons, from 0 to 100%, in both modes. Also works with the GNOME profile.
+- **Enable panel opacity**: the panel stays solid by default; when on, it also gets the shell opacity.
+- **Disable menu borders**: removes the outline of Quick Settings, the calendar and other menus, in both modes.
+- **Uniform button colors**: the arrow (›) next to Quick Settings toggles such as Wi-Fi or Bluetooth uses the same color as its toggle, on and off, instead of GNOME's separate shade.
 - **Disable Quick Settings dimming**: Quick Settings is no longer darkened while one of its menus (Wi-Fi, Power Off…) is open.
-- **Calendar background**: the month calendar gets the color of the cards below it (Today, World Clocks, Weather), without a pill behind each day. With the GNOME profile it follows GNOME's own card color.
-- **Prevent expanded menus from overlapping** (on by default): GNOME sizes the menus Quick Settings toggles open without their width, so a menu with wrapped text (Bluetooth when off) covers the buttons below it ([GNOME issue 7622](https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/7622)). This measures them at their real width, in any language.
-- **Override Dash to Panel color settings**: Dash to Panel's panels use the theme's panel color (this extension's color and opacity, or GNOME's own with the GNOME profile) instead of Dash to Panel's own color and transparency settings (which are left unchanged).
+- **Calendar as card**: the month calendar gets the color of the cards below it (Today, World Clocks, Weather), without a pill behind each day. With the GNOME profile it follows GNOME's own card color.
+- **Fix menu overlap** (on by default): GNOME sizes the menus Quick Settings toggles open without their width, so a menu with wrapped text (Bluetooth when off) covers the buttons below it ([GNOME issue 7622](https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/7622)). This measures them at their real width, in any language.
+- **Override Dash to Panel colors**: Dash to Panel's panels use the theme's panel color (this extension's color and opacity, or GNOME's own with the GNOME profile) instead of Dash to Panel's own color and transparency settings (which are left unchanged).
 - **Automatic switch**: applies a chosen general profile at two times of day (for example, a light setup in the morning and an Oled one at night). A profile picked by hand in between is kept until the next switch time.
 - **Panel menu entry**: adds a "Light Mode Manager" entry that opens these preferences to the right-click menu of the panel. Requires [Dash to Panel](https://github.com/home-sweet-gnome/dash-to-panel).
 - **Quick Settings switcher**: adds a button to Quick Settings that shows the applied general profile and switches it from its menu. Hidden on the lock screen.
