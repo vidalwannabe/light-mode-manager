@@ -286,6 +286,11 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             reset: true,
         });
         const gnomeProfile = {name: 'GNOME', builtin: true, colors: Object.fromEntries(COLOR_ROWS.map(([n]) => [n, '']))};
+        // "Oled": the dark Default with a pure black general background.
+        const oledProfile = () => {
+            const base = defaultProfile('-dark');
+            return {name: 'Oled', builtin: true, colors: {...base.colors, general: '#000000'}};
+        };
 
         const addTab = (title, icon, suffix, emptyLabel, builtins) => {
             const page = new Adw.PreferencesPage({title, icon_name: icon});
@@ -298,8 +303,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             window.add(page);
         };
 
-        addTab('Light mode', 'weather-clear-symbolic', '', null, [defaultProfile('')]);
+        addTab('Light mode', 'weather-clear-symbolic', '', 'System default', [defaultProfile(''), gnomeProfile]);
         addTab('Dark mode', 'weather-clear-night-symbolic', '-dark', 'System default',
-            [defaultProfile('-dark'), gnomeProfile]);
+            [defaultProfile('-dark'), gnomeProfile, oledProfile()]);
     }
 }

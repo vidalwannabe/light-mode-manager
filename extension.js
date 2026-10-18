@@ -137,11 +137,16 @@ export default class LightModeManagerExtension extends Extension {
 
     _lightCss() {
         const s = this._settings;
+        // Every color on system default: no stylesheet, GNOME's own light look.
+        if ([...LIGHT_KEYS].every(key => !s.get_string(key).trim()))
+            return '';
+
+        // A single empty color keeps the template's original one.
         const byColor = {};
         const byRgb = {};
         for (const [key, color, rgb] of TOKENS) {
-            const value = s.get_string(key);
-            byColor[color] = value;
+            const value = s.get_string(key).trim();
+            byColor[color] = value || color;
             byRgb[rgb] = colorToRgb(value) ?? rgb;
         }
 
