@@ -1,3 +1,5 @@
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk';
 import Gdk from 'gi://Gdk';
 import Adw from 'gi://Adw';
@@ -67,15 +69,10 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         };
 
         // Asks for a profile name. taken(name) says whether the name is already used.
-        const nameDialog = ({heading, confirm, name = '', taken, replaceOption, onConfirm}) => {
+        const nameDialog = ({heading, confirm, name = '', taken, onConfirm}) => {
             const box = new Gtk.Box({orientation: Gtk.Orientation.VERTICAL, spacing: 12});
             const entry = new Gtk.Entry({text: name, placeholder_text: 'Profile name', activates_default: true});
             box.append(entry);
-            let replace = null;
-            if (replaceOption) {
-                replace = new Gtk.CheckButton({label: 'Replace its colors with the current ones'});
-                box.append(replace);
-            }
             const dialog = new Adw.AlertDialog({heading, extra_child: box});
             dialog.add_response('cancel', 'Cancel');
             dialog.add_response('ok', confirm);
@@ -90,20 +87,20 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             validate();
             dialog.connect('response', (_d, response) => {
                 if (response === 'ok')
-                    onConfirm(entry.get_text().trim(), replace?.get_active() ?? false);
+                    onConfirm(entry.get_text().trim());
             });
             dialog.present(window);
             entry.grab_focus();
         };
 
-        const confirmDelete = (name, onConfirm) => {
-            const dialog = new Adw.AlertDialog({heading: `Delete "${name}"?`, body: 'This profile will be removed.'});
+        const confirm = (heading, body, label, onConfirm) => {
+            const dialog = new Adw.AlertDialog({heading, body});
             dialog.add_response('cancel', 'Cancel');
-            dialog.add_response('delete', 'Delete');
-            dialog.set_response_appearance('delete', Adw.ResponseAppearance.DESTRUCTIVE);
+            dialog.add_response('ok', label);
+            dialog.set_response_appearance('ok', Adw.ResponseAppearance.DESTRUCTIVE);
             dialog.set_close_response('cancel');
             dialog.connect('response', (_d, response) => {
-                if (response === 'delete')
+                if (response === 'ok')
                     onConfirm();
             });
             dialog.present(window);
@@ -144,18 +141,48 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             })});
             const selector = new Gtk.MenuButton({popover, valign: Gtk.Align.CENTER, tooltip_text: 'Saved profiles'});
 
-            const addButton = new Gtk.Button({
-                icon_name: 'list-add-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Save current colors as a profile',
-            });
-            addButton.add_css_class('flat');
-            addButton.connect('clicked', () => nameDialog({
+            // "+" menu: save the current colors as a new profile or into an existing one.
+            const actions = new Gio.SimpleActionGroup();
+            const newAction = new Gio.SimpleAction({name: 'new'});
+            newAction.connect('activate', () => nameDialog({
                 heading: 'New profile', confirm: 'Save',
                 taken: n => load().some(p => p.name === n),
                 onConfirm: name => save([...load(), {name, colors: current()}]),
             }));
+            const overwriteAction = new Gio.SimpleAction({name: 'overwrite', parameter_type: new GLib.VariantType('s')});
+            overwriteAction.connect('activate', (_a, param) => {
+                const name = param.unpack();
+                confirm(`Apply to "${name}"?`, 'Its saved colors will be replaced with the current ones.', 'Replace',
+                    () => save(load().map(p => p.name === name ? {name, colors: current()} : p)));
+            });
+            const noneAction = new Gio.SimpleAction({name: 'none', enabled: false});
+            [newAction, overwriteAction, noneAction].forEach(a => actions.add_action(a));
+
+            const addButton = new Gtk.MenuButton({
+                icon_name: 'list-add-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Save current colors',
+            });
+            addButton.add_css_class('flat');
+            addButton.insert_action_group('profile', actions);
+            const buildAddMenu = profiles => {
+                const menu = new Gio.Menu();
+                menu.append('Create new profile', 'profile.new');
+                if (profiles.length === 0) {
+                    menu.append('Apply to existing profile', 'profile.none');
+                } else {
+                    const sub = new Gio.Menu();
+                    for (const p of profiles) {
+                        const item = Gio.MenuItem.new(p.name, null);
+                        item.set_action_and_target_value('profile.overwrite', new GLib.Variant('s', p.name));
+                        sub.append_item(item);
+                    }
+                    menu.append_submenu('Apply to existing profile', sub);
+                }
+                addButton.set_menu_model(menu);
+            };
 
             const refresh = () => {
                 const profiles = load();
+                buildAddMenu(profiles);
                 selector.set_label(profiles.find(p => matches(p.colors))?.name ?? 'No profile');
                 list.remove_all();
                 if (profiles.length === 0) {
@@ -171,31 +198,14 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                         apply(profile.colors);
                     });
 
-                    const edit = new Gtk.Button({icon_name: 'document-edit-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Edit'});
-                    edit.add_css_class('flat');
-                    edit.connect('clicked', () => {
-                        popover.popdown();
-                        nameDialog({
-                            heading: 'Edit profile', confirm: 'Save', name: profile.name, replaceOption: true,
-                            taken: n => load().some((p, j) => j !== i && p.name === n),
-                            onConfirm: (name, replace) => {
-                                const all = load();
-                                if (!all[i])
-                                    return;
-                                all[i] = {name, colors: replace ? current() : all[i].colors};
-                                save(all);
-                            },
-                        });
-                    });
-
                     const del = new Gtk.Button({icon_name: 'user-trash-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Delete'});
                     del.add_css_class('flat');
                     del.connect('clicked', () => {
                         popover.popdown();
-                        confirmDelete(profile.name, () => save(load().filter((_p, j) => j !== i)));
+                        confirm(`Delete "${profile.name}"?`, 'This profile will be removed.', 'Delete',
+                            () => save(load().filter((_p, j) => j !== i)));
                     });
 
-                    row.add_suffix(edit);
                     row.add_suffix(del);
                     list.append(row);
                 });
@@ -205,7 +215,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             for (const [n] of COLOR_ROWS)
                 s.connect(`changed::${colorKey(n)}`, refresh);
 
-            const row = new Adw.ActionRow({title: 'Profile', subtitle: 'Apply, edit or delete saved color sets'});
+            const row = new Adw.ActionRow({title: 'Profile', subtitle: 'Apply or delete saved color sets'});
             row.add_suffix(selector);
             row.add_suffix(addButton);
             const group = new Adw.PreferencesGroup({title: 'Profiles'});
