@@ -620,12 +620,6 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             });
             s.bind('ignore-panel', ignoreRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(ignoreRow);
-            const islandsRow = new Adw.SwitchRow({
-                title: 'Island mode',
-                subtitle: 'Transparent panel with a rounded background behind each section',
-            });
-            s.bind('panel-islands', islandsRow, 'active', Gio.SettingsBindFlags.DEFAULT);
-            effects.add(islandsRow);
             const bordersRow = new Adw.SwitchRow({
                 title: 'Hide borders',
                 subtitle: 'Removes the outline of Quick Settings, the calendar and other menus',

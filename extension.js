@@ -72,7 +72,7 @@ const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode; other keys (profiles...) never do.
 // General tab options that change the theme.
-const EFFECT_KEYS = ['general-opacity', 'ignore-panel', 'panel-islands', 'hide-borders', 'match-arrow-buttons'];
+const EFFECT_KEYS = ['general-opacity', 'ignore-panel', 'hide-borders', 'match-arrow-buttons'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', ...EFFECT_KEYS];
 
@@ -108,19 +108,6 @@ function arrowCss(dark) {
     const off = dark ? 'st-mix(#ffffff, #36363a, 9%)' : 'st-mix(#222226, whitesmoke, 12%)';
     return states('', off) + states(':checked', '-st-accent-color');
 }
-
-// Island mode: the panel is transparent and each section (left, center, right) gets its
-// own rounded background. GNOME sizes the sections to their content. Empty sections get
-// ISLAND_EMPTY and no island; the overview and lock screen keep GNOME's transparent panel.
-const ISLAND_EMPTY = 'lmm-island-empty';
-const ISLAND_SEL = '#panelLeft, #panelCenter, #panelRight';
-const NO_ISLAND_SEL = ['#panel:overview', '#panel.unlock-screen', '#panel.login-screen']
-    .flatMap(p => ['#panelLeft', '#panelCenter', '#panelRight'].map(s => `${p} ${s}`))
-    .concat(['#panelLeft', '#panelCenter', '#panelRight'].map(s => `${s}.${ISLAND_EMPTY}`)).join(', ');
-const islandsCss = color =>
-    rule('#panel', 'background-color', 'transparent') +
-    `${ISLAND_SEL} {\n  background-color: ${color};\n  border-radius: 999px;\n  margin: 3px 2px;\n}\n` +
-    `${NO_ISLAND_SEL} {\n  background-color: transparent;\n  margin: 0;\n}\n`;
 
 // GNOME's own delay before fading out the snapshot of the old screen.
 const TRANSITION_DELAY = 250;
@@ -403,67 +390,6 @@ export default class LightModeManagerExtension extends Extension {
         this._dtpCreatedId = 0;
     }
 
-    // ---------- Island mode ----------
-    // Marks panel sections with no visible item, so they get no island (St has no :empty).
-    // Panel items are containers that stay visible while hiding the button inside them.
-    _unhookIslandBoxes() {
-        for (const box of this._islandBoxes ?? []) {
-            box.disconnectObject(this);
-            box.remove_style_class_name(ISLAND_EMPTY);
-        }
-        this._islandBoxes = null;
-        if (this._islandDtpId)
-            this._islandDtp?.disconnect(this._islandDtpId);
-        this._islandDtp = null;
-        this._islandDtpId = 0;
-    }
-
-    _syncIslandBoxes() {
-        this._unhookIslandBoxes();
-        if (!this._settings.get_boolean('panel-islands'))
-            return;
-        this._islandBoxes = [];
-        // Dash to Panel recreates its panels (and their sections) on monitor or layout changes.
-        if (global.dashToPanel) {
-            this._islandDtp = global.dashToPanel;
-            this._islandDtpId = this._islandDtp.connect('panels-created', () => this._syncIslandBoxes());
-        }
-        const panels = new Set([Main.panel, ...(global.dashToPanel?.panels ?? []).map(p => p.panel)]);
-        for (const panel of panels) {
-            for (const box of [panel?._leftBox, panel?._centerBox, panel?._rightBox]) {
-                if (!box || this._islandBoxes.includes(box))
-                    continue;
-                this._islandBoxes.push(box);
-                // Checked after the change settles: restyling during allocation is not allowed.
-                const check = () => this._queueIslandCheck(box);
-                box.connectObject('child-added', check, 'child-removed', check, 'notify::width', check,
-                    'destroy', () => this._islandBoxes?.splice(this._islandBoxes.indexOf(box), 1), this);
-                this._checkIslandBox(box);
-            }
-        }
-    }
-
-    _checkIslandBox(box) {
-        const empty = !box.get_children().some(c => c.visible && (c.child?.visible ?? true));
-        if (empty)
-            box.add_style_class_name(ISLAND_EMPTY);
-        else
-            box.remove_style_class_name(ISLAND_EMPTY);
-    }
-
-    _queueIslandCheck(box) {
-        (this._islandQueue ??= new Set()).add(box);
-        this._islandId ||= GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
-            this._islandId = 0;
-            for (const b of this._islandQueue) {
-                if (this._islandBoxes?.includes(b))
-                    this._checkIslandBox(b);
-            }
-            this._islandQueue.clear();
-            return GLib.SOURCE_REMOVE;
-        });
-    }
-
     // ---------- Dash to Panel menu entry ----------
     _dtpSettings() {
         const dir = Main.extensionManager.lookup(DTP_UUID)?.dir.get_child('schemas');
@@ -548,11 +474,8 @@ export default class LightModeManagerExtension extends Extension {
         });
         if (opaque) {
             css += rule(DARK_OVERVIEW_SEL, 'background-color', opaque);
-            const solid = this._settings.get_boolean('ignore-panel');
-            if (solid)
+            if (this._settings.get_boolean('ignore-panel'))
                 css += rule('#panel', 'background-color', opaque);
-            if (this._settings.get_boolean('panel-islands'))
-                css += islandsCss(solid ? opaque : values[general]);
             if (opacity < 100)
                 css += noShadowCss;
         }
@@ -617,10 +540,8 @@ export default class LightModeManagerExtension extends Extension {
 
         // The top bar has no template color of its own, so it gets its own rule.
         if (byKey['color-general']) {
-            const panelColor = this._settings.get_boolean('ignore-panel') ? opaque : byKey['color-general'];
-            css += rule('#panel', 'background-color', panelColor);
-            if (this._settings.get_boolean('panel-islands'))
-                css += islandsCss(panelColor);
+            css += rule('#panel', 'background-color',
+                this._settings.get_boolean('ignore-panel') ? opaque : byKey['color-general']);
         }
         // The top bar text follows "Text and icons".
         if (byKey['color-fg'])
@@ -735,8 +656,6 @@ export default class LightModeManagerExtension extends Extension {
                 this._syncPanelMenu(this._settings.get_boolean(key));
             else if (key === 'override-dtp-colors')
                 this._syncDtpPanels();
-            if (key === 'panel-islands')
-                this._syncIslandBoxes();
             else if (key === 'quick-settings-profiles')
                 this._syncQuickSettings();
             else if (AUTO_KEYS.includes(key))
@@ -747,10 +666,8 @@ export default class LightModeManagerExtension extends Extension {
         this._syncPanelMenu(this._settings.get_boolean('panel-menu-entry'));
         // Dash to Panel may be enabled, disabled or reloaded after this extension.
         Main.extensionManager.connectObject('extension-state-changed', (_m, ext) => {
-            if (ext.uuid === DTP_UUID) {
+            if (ext.uuid === DTP_UUID)
                 this._syncDtpPanels();
-                this._syncIslandBoxes();
-            }
         }, this);
 
         this._interface = Gio.Settings.new('org.gnome.desktop.interface');
@@ -770,7 +687,6 @@ export default class LightModeManagerExtension extends Extension {
 
         this._applyTheme();
         this._syncDtpPanels();
-        this._syncIslandBoxes();
         this._profiles = createProfiles(this._settings);
         this._syncAutoSwitch();
     }
@@ -788,10 +704,6 @@ export default class LightModeManagerExtension extends Extension {
         this._syncPanelMenu(false);
         Main.extensionManager.disconnectObject(this);
         this._unhookDtpPanels();
-        this._unhookIslandBoxes();
-        if (this._islandId)
-            GLib.Source.remove(this._islandId);
-        this._islandId = 0;
         this._indicator?.destroy();
         this._indicator = null;
         if (this._autoId) {
