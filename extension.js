@@ -71,9 +71,10 @@ const DARK_RULES = [
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode; other keys (profiles...) never do.
-const OPACITY_KEYS = ['general-opacity', 'hide-borders', 'match-arrow-buttons'];
-const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...OPACITY_KEYS];
-const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', ...OPACITY_KEYS];
+// General tab options that change the theme.
+const EFFECT_KEYS = ['general-opacity', 'hide-borders', 'match-arrow-buttons'];
+const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
+const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', ...EFFECT_KEYS];
 
 // The menus' border: Quick Settings, the calendar and notifications, panel and context menus.
 const BORDER_SEL = '.popup-menu-content, .candidate-popup-content';
