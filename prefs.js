@@ -29,7 +29,7 @@ const flatButton = props => {
 export default class LightModeManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
-        window.set_default_size(600, 500);
+        window.set_default_size(600, 930);
         window.set_search_enabled(false);
 
         // Settings handlers and pending idles are dropped when the window closes,
@@ -623,8 +623,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         };
 
         const profiles = createProfiles(s);
+        addGeneralTab(profiles);
         addTab('Light mode', 'weather-clear-symbolic', '', profiles.light);
         addTab('Dark mode', 'weather-clear-night-symbolic', '-dark', profiles.dark);
-        addGeneralTab(profiles);
     }
 }
