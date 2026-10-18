@@ -2,7 +2,7 @@
 
 GNOME Shell extension (GNOME 48) that brings light mode to the parts of the shell GNOME keeps dark (top bar, menus, quick settings, notifications, overview, dash…), and lets you customize the shell colors in both light and dark mode.
 
-It customizes **GNOME Shell only**. App colors are not changed.
+It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 apps only follow light and dark mode, when their theme has a dark variant installed (Adwaita / Adwaita-dark).
 
 ## Features
 

@@ -70,11 +70,19 @@ const DARK_RULES = [
 // Color settings of each mode.
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
-// Settings that rebuild the theme of each mode; other keys (profiles...) never do.
-// General tab options that change the theme.
+// Settings that rebuild the theme of each mode (colors and General tab options);
+// other keys (profiles...) never do.
 const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'hide-borders', 'match-arrow-buttons'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', ...EFFECT_KEYS];
+
+// Accepted color values: #rgb, #rrggbb, rgb()/rgba() or a name. Anything else (edited in
+// dconf or imported) counts as system default, so it can never break the stylesheet.
+const COLOR_RE = /^(#[0-9a-f]{3}|#[0-9a-f]{6}|rgba?\([\d\s.,]+\)|[a-z]+)$/i;
+
+// The template's own top bar color (templates/light.css), for a general background on
+// system default.
+const TEMPLATE_PANEL = '#f5f5f5';
 
 // The menus' border: Quick Settings, the calendar and notifications, panel and context menus.
 const BORDER_SEL = '.popup-menu-content, .candidate-popup-content';
@@ -130,8 +138,10 @@ const rule = (selector, prop, value) => `${selector} {\n  ${prop}: ${value};\n}\
 const noShadowCss = rule(SHADOW_SEL, 'box-shadow', 'none');
 const panelTextCss = color => rule(PANEL_TEXT_SEL, 'color', color) + rule(PANEL_LOCK_SEL, 'color', '#ffffff');
 
-// "r, g, b" of a #rrggbb, rgb() or rgba() color, so hover/active variants follow it.
+// "r, g, b" of a #rgb, #rrggbb, rgb() or rgba() color, so hover/active variants follow it.
 function colorToRgb(value) {
+    if (/^#[0-9a-f]{3}$/i.test(value))
+        value = `#${[...value.slice(1)].map(c => c + c).join('')}`;
     let m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(value);
     if (m)
         return m.slice(1).map(h => parseInt(h, 16)).join(', ');
@@ -141,11 +151,33 @@ function colorToRgb(value) {
 
 // The general background with the opacity from the General tab. Any alpha already in the
 // color (older settings or profiles) is ignored: the General tab is the only source.
+// A solid color without alpha is kept as written.
 function withOpacity(value, opacity) {
     const rgb = value ? colorToRgb(value) : null;
-    if (!rgb || (opacity >= 100 && value.startsWith('#')))
+    if (!rgb || (opacity >= 100 && !/^rgba/i.test(value)))
         return value;
     return `rgba(${rgb}, ${opacity / 100})`;
+}
+
+// The CSS property of the value at `offset` in `css`.
+function propertyAt(css, offset) {
+    const start = Math.max(css.lastIndexOf(';', offset), css.lastIndexOf('{', offset)) + 1;
+    return css.slice(start, css.indexOf(':', start)).trim().split(/\s+/).pop();
+}
+
+// Whether GTK 3 can load this theme: built in (Adwaita) or installed in one of its theme
+// folders, with one of the subfolders it reads (gtk-3.0 to gtk-3.24).
+const GTK3_SUBDIRS = Array.from({length: 13}, (_v, i) => `gtk-3.${i * 2}`);
+function gtk3ThemeExists(name) {
+    if (name === 'Adwaita' || name === 'Adwaita-dark')
+        return true;
+    if (!name)
+        return false;
+    const dirs = [GLib.get_user_data_dir(), ...GLib.get_system_data_dirs()]
+        .map(d => GLib.build_filenamev([d, 'themes']));
+    dirs.push(GLib.build_filenamev([GLib.get_home_dir(), '.themes']));
+    return dirs.some(d => GTK3_SUBDIRS.some(sub =>
+        GLib.file_test(GLib.build_filenamev([d, name, sub]), GLib.FileTest.IS_DIR)));
 }
 
 const PROFILE_ICON = 'preferences-desktop-appearance-symbolic';
@@ -228,14 +260,17 @@ export default class LightModeManagerExtension extends Extension {
         return this._getColorScheme() === 'prefer-dark';
     }
 
-    // Legacy GTK3 apps: switches between "Theme" and "Theme-dark".
+    // Legacy GTK 3 apps: switches between "Theme" and "Theme-dark", only to an installed theme.
     _setLegacyColorScheme(scheme) {
         const theme = this._interface.get_string('gtk-theme');
         const isDark = theme.endsWith('-dark');
+        let next = theme;
         if (scheme === 'prefer-dark' && !isDark)
-            this._interface.set_string('gtk-theme', `${theme}-dark`);
+            next = `${theme}-dark`;
         else if (scheme !== 'prefer-dark' && isDark)
-            this._interface.set_string('gtk-theme', theme.slice(0, -5));
+            next = theme.slice(0, -5);
+        if (next !== theme && gtk3ThemeExists(next))
+            this._interface.set_string('gtk-theme', next);
     }
 
     _schemeChanged() {
@@ -451,9 +486,12 @@ export default class LightModeManagerExtension extends Extension {
             .join('') + noShadowCss;
     }
 
-    // The value strings of the given keys; empty means system default.
+    // The colors of the given keys; empty means system default.
     _values(keys) {
-        return keys.map(key => this._settings.get_string(key).trim());
+        return keys.map(key => {
+            const value = this._settings.get_string(key).trim();
+            return COLOR_RE.test(value) ? value : '';
+        });
     }
 
     // Vanilla GNOME keeps the shell dark in light mode. With every light color on system
@@ -494,14 +532,15 @@ export default class LightModeManagerExtension extends Extension {
             if (values[i])
                 css += rule(selector, prop, values[i]);
         });
-        if (!opaque)
-            css += this._nativeOpacityCss();
+        // The overview stays opaque, and the panel too unless "Enable panel opacity".
         if (opaque) {
             css += rule(DARK_OVERVIEW_SEL, 'background-color', opaque);
             if (!this._settings.get_boolean('panel-opacity'))
                 css += rule('#panel', 'background-color', opaque);
             if (opacity < 100)
                 css += noShadowCss;
+        } else {
+            css += this._nativeOpacityCss();
         }
         // The top bar text follows "Text and icons".
         const fg = values[DARK_KEYS.indexOf('color-fg-dark')];
@@ -531,8 +570,8 @@ export default class LightModeManagerExtension extends Extension {
 
     _lightCss() {
         const values = this._values(LIGHT_KEYS);
-        // Every color on system default: no stylesheet (see _syncShellScheme), where the
-        // shell keeps its own dark style, so the arrow buttons follow that one.
+        // Every color on system default (GNOME profile): the shell keeps its own dark style
+        // (see _syncShellScheme), so only the General tab options apply, on GNOME's colors.
         if (values.every(v => !v))
             return (this._settings.get_boolean('match-arrow-buttons') ? arrowCss(true) : '') +
                 this._borderCss(null) + this._nativeOpacityCss();
@@ -540,44 +579,50 @@ export default class LightModeManagerExtension extends Extension {
         // An empty color keeps the template's original one.
         const byKey = Object.fromEntries(LIGHT_KEYS.map((key, i) => [key, values[i]]));
         const opacity = this._settings.get_int('general-opacity');
-        const opaque = withOpacity(byKey['color-general'], 100);
-        byKey['color-general'] = withOpacity(byKey['color-general'], opacity);
-        const byColor = {};
+        // Each token as a solid color, and with the opacity on the general background.
+        const solid = {};
+        const faded = {};
         const byRgb = {};
         for (const [key, color, rgb] of TOKENS) {
-            byColor[color] = byKey[key] || color;
-            byRgb[rgb] = colorToRgb(byKey[key]) ?? rgb;
+            const value = byKey[key] || (color.startsWith('#') ? color : `rgb(${rgb})`);
+            const general = key === 'color-general';
+            solid[color] = general ? withOpacity(value, 100) : value;
+            faded[color] = general ? withOpacity(value, opacity) : value;
+            byRgb[rgb] = colorToRgb(value) ?? rgb;
         }
-        const fill = (text, colors) => text.replace(TOKEN_RE, (m, rgb, alpha) =>
-            rgb ? `rgba(${byRgb[rgb]}, ${alpha})` : colors[m.toLowerCase()]);
+        // rgba() variants keep their own alpha. Text ("color:") is always solid: the opacity
+        // is for backgrounds only.
+        const fill = (text, colors) => text.replace(TOKEN_RE, (m, rgb, alpha, offset) => {
+            if (rgb)
+                return `rgba(${byRgb[rgb]}, ${alpha})`;
+            return (propertyAt(text, offset) === 'color' ? solid : colors)[m.toLowerCase()];
+        });
 
         const [head, tail, overview] = this._template();
-        let css = fill(head, byColor) + tail;
+        let css = fill(head, faded) + tail;
         // Translucent general background: the overview stays opaque and shadows are removed.
-        if (opaque && opacity < 100) {
-            const opaqueColors = {...byColor};
-            for (const [key, color] of TOKENS) {
-                if (key === 'color-general')
-                    opaqueColors[color] = opaque;
-            }
-            css += fill(overview, opaqueColors) + noShadowCss;
-        }
+        if (opacity < 100)
+            css += fill(overview, solid) + noShadowCss;
 
-        // The top bar has no template color of its own, so it gets its own rule.
-        if (byKey['color-general']) {
-            css += rule('#panel', 'background-color',
-                this._settings.get_boolean('panel-opacity') ? byKey['color-general'] : opaque);
-        }
+        // The template's top bar color is not a token, so it gets its own rule.
+        const panel = byKey['color-general'] || TEMPLATE_PANEL;
+        css += rule('#panel', 'background-color',
+            withOpacity(panel, this._settings.get_boolean('panel-opacity') ? opacity : 100));
         // The top bar text follows "Text and icons".
         if (byKey['color-fg'])
             css += panelTextCss(byKey['color-fg']);
         if (this._settings.get_boolean('match-arrow-buttons'))
-            css += fill(arrowCss(false), byColor);
+            css += fill(arrowCss(false), faded);
         return css + this._borderCss('color-border');
     }
 
     // Loads the stylesheet, then keeps Dash to Panel's panels on this extension's color.
     _applyTheme() {
+        // A pending delayed apply would only repeat this one.
+        if (this._applyId) {
+            GLib.Source.remove(this._applyId);
+            this._applyId = 0;
+        }
         try {
             this._applyStylesheet();
         } finally {
@@ -710,10 +755,11 @@ export default class LightModeManagerExtension extends Extension {
         });
         this._syncQuickSettings();
 
-        this._applyTheme();
-        this._syncDtpPanels();
+        // Before the first theme, so a profile applied by the automatic switch is built once.
         this._profiles = createProfiles(this._settings);
         this._syncAutoSwitch();
+        this._applyTheme();
+        this._syncDtpPanels();
     }
 
     disable() {
@@ -742,9 +788,11 @@ export default class LightModeManagerExtension extends Extension {
         }
         if (this._getColorScheme() === 'prefer-light')
             this._interface.set_string('color-scheme', 'default');
-        this._setLegacyColorScheme('default');
+        // Legacy GTK 3 apps stay on the scheme that remains.
+        this._setLegacyColorScheme(this._getColorScheme());
 
         this._settings = this._interface = this._cacheDir = null;
+        this._lastCss = this._modeScheme = this._dtpColor = null;
         this._templateHead = this._templateTail = this._templateOverview = null;
     }
 }

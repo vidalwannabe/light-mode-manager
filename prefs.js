@@ -53,10 +53,11 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             });
             let loading = false;
             const load = () => {
-                const value = s.get_string(key);
-                row.set_subtitle(value ? subtitle : 'System default');
+                // Empty or unreadable: the shell uses the system default.
                 const color = new Gdk.RGBA();
-                if (!color.parse(value))
+                const valid = color.parse(s.get_string(key).trim());
+                row.set_subtitle(valid ? subtitle : 'System default');
+                if (!valid)
                     color.parse('#808080');
                 loading = true;
                 button.set_rgba(color);
@@ -482,7 +483,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         const readSettingsFile = file => {
             const [, bytes] = file.load_contents(null);
             const data = JSON.parse(new TextDecoder().decode(bytes));
-            if (data?.extension !== this.uuid || typeof data.settings !== 'object')
+            if (data?.extension !== this.uuid || typeof data.settings !== 'object' || !data.settings)
                 throw new Error('not a Light Mode Manager settings file');
             const schema = s.settings_schema;
             return new Map(schema.list_keys().map(k => {
@@ -531,9 +532,9 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                         continue;
                     const entry = {name: p.name.trim(), ...content(p)};
                     // Already there, under its name or a numbered copy of it ("Name (2)").
-                    const key = JSON.stringify(content(entry));
+                    const signature = JSON.stringify(content(entry));
                     const same = own.find(q => (q.name === entry.name || numbered(q.name, entry.name)) &&
-                        JSON.stringify(content(q)) === key);
+                        JSON.stringify(content(q)) === signature);
                     if (same) {
                         names.set(p.name, same.name);
                         continue;
