@@ -109,6 +109,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         // Profile selector and "+" button at the top of a tab.
         const profilesGroup = suffix => {
             const listKey = `profiles${suffix}`;
+            const activeKey = `active-profile${suffix}`;
             const colorKey = name => `color-${name}${suffix}`;
 
             const load = () => {
@@ -132,6 +133,13 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 }
             };
             const matches = colors => COLOR_ROWS.every(([n]) => colors[n] === s.get_string(colorKey(n)));
+            // The applied profile is remembered by name, so two profiles with the same
+            // colors are not both marked. It stops counting once a color is changed.
+            const setActive = name => s.set_string(activeKey, name);
+            const active = profiles => {
+                const p = profiles.find(q => q.name === s.get_string(activeKey));
+                return p && matches(p.colors) ? p : null;
+            };
 
             const list = new Gtk.ListBox({selection_mode: Gtk.SelectionMode.NONE});
             list.add_css_class('boxed-list');
@@ -147,13 +155,19 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             newAction.connect('activate', () => nameDialog({
                 heading: 'New profile', confirm: 'Save',
                 taken: n => load().some(p => p.name === n),
-                onConfirm: name => save([...load(), {name, colors: current()}]),
+                onConfirm: name => {
+                    save([...load(), {name, colors: current()}]);
+                    setActive(name);
+                },
             }));
             const overwriteAction = new Gio.SimpleAction({name: 'overwrite', parameter_type: new GLib.VariantType('s')});
             overwriteAction.connect('activate', (_a, param) => {
                 const name = param.unpack();
                 confirm(`Apply to "${name}"?`, 'Its saved colors will be replaced with the current ones.', 'Replace',
-                    () => save(load().map(p => p.name === name ? {name, colors: current()} : p)));
+                    () => {
+                        save(load().map(p => p.name === name ? {name, colors: current()} : p));
+                        setActive(name);
+                    });
             });
             const noneAction = new Gio.SimpleAction({name: 'none', enabled: false});
             [newAction, overwriteAction, noneAction].forEach(a => actions.add_action(a));
@@ -183,7 +197,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             const refresh = () => {
                 const profiles = load();
                 buildAddMenu(profiles);
-                selector.set_label(profiles.find(p => matches(p.colors))?.name ?? 'No profile');
+                const applied = active(profiles);
+                selector.set_label(applied?.name ?? 'No profile');
                 list.remove_all();
                 if (profiles.length === 0) {
                     list.append(new Adw.ActionRow({title: 'No saved profiles', subtitle: 'Use + to save the current colors'}));
@@ -191,10 +206,11 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 }
                 profiles.forEach((profile, i) => {
                     const row = new Adw.ActionRow({title: profile.name, activatable: true, tooltip_text: 'Apply'});
-                    if (matches(profile.colors))
-                        row.add_prefix(new Gtk.Image({icon_name: 'object-select-symbolic'}));
+                    // Every row gets the check icon so names stay aligned; only the applied one shows it.
+                    row.add_prefix(new Gtk.Image({icon_name: 'object-select-symbolic', opacity: profile === applied ? 1 : 0}));
                     row.connect('activated', () => {
                         popover.popdown();
+                        setActive(profile.name);
                         apply(profile.colors);
                     });
 
@@ -212,6 +228,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             };
             refresh();
             s.connect(`changed::${listKey}`, refresh);
+            s.connect(`changed::${activeKey}`, refresh);
             for (const [n] of COLOR_ROWS)
                 s.connect(`changed::${colorKey(n)}`, refresh);
 

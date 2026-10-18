@@ -14,5 +14,7 @@
     <!-- Saved color profiles: JSON list of {"name": ..., "colors": {row: color}} -->
     <key name="profiles" type="s"><default>'[]'</default><summary>Light mode profiles</summary></key>
     <key name="profiles-dark" type="s"><default>'[]'</default><summary>Dark mode profiles</summary></key>
+    <key name="active-profile" type="s"><default>''</default><summary>Last applied light mode profile</summary></key>
+    <key name="active-profile-dark" type="s"><default>''</default><summary>Last applied dark mode profile</summary></key>
   </schema>
 </schemalist>
