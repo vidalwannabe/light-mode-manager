@@ -7,7 +7,7 @@ import GLib from 'gi://GLib';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import {QuickMenuToggle, SystemIndicator} from 'resource:///org/gnome/shell/ui/quickSettings.js';
+import {QuickMenuToggle, QuickSettingsItem, SystemIndicator} from 'resource:///org/gnome/shell/ui/quickSettings.js';
 
 import {createProfiles} from './profiles.js';
 
@@ -229,6 +229,14 @@ function gtk3ThemeExists(name) {
         GLib.file_test(GLib.build_filenamev([d, name, sub]), GLib.FileTest.IS_DIR)));
 }
 
+// get_preferred_height() of `actor` with "any width" (-1) replaced by width(), when known.
+function heightAtWidth(actor, width) {
+    return forWidth => {
+        const w = forWidth < 0 ? width() : forWidth;
+        return Clutter.Actor.prototype.get_preferred_height.call(actor, w > 0 ? w : forWidth);
+    };
+}
+
 const PROFILE_ICON = 'preferences-desktop-appearance-symbolic';
 
 const AUTO_KEYS = ['auto-switch', 'auto-switch-1-time', 'auto-switch-1-profile', 'auto-switch-2-time', 'auto-switch-2-profile'];
@@ -375,22 +383,85 @@ export default class LightModeManagerExtension extends Extension {
         }
     }
 
-    // ---------- Quick Settings dimming ----------
+    // ---------- Quick Settings overrides ----------
+    // Both options below replace a GNOME method on one object. What was there before is
+    // kept and put back on restore, and only if the method is still ours, so an override
+    // from another extension is never lost.
+    _override(object, name, fn) {
+        this._overrides ??= new Map();
+        const own = Object.hasOwn(object, name);
+        this._overrides.set(fn, {object, name, own, previous: object[name]});
+        object[name] = fn;
+    }
+
+    _restore(fn) {
+        const saved = this._overrides?.get(fn);
+        if (!saved)
+            return;
+        this._overrides.delete(fn);
+        const {object, name, own, previous} = saved;
+        if (object[name] !== fn)
+            return;
+        if (own)
+            object[name] = previous;
+        else
+            delete object[name];
+    }
+
     // While one of its menus is open, GNOME darkens Quick Settings with a Clutter effect
-    // (not CSS), from QuickSettingsMenu._setDimmed(). With no-qs-dimming the menu gets an
-    // own no-op _setDimmed(); deleting it brings back GNOME's method from the prototype.
+    // (not CSS), from QuickSettingsMenu._setDimmed(). With no-qs-dimming it does nothing.
     _syncQsDimming(remove = this._settings.get_boolean('no-qs-dimming')) {
         const menu = Main.panel.statusArea.quickSettings?.menu;
-        if (typeof menu?._setDimmed !== 'function' || remove === Object.hasOwn(menu, '_setDimmed'))
+        if (typeof menu?._setDimmed !== 'function' || remove === !!this._noDimming)
             return;
         if (remove) {
             // Undo a dimming already in place (a menu open right now).
             menu._setDimmed(false);
-            menu._setDimmed = () => {};
+            this._noDimming = () => {};
+            this._override(menu, '_setDimmed', this._noDimming);
         } else {
-            delete menu._setDimmed;
+            this._restore(this._noDimming);
+            this._noDimming = null;
             menu._setDimmed(!!menu._activeMenu);
         }
+    }
+
+    // GNOME measures an expanded Quick Settings menu, and the room the buttons below make for
+    // it, with get_preferred_height(-1): at no particular width. Text that wraps (Bluetooth
+    // off: "Turn on Bluetooth to connect to devices") then counts as one line and the menu
+    // covers the buttons below (GNOME issue 7622). With fix-qs-menu-height both are measured
+    // at the real width, in any language: QuickToggleMenu.open() (the opening animation) and
+    // the menus' overlay (read by the Quick Settings layout once the animation ends).
+    _syncQsMenuHeight(fix = this._settings.get_boolean('fix-qs-menu-height')) {
+        const overlay = Main.panel.statusArea.quickSettings?.menu?._overlay;
+        if (!overlay || fix === !!this._menuOpen)
+            return;
+        if (fix) {
+            // QuickToggleMenu is not exported: its prototype comes from a throwaway item.
+            const item = new QuickSettingsItem({hasMenu: true});
+            const proto = Object.getPrototypeOf(item.menu);
+            item.menu.destroy();
+            item.destroy();
+            const open = proto.open;
+            this._menuOpen = function (animate) {
+                const {actor} = this;
+                actor.get_preferred_height = heightAtWidth(actor, () => actor.get_parent()?.width ?? 0);
+                try {
+                    open.call(this, animate);
+                } finally {
+                    delete actor.get_preferred_height;
+                }
+            };
+            this._overlayHeight = heightAtWidth(overlay, () => overlay.get_parent()?.width ?? 0);
+            this._override(proto, 'open', this._menuOpen);
+            this._override(overlay, 'get_preferred_height', this._overlayHeight);
+        } else {
+            this._restore(this._menuOpen);
+            this._restore(this._overlayHeight);
+            this._menuOpen = this._overlayHeight = null;
+        }
+        // A menu open right now gets the new height.
+        overlay.get_parent()?.queue_relayout();
     }
 
     // ---------- Automatic switch ----------
@@ -825,6 +896,8 @@ export default class LightModeManagerExtension extends Extension {
                 this._syncQuickSettings();
             else if (key === 'no-qs-dimming')
                 this._syncQsDimming();
+            else if (key === 'fix-qs-menu-height')
+                this._syncQsMenuHeight();
             else if (AUTO_KEYS.includes(key))
                 this._syncAutoSwitch();
             else if ((this._isDark() ? DARK_THEME_KEYS : LIGHT_THEME_KEYS).includes(key))
@@ -852,6 +925,7 @@ export default class LightModeManagerExtension extends Extension {
         });
         this._syncQuickSettings();
         this._syncQsDimming();
+        this._syncQsMenuHeight();
 
         // Before the first theme, so a profile applied by the automatic switch is built once.
         this._profiles = createProfiles(this._settings);
@@ -876,6 +950,7 @@ export default class LightModeManagerExtension extends Extension {
         this._indicator?.destroy();
         this._indicator = null;
         this._syncQsDimming(false);
+        this._syncQsMenuHeight(false);
         if (this._autoId) {
             GLib.Source.remove(this._autoId);
             this._autoId = 0;
@@ -891,7 +966,7 @@ export default class LightModeManagerExtension extends Extension {
         this._setLegacyColorScheme(this._getColorScheme());
 
         this._settings = this._interface = this._cacheDir = null;
-        this._lastCss = this._modeScheme = this._dtpColor = null;
+        this._lastCss = this._modeScheme = this._dtpColor = this._overrides = null;
         this._templateHead = this._templateTail = this._templateOverview = null;
     }
 }

@@ -646,6 +646,12 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             });
             s.bind('calendar-background', calendarRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(calendarRow);
+            const menuHeightRow = new Adw.SwitchRow({
+                title: 'Prevent expanded menus from overlapping',
+                subtitle: 'Quick Settings menus with wrapped text (like Bluetooth when off) no longer cover the buttons below',
+            });
+            s.bind('fix-qs-menu-height', menuHeightRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+            effects.add(menuHeightRow);
             const dtpRow = new Adw.SwitchRow({
                 title: 'Override Dash to Panel color settings',
                 subtitle: 'Dash to Panel uses this extension\'s panel color and opacity',

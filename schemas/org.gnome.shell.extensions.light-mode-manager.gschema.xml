@@ -25,6 +25,7 @@
     <key name="active-general-profile" type="s"><default>'Default'</default><summary>Last applied general profile</summary></key>
     <!-- General tab -->
     <key name="transition-duration" type="i"><range min="0" max="2000"/><default>500</default><summary>Fade duration in ms when switching between light and dark mode</summary></key>
+    <key name="fix-qs-menu-height" type="b"><default>true</default><summary>Expanded Quick Settings menus are measured at their real width, so they never cover the buttons below</summary></key>
     <key name="override-dtp-colors" type="b"><default>false</default><summary>Dash to Panel uses this extension's panel color and opacity instead of its own</summary></key>
     <key name="panel-opacity" type="b"><default>false</default><summary>The general background opacity also applies to the panel (solid otherwise)</summary></key>
     <key name="hide-borders" type="b"><default>false</default><summary>Hide the menu borders, both modes</summary></key>
