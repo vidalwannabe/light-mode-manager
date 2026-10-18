@@ -656,7 +656,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             effects.add(menuHeightRow);
             const dtpRow = new Adw.SwitchRow({
                 title: 'Override Dash to Panel colors',
-                subtitle: "Dash to Panel uses this extension's panel color and opacity, not its own",
+                subtitle: "Its panels and window previews use this extension's colors, not its own",
             });
             s.bind('override-dtp-colors', dtpRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(dtpRow);

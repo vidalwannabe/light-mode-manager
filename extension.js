@@ -527,21 +527,22 @@ export default class LightModeManagerExtension extends Extension {
     }
 
     // ---------- Dash to Panel colors ----------
-    // Dash to Panel paints each of its panels with an inline style from its own color and
-    // opacity settings, and St always ranks inline styles above stylesheets. With
-    // override-dtp-colors, that inline background is replaced with the theme's panel color
-    // each time Dash to Panel sets it, and restored when turned off. Dash to Panel's
-    // settings and code are never changed.
+    // Dash to Panel paints its panels and its window previews (background, header, focus,
+    // close button) from each panel's dynamicTransparency: backgroundColorRgb and alpha,
+    // which come from its own color and opacity settings. With override-dtp-colors, that
+    // object's _updateColor() and _updateAlpha() are replaced so both always come from this
+    // extension's panel color, whatever Dash to Panel's settings (custom color, dynamic
+    // opacity...). Its settings are never changed, and its methods come back when turned off.
 
-    // The background the loaded stylesheets give #panel: this extension's color, opacity and
-    // "Enable panel opacity", or GNOME's own with the GNOME profile. Read from a hidden probe,
-    // as Dash to Panel does, so no inline style is involved.
+    // The background the loaded stylesheets give #panel: this extension's color, shell
+    // opacity and "Enable panel opacity", or GNOME's own with the GNOME profile. Read from a
+    // hidden probe, as Dash to Panel does. Alpha from 0 to 1.
     _themePanelColor() {
         const probe = new St.Bin({name: 'panel'});
         Main.uiGroup.add_child(probe);
-        const c = probe.get_theme_node().get_background_color();
+        const {red, green, blue, alpha} = probe.get_theme_node().get_background_color();
         probe.destroy();
-        return `rgba(${c.red}, ${c.green}, ${c.blue}, ${+(c.alpha / 255).toFixed(3)})`;
+        return {red, green, blue, alpha: alpha / 255};
     }
 
     _syncDtpPanels() {
@@ -555,34 +556,43 @@ export default class LightModeManagerExtension extends Extension {
         this._dtpColor = this._themePanelColor();
         this._dtpPanels = new Map();
         for (const panel of dtp.panels ?? []) {
-            this._dtpPanels.set(panel, {original: panel.get_style() ?? '', ours: null});
-            panel.connectObject(
-                'notify::style', () => this._overrideDtpPanel(panel),
-                'destroy', () => this._dtpPanels?.delete(panel),
-                this);
-            this._overrideDtpPanel(panel);
+            const transparency = panel.dynamicTransparency;
+            if (typeof transparency?._updateAllAndSet !== 'function')
+                continue;
+            const color = () => {
+                const {red, green, blue} = this._dtpColor;
+                transparency.backgroundColorRgb = {red, green, blue};
+            };
+            const alpha = () => {
+                transparency.alpha = this._dtpColor.alpha;
+            };
+            this._override(transparency, '_updateColor', color);
+            this._override(transparency, '_updateAlpha', alpha);
+            this._dtpPanels.set(panel, {transparency, color, alpha});
+            panel.connectObject('destroy', () => this._dtpPanels?.delete(panel), this);
+            transparency._updateAllAndSet();
         }
     }
 
-    // Keeps Dash to Panel's own style (transition...) with the theme's background.
-    _overrideDtpPanel(panel) {
-        const state = this._dtpPanels?.get(panel);
-        if (!state)
+    // After a theme change: the new panel color, on every panel and its previews.
+    _refreshDtpPanels() {
+        if (!this._dtpPanels)
             return;
-        const style = panel.get_style() ?? '';
-        if (style !== state.ours)
-            state.original = style;
-        const next = `background-color: ${this._dtpColor}; ${state.original.replace(/background-color:[^;]*;?\s*/g, '')}`;
-        state.ours = next;
-        if (style !== next)
-            panel.set_style(next);
+        this._dtpColor = this._themePanelColor();
+        for (const {transparency} of this._dtpPanels.values())
+            transparency._updateAllAndSet();
     }
 
     _unhookDtpPanels() {
-        for (const [panel, state] of this._dtpPanels ?? []) {
+        for (const [panel, {transparency, color, alpha}] of this._dtpPanels ?? []) {
             panel.disconnectObject(this);
-            if (panel.get_style() === state.ours)
-                panel.set_style(state.original);
+            this._restore(color);
+            this._restore(alpha);
+            try {
+                transparency._updateAllAndSet();
+            } catch (e) {
+                console.error(`[LightModeManager] ${e.message}`);
+            }
         }
         this._dtpPanels = null;
         if (this._dtpCreatedId)
@@ -840,10 +850,7 @@ export default class LightModeManagerExtension extends Extension {
         try {
             this._applyStylesheet();
         } finally {
-            if (this._dtpPanels) {
-                this._dtpColor = this._themePanelColor();
-                this._dtpPanels.forEach((_s, panel) => this._overrideDtpPanel(panel));
-            }
+            this._refreshDtpPanels();
         }
     }
 
