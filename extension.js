@@ -123,10 +123,12 @@ function buttonCss(selectors, base, dark) {
         'background-color', color)).join('');
 }
 
-// Inactive Quick Settings buttons: toggles that are off and the round buttons at the top.
-// Checked toggles get GNOME's accent states again after them, and the Background Apps
-// item (also a toggle) its transparent background, which still gives way to the hover.
+// Inactive Quick Settings buttons: toggles that are off and the round buttons at the top;
+// the menus they expand (Wi-Fi, Power Off...) use the same color. Checked toggles get
+// GNOME's accent states again after them, and the Background Apps item (also a toggle)
+// its transparent background, which still gives way to the hover.
 const QS_BUTTONS = ['.quick-toggle', '.quick-settings-system-item .icon-button'];
+const QS_MENU = '.quick-toggle-menu';
 const QS_CHECKED = '.quick-toggle:checked';
 const QS_FLAT = '.background-apps-quick-toggle';
 
@@ -373,6 +375,24 @@ export default class LightModeManagerExtension extends Extension {
         }
     }
 
+    // ---------- Quick Settings dimming ----------
+    // While one of its menus is open, GNOME darkens Quick Settings with a Clutter effect
+    // (not CSS), from QuickSettingsMenu._setDimmed(). With no-qs-dimming the menu gets an
+    // own no-op _setDimmed(); deleting it brings back GNOME's method from the prototype.
+    _syncQsDimming(remove = this._settings.get_boolean('no-qs-dimming')) {
+        const menu = Main.panel.statusArea.quickSettings?.menu;
+        if (typeof menu?._setDimmed !== 'function' || remove === Object.hasOwn(menu, '_setDimmed'))
+            return;
+        if (remove) {
+            // Undo a dimming already in place (a menu open right now).
+            menu._setDimmed(false);
+            menu._setDimmed = () => {};
+        } else {
+            delete menu._setDimmed;
+            menu._setDimmed(!!menu._activeMenu);
+        }
+    }
+
     // ---------- Automatic switch ----------
     // The switch (1 or 2) whose time passed most recently at `minutes` past midnight,
     // or 0 if both times are equal.
@@ -593,10 +613,11 @@ export default class LightModeManagerExtension extends Extension {
         const fg = values[DARK_KEYS.indexOf('color-fg-dark')];
         if (fg)
             css += panelTextCss(fg);
-        css += this._quickSettingsCss(true, this._values(['color-qs-button-dark'])[0]);
         const card = values[DARK_KEYS.indexOf('color-card-dark')];
         if (card)
             css += buttonCss(DARK_CARD_BUTTONS, card, true);
+        // After the cards, so the Quick Settings menus take the inactive buttons color.
+        css += this._quickSettingsCss(true, this._values(['color-qs-button-dark'])[0]);
         if (this._settings.get_boolean('calendar-background'))
             css += calendarCss(card || NATIVE_CARD, true);
         return css + this._borderCss('color-border-dark');
@@ -612,7 +633,7 @@ export default class LightModeManagerExtension extends Extension {
         let css = '';
         if (color) {
             css += buttonCss(QS_BUTTONS, color, dark) + buttonCss(QS_CHECKED, '-st-accent-color', dark) +
-                rule(QS_FLAT, 'background-color', 'transparent');
+                rule(QS_FLAT, 'background-color', 'transparent') + buttonCss(QS_MENU, color, dark);
             const amount = ARROW_SHADE[dark ? 'dark' : 'light'];
             css += buttonCss(ARROW_SEL, match ? color : `${shade(dark)}(${color}, ${amount}%)`, dark);
         } else {
@@ -802,6 +823,8 @@ export default class LightModeManagerExtension extends Extension {
                 this._syncDtpPanels();
             else if (key === 'quick-settings-profiles')
                 this._syncQuickSettings();
+            else if (key === 'no-qs-dimming')
+                this._syncQsDimming();
             else if (AUTO_KEYS.includes(key))
                 this._syncAutoSwitch();
             else if ((this._isDark() ? DARK_THEME_KEYS : LIGHT_THEME_KEYS).includes(key))
@@ -828,6 +851,7 @@ export default class LightModeManagerExtension extends Extension {
             this._syncQuickSettings();
         });
         this._syncQuickSettings();
+        this._syncQsDimming();
 
         // Before the first theme, so a profile applied by the automatic switch is built once.
         this._profiles = createProfiles(this._settings);
@@ -851,6 +875,7 @@ export default class LightModeManagerExtension extends Extension {
         this._unhookDtpPanels();
         this._indicator?.destroy();
         this._indicator = null;
+        this._syncQsDimming(false);
         if (this._autoId) {
             GLib.Source.remove(this._autoId);
             this._autoId = 0;

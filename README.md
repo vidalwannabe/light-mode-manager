@@ -15,8 +15,8 @@ Each tab has six colors:
 | General background | Top bar, menus and dialogs, OSD and window switcher, overview |
 | Text and icons | Main text color, including the top bar |
 | Secondary text | Dates, captions, subtitles |
-| Cards, dash and search | Notifications, calendar, quick settings, dock, search results, app folders |
-| Inactive Quick Settings buttons | Quick Settings toggles that are off, their arrows and the round buttons at the top |
+| Cards, dash and search | Notifications, calendar, dock, search results, app folders |
+| Inactive Quick Settings buttons | Quick Settings toggles that are off, their arrows, the round buttons at the top and the menus they open |
 | Borders | Outline of Quick Settings, the calendar and other menus |
 
 Hover, focus and active states follow these colors automatically. Every color has a button to restore its Default profile value.
@@ -39,6 +39,7 @@ Each tab has a profile selector to apply a set of colors in one click.
 - **Enable panel opacity**: the panel stays solid by default; when on, it also gets the opacity.
 - **Hide borders**: removes the outline of Quick Settings, the calendar and other menus, in both modes.
 - **Match arrow buttons**: the arrow (›) next to Quick Settings toggles such as Wi-Fi or Bluetooth uses the same color as its toggle, on and off, instead of GNOME's separate shade.
+- **Remove Quick Settings dimming**: Quick Settings is no longer darkened while one of its menus (Wi-Fi, Power Off…) is open.
 - **Calendar background**: the month calendar gets the color of the cards below it (Today, World Clocks, Weather), without a pill behind each day. With the GNOME profile it follows GNOME's own card color.
 - **Override Dash to Panel color settings**: Dash to Panel's panels use the theme's panel color (this extension's color and opacity, or GNOME's own with the GNOME profile) instead of Dash to Panel's own color and transparency settings (which are left unchanged).
 - **Automatic switch**: applies a chosen general profile at two times of day (for example, a light setup in the morning and an Oled one at night). A profile picked by hand in between is kept until the next switch time.
