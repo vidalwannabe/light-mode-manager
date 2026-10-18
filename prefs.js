@@ -17,8 +17,7 @@ const COLOR_ROWS = [
     ['panel-text', 'Top bar text', 'Top bar text and icon color', false],
     ['fg', 'Text and icons', 'Main text color', false],
     ['fg-muted', 'Secondary text', 'Dates, captions, subtitles', false],
-    ['card', 'Cards', 'Notifications, calendar, quick settings', false],
-    ['dash', 'Dash, search and folders', 'Overview dock, search results, app folders', false],
+    ['card', 'Cards, dash and search', 'Notifications, calendar, quick settings, dock, search results, app folders', false],
 ];
 
 export default class LightModeManagerPrefs extends ExtensionPreferences {

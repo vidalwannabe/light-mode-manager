@@ -6,14 +6,12 @@
     <key name="color-panel-text" type="s"><default>''</default><summary>Top bar text (empty = same as text color)</summary></key>
     <key name="color-fg" type="s"><default>'#000000'</default><summary>Text and icons</summary></key>
     <key name="color-fg-muted" type="s"><default>'#767679'</default><summary>Secondary text</summary></key>
-    <key name="color-card" type="s"><default>'#ebebed'</default><summary>Cards</summary></key>
-    <key name="color-dash" type="s"><default>'#ebebed'</default><summary>Dash, search and folders</summary></key>
+    <key name="color-card" type="s"><default>'#ebebed'</default><summary>Cards, dash and search</summary></key>
     <!-- Dark mode (empty = system default) -->
     <key name="color-general-dark" type="s"><default>'#222226'</default><summary>General background</summary></key>
     <key name="color-panel-text-dark" type="s"><default>'#ffffff'</default><summary>Top bar text</summary></key>
     <key name="color-fg-dark" type="s"><default>'#ffffff'</default><summary>Text and icons</summary></key>
     <key name="color-fg-muted-dark" type="s"><default>'#767679'</default><summary>Secondary text</summary></key>
-    <key name="color-card-dark" type="s"><default>'#343437'</default><summary>Cards</summary></key>
-    <key name="color-dash-dark" type="s"><default>'#343437'</default><summary>Dash, search and folders</summary></key>
+    <key name="color-card-dark" type="s"><default>'#343437'</default><summary>Cards, dash and search</summary></key>
   </schema>
 </schemalist>

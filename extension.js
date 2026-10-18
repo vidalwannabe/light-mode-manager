@@ -15,7 +15,7 @@ const TOKENS = [
     ['color-fg-muted', '#767679', '118, 118, 121'],
     ['color-card', '#e8e8e8', '232, 232, 232'],
     ['color-general', '#dcdcdc', '220, 220, 220'],
-    ['color-dash', '#cecece', '206, 206, 206'],
+    ['color-card', '#cecece', '206, 206, 206'],
     ['color-general', '#e1e1e1', '225, 225, 225'],
     ['color-general', 'whitesmoke', '245, 245, 245'],
 ];
@@ -37,8 +37,10 @@ const DARK_RULES = [
         '#panel', '.popup-menu-content', '.candidate-popup-content', '.modal-dialog',
         '.switcher-list', '.osd-window', '.workspace-switcher', '.resize-popup', '#overviewGroup',
     ].join(', '), 'background-color', 'color-general-dark'],
-    ['.message, .notification-banner, .quick-toggle-menu', 'background-color', 'color-card-dark'],
-    ['#dash .dash-background, .search-section-content, .app-folder-dialog', 'background-color', 'color-dash-dark'],
+    [[
+        '.message', '.notification-banner', '.quick-toggle-menu',
+        '#dash .dash-background', '.search-section-content', '.app-folder-dialog',
+    ].join(', '), 'background-color', 'color-card-dark'],
     [[
         'stage', '.popup-menu', '.popup-menu-item', '.popup-inactive-menu-item', '.message',
         '.quick-toggle-menu', '.events-button', '.world-clocks-button', '.weather-button',
