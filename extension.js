@@ -918,10 +918,11 @@ export default class ShellColorManagerExtension extends Extension {
     }
 
     // "Top bar background": with "Enable panel opacity" it also gets the shell opacity.
-    // `fallback` is the color used on system default.
+    // `fallback` is the color used on system default. With no color and full opacity nothing
+    // is written: the top bar stays as GNOME (or the light template) and other extensions leave it.
     _panelCss(panel, fallback) {
         const opacity = this._settings.get_boolean('panel-opacity') ? this._settings.get_int('general-opacity') : 100;
-        if (!panel && opacity >= 100 && fallback === NATIVE_PANEL)
+        if (!panel && opacity >= 100)
             return '';
         // GNOME draws the top bar of the lock and login screens transparent, over the
         // wallpaper. Extension stylesheets outrank GNOME's whatever the specificity, so the
