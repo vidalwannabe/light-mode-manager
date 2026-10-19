@@ -17,6 +17,7 @@ const COLOR_ROWS = [
     ['fg', 'Main text and icons', 'Titles and icons of notifications, widgets, menus, dialogs and Quick Settings'],
     ['fg-muted', 'Secondary text', 'Text under titles: notification body, times, locations and subtitles'],
     ['card', 'Cards background', 'Notifications, banners and calendar widgets: Today, World Clocks and Weather'],
+    ['dash', 'Dash background', 'Overview dock with favorite and running apps'],
     ['qs-active-fg', 'Active buttons text and icons', 'Text, icons and arrows of Quick Settings toggles that are on', 'Accent text color', '#ffffff'],
     ['qs-button', 'Idle Quick Settings buttons', 'Toggles that are off, top round buttons, slider buttons and toggle menus'],
     ['border', 'Borders', 'Outline of Quick Settings, the calendar and other menus'],
@@ -641,7 +642,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             effects.add(dimRow);
             const arrowRow = new Adw.SwitchRow({
                 title: 'Match arrows to toggles',
-                subtitle: "The arrow (›) next to each Quick Settings toggle uses the toggle's color, on and off",
+                subtitle: "The arrow (›) next to each Quick Settings toggle uses the toggle's color",
             });
             s.bind('match-arrow-buttons', arrowRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(arrowRow);

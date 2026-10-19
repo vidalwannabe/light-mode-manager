@@ -54,6 +54,9 @@ const DARK_RULES = [
         '.notification-banner',
     ], 'background-color', 'color-card-dark'],
     [[
+        '#dash .dash-background',
+    ], 'background-color', 'color-dash-dark'],
+    [[
         'stage', '.popup-menu', '.popup-menu-item', '.popup-inactive-menu-item', '.message',
         '.quick-toggle-menu', '.events-button', '.world-clocks-button', '.weather-button',
         '.datemenu-today-button', '.calendar .calendar-day', '.calendar .calendar-month-header .calendar-month-label',
@@ -78,7 +81,7 @@ const DARK_CARD_BUTTONS = ['.quick-toggle-menu', ...CARD_BUTTONS];
 
 // Color settings of each mode.
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button', 'color-panel-fg',
-    'color-qs-active-fg'];
+    'color-qs-active-fg', 'color-dash'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and General tab options);
 // other keys (profiles...) never do.
@@ -960,6 +963,9 @@ export default class LightModeManagerExtension extends Extension {
                 return `rgba(${cardColors.has(rgb) ? rgb : byRgb[rgb]}, ${alpha})`;
             return cardColors.has(m.toLowerCase()) ? m : solid[m.toLowerCase()];
         });
+        // "Dash background", solid like the overview (the template's own color when empty).
+        if (byKey['color-dash'])
+            css += rule('#dash .dash-background', 'background-color', withOpacity(byKey['color-dash'], 100));
         const token = expression => fill(expression, faded);
         css += this._quickSettingsCss(false, byKey['color-qs-button'], {
             toggle: token(toggleOff(false)), arrow: token(arrowOff(false)),
