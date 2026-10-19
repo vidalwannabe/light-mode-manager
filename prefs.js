@@ -112,16 +112,14 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             });
             watch(key, load);
 
-            // Right-click copies the color code shown, unless the swatch is only the gray
-            // placeholder of a color left on system default.
+            // Right-click copies the color code shown; nothing happens when the swatch is only
+            // the gray placeholder of a color left on system default.
             const copy = new Gtk.GestureClick({button: Gdk.BUTTON_SECONDARY});
             copy.set_propagation_phase(Gtk.PropagationPhase.CAPTURE);
             copy.connect('pressed', () => {
                 const hex = toHex(button.get_rgba()).toUpperCase();
-                if (!new Gdk.RGBA().parse(s.get_string(key).trim()) && hex === '#808080') {
-                    window.add_toast(new Adw.Toast({title: 'System default has no color code', timeout: 2}));
+                if (!new Gdk.RGBA().parse(s.get_string(key).trim()) && hex === '#808080')
                     return;
-                }
                 button.get_clipboard().set_content(Gdk.ContentProvider.new_for_bytes('text/plain;charset=utf-8',
                     new GLib.Bytes(new TextEncoder().encode(hex))));
                 window.add_toast(new Adw.Toast({title: `Color code copied (${hex})`, timeout: 2}));
@@ -393,13 +391,15 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             });
         };
 
-        // Ctrl+Z undoes the last color change of the open tab; each mode tab keeps its own
-        // history. Changes made in the same main loop iteration (a whole color set being
-        // applied) are one step. Every change to the tab's colors is recorded, whatever made it.
+        // Ctrl+Z undoes the last color change of the open tab and Ctrl+Shift+Z redoes the last
+        // undone one; each mode tab keeps its own history. Changes made in the same main loop
+        // iteration (a whole color set being applied) are one step. Every change to the tab's
+        // colors is recorded, whatever made it; a new change drops the steps left to redo.
         const histories = new Map();
         const trackHistory = (page, keys) => {
             const last = new Map(keys.map(key => [key, s.get_string(key)]));
-            const steps = [];
+            const undos = [];
+            const redos = [];
             let step = null;
             for (const key of keys) {
                 watch(key, () => {
@@ -408,9 +408,10 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                         return;
                     if (!step) {
                         step = new Map();
-                        steps.push(step);
-                        if (steps.length > 100)
-                            steps.shift();
+                        undos.push(step);
+                        if (undos.length > 100)
+                            undos.shift();
+                        redos.length = 0;
                         GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
                             step = null;
                             return GLib.SOURCE_REMOVE;
@@ -421,26 +422,35 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                     last.set(key, value);
                 });
             }
-            histories.set(page, () => {
-                const undo = steps.pop();
-                if (step === undo)
+            // Applies a step (key -> value to set) and files its reverse in `into`. `last` is
+            // updated first, so the handlers above do not record it as a new change.
+            const travel = (from, into) => {
+                const target = from.pop();
+                if (!target)
+                    return;
+                if (step === target)
                     step = null;
-                // Updated first, so the handlers above do not record the undo itself.
-                undo?.forEach((value, key) => {
+                const reverse = new Map();
+                target.forEach((value, key) => {
+                    reverse.set(key, last.get(key));
                     last.set(key, value);
                     s.set_string(key, value);
                 });
-            });
+                into.push(reverse);
+            };
+            histories.set(page, {undo: () => travel(undos, redos), redo: () => travel(redos, undos)});
         };
         const shortcuts = new Gtk.ShortcutController({scope: Gtk.ShortcutScope.MANAGED});
-        shortcuts.add_shortcut(new Gtk.Shortcut({
-            trigger: Gtk.ShortcutTrigger.parse_string('<Control>z'),
-            action: Gtk.CallbackAction.new(() => {
-                const undo = histories.get(window.get_visible_page());
-                undo?.();
-                return !!undo;
-            }),
-        }));
+        for (const [trigger, action] of [['<Control>z', 'undo'], ['<Control><Shift>z', 'redo']]) {
+            shortcuts.add_shortcut(new Gtk.Shortcut({
+                trigger: Gtk.ShortcutTrigger.parse_string(trigger),
+                action: Gtk.CallbackAction.new(() => {
+                    const history = histories.get(window.get_visible_page());
+                    history?.[action]();
+                    return !!history;
+                }),
+            }));
+        }
         window.add_controller(shortcuts);
 
         const addTab = (title, icon, suffix, model, sendTo) => {
@@ -459,6 +469,19 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                 page.add(group);
             }
             trackHistory(page, keys);
+            // How to undo, redo and copy colors, below the last group.
+            const notes = new Adw.PreferencesGroup();
+            for (const text of [
+                'Ctrl+Z undoes the last color change in this tab. Each tab keeps its own history.',
+                'Ctrl+Shift+Z redoes the last change you undid.',
+                'Right-click a color swatch to copy its color code to the clipboard.',
+            ]) {
+                const label = new Gtk.Label({label: text, wrap: true, justify: Gtk.Justification.CENTER, margin_bottom: 6});
+                label.add_css_class('dim-label');
+                label.add_css_class('caption');
+                notes.add(label);
+            }
+            page.add(notes);
             window.add(page);
         };
 
