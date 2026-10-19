@@ -43,7 +43,7 @@ Each tab has sixteen colors in three groups:
 
 Color sets saved before a color existed take it from the color it came from (top bar and overview from the menus background, today from the sliders), so they keep their look.
 
-Hover, focus and active states follow these colors automatically. Every color has a button to restore its value in the applied color set (or the last one applied, after editing).
+Hover, focus and active states follow these colors automatically. Every color has a button to set it to system default. Ctrl+Z undoes the last color change in the open tab; the Light mode and Dark mode tabs each keep their own history, and applying a color set is undone in one step.
 
 ### Color sets
 

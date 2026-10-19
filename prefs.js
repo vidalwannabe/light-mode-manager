@@ -80,7 +80,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             return false;
         });
 
-        const colorRow = (group, key, title, subtitle, restore, emptyLabel = 'System default', emptyColor = '#808080') => {
+        const colorRow = (group, key, title, subtitle, emptyLabel = 'System default', emptyColor = '#808080') => {
             const row = new Adw.ActionRow({title});
             const button = new Gtk.ColorDialogButton({
                 dialog: new Gtk.ColorDialog({with_alpha: false}),
@@ -105,8 +105,8 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             });
             watch(key, load);
 
-            const reset = flatButton({icon_name: 'edit-undo-symbolic', tooltip_text: 'Restore this color from the applied color set'});
-            reset.connect('clicked', restore);
+            const reset = flatButton({icon_name: 'edit-undo-symbolic', tooltip_text: 'Restore system default'});
+            reset.connect('clicked', () => s.set_string(key, ''));
             row.add_suffix(button);
             row.add_suffix(reset);
             group.add(row);
@@ -369,15 +369,69 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             });
         };
 
+        // Ctrl+Z undoes the last color change of the open tab; each mode tab keeps its own
+        // history. Changes made in the same main loop iteration (a whole color set being
+        // applied) are one step. Every change to the tab's colors is recorded, whatever made it.
+        const histories = new Map();
+        const trackHistory = (page, keys) => {
+            const last = new Map(keys.map(key => [key, s.get_string(key)]));
+            const steps = [];
+            let step = null;
+            for (const key of keys) {
+                watch(key, () => {
+                    const value = s.get_string(key);
+                    if (value === last.get(key))
+                        return;
+                    if (!step) {
+                        step = new Map();
+                        steps.push(step);
+                        if (steps.length > 100)
+                            steps.shift();
+                        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                            step = null;
+                            return GLib.SOURCE_REMOVE;
+                        });
+                    }
+                    if (!step.has(key))
+                        step.set(key, last.get(key));
+                    last.set(key, value);
+                });
+            }
+            histories.set(page, () => {
+                const undo = steps.pop();
+                if (step === undo)
+                    step = null;
+                // Updated first, so the handlers above do not record the undo itself.
+                undo?.forEach((value, key) => {
+                    last.set(key, value);
+                    s.set_string(key, value);
+                });
+            });
+        };
+        const shortcuts = new Gtk.ShortcutController({scope: Gtk.ShortcutScope.MANAGED});
+        shortcuts.add_shortcut(new Gtk.Shortcut({
+            trigger: Gtk.ShortcutTrigger.parse_string('<Control>z'),
+            action: Gtk.CallbackAction.new(() => {
+                const undo = histories.get(window.get_visible_page());
+                undo?.();
+                return !!undo;
+            }),
+        }));
+        window.add_controller(shortcuts);
+
         const addTab = (title, icon, suffix, model, sendTo) => {
             const page = new Adw.PreferencesPage({title, icon_name: icon});
             page.add(modeProfilesGroup(model, sendTo));
+            const keys = [];
             for (const [groupTitle, rows] of COLOR_GROUPS) {
                 const group = new Adw.PreferencesGroup({title: groupTitle});
-                for (const [name, label, subtitle, emptyLabel, emptyColor] of rows)
-                    colorRow(group, `color-${name}${suffix}`, label, subtitle, () => model.restore(name), emptyLabel, emptyColor);
+                for (const [name, label, subtitle, emptyLabel, emptyColor] of rows) {
+                    keys.push(`color-${name}${suffix}`);
+                    colorRow(group, `color-${name}${suffix}`, label, subtitle, emptyLabel, emptyColor);
+                }
                 page.add(group);
             }
+            trackHistory(page, keys);
             window.add(page);
         };
 
