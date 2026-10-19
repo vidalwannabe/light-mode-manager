@@ -46,7 +46,7 @@ Hover, focus and active states follow these colors automatically. Every color ha
 
 ### Profiles
 
-Each tab has a profile selector to apply a set of colors in one click. Built-in profiles come first, then your own in alphabetical order. It shows **Unsaved** when the current colors match no profile.
+Each tab has a profile selector to apply a set of colors in one click. Built-in profiles come first, then your own in alphabetical order. It shows the profile the current colors match, in real time (editing a color back to its saved value shows the profile again), or **Unsaved** when they match none.
 
 - **Built-in profiles**, which cannot be deleted or overwritten:
   - Light mode: **Default** and **GNOME**.
@@ -56,7 +56,7 @@ Each tab has a profile selector to apply a set of colors in one click. Built-in 
 
 ### Appearance tab
 
-- **General profile**: pairs a light mode profile with a dark mode profile and applies both at once. Built-in **Default** and **GNOME** general profiles are included. Adding a profile (with the save button or by importing) only saves it; it is applied from the selector. The save button preselects the profiles applied in each tab, and offers to save a tab with unsaved colors as a new profile first (skipping lets you choose another profile, Default preselected).
+- **General profile**: pairs a light mode profile with a dark mode profile and applies both at once. Built-in **Default** and **GNOME** general profiles are included. The selector shows the general profile that pairs the profiles the Light and Dark tabs show, in real time, even right after saving it. Adding a profile (with the save button or by importing) only saves it; it is applied from the selector. The save button preselects the profiles applied in each tab, and offers to save a tab with unsaved colors as a new profile first (skipping lets you choose another profile, Default preselected).
 
 **Visual tweaks**
 

@@ -77,10 +77,13 @@ function modeProfiles(settings, suffix, builtins) {
             else
                 settings.set_string(colorKey(n), value);
         },
-        // The applied profile; it stops counting once a color is changed.
+        // The profile the current colors match, found in real time: the last applied one
+        // first, otherwise any profile with exactly these colors; null when none does.
         applied(profiles = store.all()) {
-            const p = profiles.find(q => q.name === store.activeName());
-            return p && matches(p.colors) ? p : null;
+            const active = profiles.find(q => q.name === store.activeName());
+            if (active && matches(active.colors))
+                return active;
+            return profiles.find(q => matches(q.colors)) ?? null;
         },
     };
 }
@@ -106,9 +109,15 @@ function generalProfiles(settings, light, dark) {
             if (d)
                 dark.apply(d);
         },
+        // The general profile pairing the profiles the Light and Dark tabs show now: the last
+        // applied one first, otherwise any saved pair. Recognizing a profile never applies it.
         applied(profiles = store.all()) {
-            const p = profiles.find(q => q.name === store.activeName());
-            return p && light.applied()?.name === p.light && dark.applied()?.name === p.dark ? p : null;
+            const [l, d] = [light.applied()?.name, dark.applied()?.name];
+            if (!l || !d)
+                return null;
+            const pairs = p => p.light === l && p.dark === d;
+            const active = profiles.find(q => q.name === store.activeName());
+            return active && pairs(active) ? active : profiles.find(pairs) ?? null;
         },
     };
 }
