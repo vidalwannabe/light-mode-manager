@@ -83,7 +83,7 @@ Each tab has a profile selector to apply a set of colors in one click. It shows 
 
 **Lock screen**
 
-- **Use GNOME colors on the lock screen**: the lock screen shows GNOME's own colors: the extension's stylesheet is unloaded on lock and loaded again on unlock, which can cause a short delay or flicker when unlocking on slower computers. When turned off (the default), the lock screen keeps your colors and unlocking is instant, with nothing to reload; on the lock screen the extension only touches colors, through its CSS stylesheet.
+- **Use GNOME colors on the lock screen**: if turned on, the lock screen shows GNOME's own colors: the extension's stylesheet is unloaded on lock and loaded again on unlock, which can cause a short delay or flicker when unlocking on slower computers. When turned off (the default), the lock screen keeps your colors and unlocking is instant, with nothing to reload; on the lock screen the extension only touches colors, through its CSS stylesheet.
 
 **Backup**
 

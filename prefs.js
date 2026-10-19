@@ -763,7 +763,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
 
             const lock = new Adw.PreferencesGroup({title: 'Lock screen'});
             switchRow(lock, 'lock-screen-native', 'Use GNOME colors on the lock screen',
-                "The lock screen shows GNOME's own colors: this extension's stylesheet is unloaded on lock " +
+                "If turned on, the lock screen shows GNOME's own colors: this extension's stylesheet is unloaded on lock " +
                 'and loaded again on unlock, which can cause a short delay or flicker when unlocking on ' +
                 'slower computers. When turned off, the lock screen keeps your colors and unlocking is ' +
                 'instant, with nothing to reload; on the lock screen this extension only touches colors, ' +
