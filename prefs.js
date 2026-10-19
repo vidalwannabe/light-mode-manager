@@ -57,10 +57,16 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         // Narrower, the color and schedule rows squeeze their titles and controls.
         window.set_size_request(600, -1);
         window.set_search_enabled(false);
+        // One-line profile rows in the selectors, instead of libadwaita's 50px rows.
+        const css = new Gtk.CssProvider();
+        css.load_from_string('list.lmm-profile-list > row, list.lmm-profile-list > row > box.header { min-height: 0; }' +
+            'list.lmm-profile-list > row > box.header { padding-top: 2px; padding-bottom: 2px; }' +
+            'list.lmm-profile-list button { min-height: 26px; min-width: 26px; padding: 0; }');
+        Gtk.StyleContext.add_provider_for_display(window.get_display(), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
 
         // Settings handlers and pending idles are dropped when the window closes,
         // so they never run on dead widgets.
-        const cleanups = [];
+        const cleanups = [() => Gtk.StyleContext.remove_provider_for_display(window.get_display(), css)];
         const watch = (key, fn) => {
             const id = s.connect(`changed::${key}`, fn);
             cleanups.push(() => s.disconnect(id));
@@ -158,6 +164,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         const selectorGroup = ({groupTitle = 'Profiles', title, subtitle, model, describe, addButton, onRefresh}) => {
             const list = new Gtk.ListBox({selection_mode: Gtk.SelectionMode.NONE});
             list.add_css_class('boxed-list');
+            list.add_css_class('lmm-profile-list');
             const popover = new Gtk.Popover({child: new Gtk.ScrolledWindow({
                 child: list, propagate_natural_height: true, max_content_height: 360,
                 hscrollbar_policy: Gtk.PolicyType.NEVER, width_request: 300,
@@ -167,7 +174,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             const profileRow = (profile, applied) => {
                 const builtin = model.builtins.includes(profile);
                 const row = new Adw.ActionRow({
-                    title: profile.name, subtitle: describe(profile, builtin), activatable: true, tooltip_text: 'Apply',
+                    title: profile.name, subtitle: describe(profile), activatable: true, tooltip_text: 'Apply',
                 });
                 // Every row gets the check icon so names stay aligned; only the applied one shows it.
                 row.add_prefix(new Gtk.Image({icon_name: 'object-select-symbolic', opacity: profile === applied ? 1 : 0}));
@@ -269,7 +276,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
 
             return selectorGroup({
                 title: 'Profile', subtitle: 'Applies a built-in or saved color set to this mode', model, addButton,
-                describe: (_p, builtin) => builtin ? 'Built-in' : '',
+                describe: () => '',
                 onRefresh: buildAddMenu,
             });
         };
