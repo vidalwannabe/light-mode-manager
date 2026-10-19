@@ -24,14 +24,18 @@ const COLOR_GROUPS = [
         ['general', 'Menus background', 'Quick Settings, calendar, right-click menus, OSD and window switcher'],
         ['border', 'Menu borders', 'Outline of Quick Settings, the calendar and other menus'],
     ]],
-    ['Quick Settings and notification panel', [
-        ['fg', 'Idle buttons and cards titles and icons', 'Notifications, widgets and Quick Settings; also menus and dialogs'],
-        ['fg-muted', 'Idle buttons and cards subtitles', 'Text under titles: notification body, times, locations and subtitles'],
+    ['Quick Settings', [
+        ['qs-fg', 'Idle buttons titles and icons', 'Toggles that are off, top round buttons, slider buttons and menu headings'],
+        ['qs-fg-muted', 'Idle buttons subtitles', 'Text under toggle and menu headings, such as the connected network'],
         ['qs-button', 'Idle buttons background', 'Toggles that are off, top round buttons, slider buttons and toggle menus'],
-        ['card', 'Cards background', 'Notifications, banners and calendar widgets: Today, World Clocks and Weather'],
         ['qs-active-fg', 'Active buttons text and icons', 'Text, icons and arrows of Quick Settings toggles that are on', 'Accent text color', '#ffffff'],
         ['qs-active', 'Active buttons background', 'Quick Settings toggles that are on and their arrows', ACCENT, () => accentColor()],
         ['highlight', 'Volume and brightness sliders', 'Filled part of the volume, brightness and other sliders', ACCENT, () => accentColor()],
+    ]],
+    ['Notification panel', [
+        ['fg', 'Cards titles and icons', 'Notifications, calendar and widgets; also menus and dialogs'],
+        ['fg-muted', 'Cards subtitles', 'Text under titles: notification body, times, locations and weekdays'],
+        ['card', 'Cards background', 'Notifications, banners and calendar widgets: Today, World Clocks and Weather'],
         ['today', 'Today in the calendar background', 'Circle behind the current day', ACCENT, () => accentColor()],
         ['today-fg', 'Today in the calendar text', 'Number of the current day'],
     ]],

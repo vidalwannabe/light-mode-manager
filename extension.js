@@ -76,7 +76,7 @@ const DARK_RULES = [
         '.world-clocks-button .world-clocks-grid .world-clocks-timezone',
         '.weather-button .weather-box .weather-header-box .weather-header',
         '.calendar .calendar-day.calendar-weekend', '.calendar .calendar-week-number',
-        '.list-search-result .list-search-result-description', '.device-subtitle',
+        '.list-search-result .list-search-result-description',
     ], 'color', 'color-fg-muted-dark'],
 ].map(([selectors, prop, key]) => [selectors.join(', '), prop, key]);
 
@@ -87,7 +87,7 @@ const DARK_CARD_BUTTONS = ['.quick-toggle-menu', ...CARD_BUTTONS];
 
 // Color settings of each mode.
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button', 'color-panel-fg',
-    'color-qs-active-fg', 'color-qs-active', 'color-highlight', 'color-today', 'color-today-fg', 'color-dash', 'color-grid-fg', 'color-panel',
+    'color-qs-active-fg', 'color-qs-active', 'color-highlight', 'color-today', 'color-today-fg', 'color-qs-fg', 'color-qs-fg-muted', 'color-dash', 'color-grid-fg', 'color-panel',
     'color-overview'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and Appearance tab options);
@@ -97,7 +97,7 @@ const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'hide-b
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark',
     'color-qs-active-fg-dark', 'color-qs-active-dark', 'color-highlight-dark', 'color-today-dark', 'color-today-fg-dark',
-    'color-panel-dark',
+    'color-qs-fg-dark', 'color-qs-fg-muted-dark', 'color-panel-dark',
     'color-overview-dark', ...EFFECT_KEYS];
 
 // Accepted color values: #rgb, #rrggbb, rgb()/rgba() or a name. Anything else (edited in
@@ -124,7 +124,7 @@ const LIGHT_OPAQUE_RE = /overview|grid-search-result|modal-dialog|audio-device-s
 const GRID_RE = /#dash|search|app-folder/;
 const CARD_TOKENS = TOKENS.filter(([key]) => key === 'color-card');
 // The app grid (app and folder names, folder dialogs, page arrows) has its own text color,
-// "App grid text": "Idle buttons and cards titles and icons" does not paint it. In light mode
+// "App grid text": "Cards titles and icons" does not paint it. In light mode
 // the template paints it with the text token, so those rules are repeated with that color
 // (the template's own when empty).
 const APP_GRID_RE = /overview-tile|app-folder|grid-search-result|page-navigation-arrow/;
@@ -238,12 +238,23 @@ const rule = (selector, prop, value) => `${selector} {\n  ${prop}: ${value};\n}\
 const noShadowCss = rule(SHADOW_SEL, 'box-shadow', 'none');
 const insensitive = selectors => selectors.map(s => `${s}:insensitive`).join(', ');
 
-// Quick Settings text and icons on GNOME's dark style, which keeps them white: toggles and
-// their arrows, the round buttons at the top and the slider buttons.
+// "Idle buttons titles and icons": Quick Settings toggles and their arrows, the round buttons
+// at the top, the slider buttons and the heading of the menus toggles open. "Idle buttons
+// subtitles": the line under a toggle or menu heading, and device subtitles (Bluetooth...).
+// Toggles that are on get "Active buttons text and icons" afterwards (activeTextCss).
 const QS_TEXT = ['.quick-settings .button', '.quick-settings .icon-button'];
-function quickSettingsTextCss(color) {
-    return rule(QS_TEXT.join(', '), 'color', color) +
-        rule(insensitive(QS_TEXT), 'color', `st-transparentize(${color}, 0.5)`);
+const QS_TITLE = [...QS_TEXT, '.quick-toggle-menu .header .title'];
+const QS_SUBTITLE = ['.quick-settings .quick-toggle .quick-toggle-subtitle', '.quick-toggle-menu .header .subtitle',
+    '.device-subtitle'];
+function quickSettingsTextCss(main, secondary) {
+    let css = '';
+    if (main) {
+        css += rule(QS_TITLE.join(', '), 'color', main) +
+            rule(insensitive(QS_TEXT), 'color', `st-transparentize(${main}, 0.5)`);
+    }
+    if (secondary)
+        css += rule(QS_SUBTITLE.join(', '), 'color', secondary);
+    return css;
 }
 
 // "Active buttons text and icons": Quick Settings toggles that are on (and their arrows and
@@ -257,7 +268,7 @@ function activeTextCss(color) {
         rule(insensitive(QS_ACTIVE), 'color', `st-transparentize(${color}, 0.5)`);
 }
 
-// Text roles. "Idle buttons and cards titles and icons" colors titles and icons, "...subtitles" only the line
+// Text roles. "Cards titles and icons" colors titles and icons, "Cards subtitles" only the line
 // that comes under a title (a notification's body and time, a location, "No Events"...).
 // GNOME dims some titles too (a notification's app name, "Today", "Weather", weekends), so
 // each role is set here explicitly, after the template or GNOME's own rules.
@@ -277,7 +288,6 @@ const MAIN_TEXT = [
     '.datemenu-today-button .date-label',
     '.calendar .calendar-month-header .calendar-month-label',
     '.calendar .calendar-day.calendar-weekend',
-    '.quick-toggle-menu .header .title',
     '.message-dialog-content .message-dialog-title',
 ];
 const SECONDARY_TEXT = [
@@ -289,8 +299,6 @@ const SECONDARY_TEXT = [
     '.weather-button .weather-box .weather-header-box .weather-header.location',
     '.weather-button .weather-box .weather-grid .weather-forecast-time',
     '.datemenu-today-button .day-label',
-    '.quick-toggle-menu .header .subtitle',
-    '.quick-settings .quick-toggle .quick-toggle-subtitle',
     '.message-dialog-content .message-dialog-description',
 ];
 // Calendar days that keep their own look over the main color: other months dimmed, today on
@@ -973,16 +981,15 @@ export default class ShellColorManagerExtension extends Extension {
         const [panelFg] = this._values(['color-panel-fg-dark']);
         if (panelFg)
             css += panelTextCss(panelFg);
-        // Titles, subtitles and Quick Settings text: "Idle buttons and cards titles and icons", "...subtitles"
-        // and "Active buttons text and icons".
+        // Titles and subtitles: "Cards titles and icons", "Cards subtitles", "Idle buttons titles
+        // and icons", "Idle buttons subtitles" and "Active buttons text and icons".
         const fg = values[DARK_KEYS.indexOf('color-fg-dark')];
-        const [active] = this._values(['color-qs-active-fg-dark']);
-        if (fg)
-            css += quickSettingsTextCss(fg);
         const muted = values[DARK_KEYS.indexOf('color-fg-muted-dark')];
-        css += textRolesCss(fg, muted);
+        const [qsFg, qsMuted, active] = this._values(['color-qs-fg-dark', 'color-qs-fg-muted-dark',
+            'color-qs-active-fg-dark']);
+        css += textRolesCss(fg, muted) + quickSettingsTextCss(qsFg, qsMuted);
         // After the subtitles, so a toggle that is on keeps its own subtitle color.
-        if (fg || muted || active)
+        if (fg || muted || qsFg || qsMuted || active)
             css += activeTextCss(active || '-st-accent-fg-color');
         css += this._darkCardsCss(values[DARK_KEYS.indexOf('color-card-dark')],
             ...this._values(['color-qs-button-dark', 'color-qs-active-dark']));
@@ -1126,8 +1133,11 @@ export default class ShellColorManagerExtension extends Extension {
         // The top bar: "Top bar text and icons".
         if (byKey['color-panel-fg'])
             css += panelTextCss(byKey['color-panel-fg']);
-        // Titles and subtitles (the template's own colors when empty), and active buttons.
-        css += textRolesCss(fill('#222226', solid), fill('#767679', solid));
+        // Titles and subtitles (the template's own colors when empty), and active buttons. The
+        // template paints Quick Settings text with the same tokens as the cards, so the idle
+        // buttons get their own colors back here.
+        css += textRolesCss(fill('#222226', solid), fill('#767679', solid)) +
+            quickSettingsTextCss(byKey['color-qs-fg'] || '#222226', byKey['color-qs-fg-muted'] || '#767679');
         // After the subtitles, so a toggle that is on keeps its own subtitle color.
         css += activeTextCss(byKey['color-qs-active-fg'] || '-st-accent-fg-color');
         // Cards (the template's own color when empty), inactive Quick Settings buttons and

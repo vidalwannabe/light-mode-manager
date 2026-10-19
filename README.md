@@ -8,7 +8,7 @@ It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 app
 
 ### Light mode and Dark mode tabs
 
-Each tab has sixteen colors in three groups:
+Each tab has eighteen colors in four groups:
 
 **Top bar and overview**
 
@@ -27,21 +27,28 @@ Each tab has sixteen colors in three groups:
 | Menus background | Quick Settings, the calendar, right-click menus, OSD and window switcher |
 | Menu borders | Outline of Quick Settings, the calendar and other menus |
 
-**Quick Settings and notification panel**
+**Quick Settings**
 
 | Color | What it paints |
 | --- | --- |
-| Idle buttons and cards titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, menus, dialogs, Quick Settings (not the app grid, see App grid text) |
-| Idle buttons and cards subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday, toggle subtitles |
+| Idle buttons titles and icons | Quick Settings toggles that are off and their arrows, the round buttons at the top, the slider buttons and the heading of the menus toggles open |
+| Idle buttons subtitles | The line under a toggle or a toggle menu heading (the connected network, the audio device…) and device subtitles |
 | Idle buttons background | Quick Settings toggles that are off, their arrows, the round buttons at the top, the slider buttons (volume, "›", brightness) and the menus toggles open |
-| Cards background | Notifications, banners and calendar widgets: Today, World Clocks and Weather. Search results and app folders keep the system background |
 | Active buttons text and icons | Quick Settings toggles that are on (Wi-Fi, Dark Style…), their arrows and subtitles. Empty: the accent's text color, subtitles included |
 | Active buttons background | Quick Settings toggles that are on, their arrows and the icon of the menu they open. Empty (default): the accent color set in GNOME Settings › Appearance |
 | Volume and brightness sliders | The filled part of the volume, brightness and other sliders. Empty (default): the accent color set in GNOME Settings › Appearance |
+
+**Notification panel**
+
+| Color | What it paints |
+| --- | --- |
+| Cards titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, and also menus and dialogs (not the app grid, see App grid text) |
+| Cards subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday |
+| Cards background | Notifications, banners and calendar widgets: Today, World Clocks and Weather. Search results and app folders keep the system background |
 | Today in the calendar background | The circle behind the current day. Empty (default): the accent color |
 | Today in the calendar text | The number of the current day. Empty (default): system default |
 
-Color sets saved before a color existed take it from the color it came from (top bar and overview from the menus background, today from the sliders), so they keep their look.
+Color sets saved before a color existed take it from the color it came from (top bar and overview from the menus background, today from the sliders, idle buttons text from the cards text), so they keep their look.
 
 Hover, focus and active states follow these colors automatically. Every color has a button to set it to system default. Ctrl+Z undoes the last color change in the open tab; the Light mode and Dark mode tabs each keep their own history, and applying a color set is undone in one step.
 
