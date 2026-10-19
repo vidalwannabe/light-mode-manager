@@ -52,7 +52,7 @@ Each tab has a color set selector to apply a set of colors in one click. Built-i
   - Light mode: **Default** and **GNOME**.
   - Dark mode: **Default**, **GNOME** and **Oled** (Default with pure black top bar, overview, menus, menu borders, idle buttons and cards).
   - **GNOME** keeps the vanilla GNOME look, the same in light and dark mode.
-- **Your own color sets**: the save button saves the current colors as a new color set, or replaces the colors of one of yours with **Update existing color set**. Your color sets can be deleted from the selector.
+- **Your own color sets**: the save button saves the current colors as a new color set, or replaces the colors of one of yours with **Update existing color set**. Your color sets can be deleted from the selector. In the selector, each of your own color sets has three buttons: **Send to Dark mode** (or Light mode), which copies it with the same colors to the other tab's list (numbered if the name is in use there); **Rename**, which also updates the general color sets that use it; and **Delete**.
 
 ### Appearance tab
 

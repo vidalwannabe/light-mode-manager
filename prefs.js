@@ -113,10 +113,12 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
 
         // Asks for a new profile name, plus one choice per entry of `combos`
         // ({title, names, selected}). taken(name) says whether the name is already used.
-        const profileDialog = (taken, onConfirm, combos = [], heading = 'New color set') => {
+        // `initial` prefills the name (renaming: keeping it unchanged is allowed); `action` is
+        // the confirm button's label.
+        const profileDialog = (taken, onConfirm, combos = [], heading = 'New color set', initial = '', action = 'Save') => {
             const fields = new Gtk.ListBox({selection_mode: Gtk.SelectionMode.NONE});
             fields.add_css_class('boxed-list');
-            const entry = new Adw.EntryRow({title: 'Color set name'});
+            const entry = new Adw.EntryRow({title: 'Color set name', text: initial});
             fields.append(entry);
             const choices = combos.map(({title, names, selected}) => {
                 const row = new Adw.ComboRow({title, model: Gtk.StringList.new(names)});
@@ -127,14 +129,14 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
 
             const dialog = new Adw.AlertDialog({heading, extra_child: fields});
             dialog.add_response('cancel', 'Cancel');
-            dialog.add_response('ok', 'Save');
+            dialog.add_response('ok', action);
             dialog.set_response_appearance('ok', Adw.ResponseAppearance.SUGGESTED);
             dialog.set_default_response('ok');
             dialog.set_close_response('cancel');
             const name = () => entry.get_text().trim();
-            const valid = () => name() !== '' && !taken(name());
+            const valid = () => name() !== '' && (name() === initial || !taken(name()));
             entry.connect('changed', () => dialog.set_response_enabled('ok', valid()));
-            dialog.set_response_enabled('ok', false);
+            dialog.set_response_enabled('ok', valid());
             const done = () => onConfirm(name(), ...choices.map(get => get()));
             dialog.connect('response', (_d, response) => {
                 if (response === 'ok')
@@ -163,8 +165,10 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             dialog.present(window);
         };
 
-        // A "Profiles" group: one row with a selector (apply, delete) and the given add button.
-        const selectorGroup = ({groupTitle = 'Color sets', title, subtitle, model, describe, addButton, onRefresh}) => {
+        // A "Color sets" group: one row with a selector (apply; send, rename and delete the user's
+        // own) and the given add button. `sendTo`: {model, label} of the other mode, for the
+        // Light and Dark tabs.
+        const selectorGroup = ({groupTitle = 'Color sets', title, subtitle, model, describe, addButton, onRefresh, sendTo}) => {
             const list = new Gtk.ListBox({selection_mode: Gtk.SelectionMode.NONE});
             list.add_css_class('boxed-list');
             list.add_css_class('lmm-profile-list');
@@ -185,7 +189,28 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                     popover.popdown();
                     model.apply(profile);
                 });
+                if (!builtin && sendTo) {
+                    // A copy in the other mode's list, with the same colors (numbered if the
+                    // name is in use there).
+                    const send = flatButton({icon_name: 'document-send-symbolic', tooltip_text: `Send to ${sendTo.label}`});
+                    send.connect('clicked', () => {
+                        popover.popdown();
+                        const name = sendTo.model.freeName(profile.name);
+                        sendTo.model.save([...sendTo.model.own(), {name, colors: {...profile.colors}}]);
+                        toast(`“${name}” sent to ${sendTo.label}`);
+                    });
+                    row.add_suffix(send);
+                }
                 if (!builtin) {
+                    const rename = flatButton({icon_name: 'document-edit-symbolic', tooltip_text: 'Rename'});
+                    rename.connect('clicked', () => {
+                        popover.popdown();
+                        profileDialog(model.taken, name => {
+                            if (name !== profile.name)
+                                model.rename(profile.name, name);
+                        }, [], 'Rename color set', profile.name, 'Rename');
+                    });
+                    row.add_suffix(rename);
                     const del = flatButton({icon_name: 'user-trash-symbolic', tooltip_text: 'Delete'});
                     del.connect('clicked', () => {
                         popover.popdown();
@@ -236,7 +261,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
 
         // Light or Dark tab profiles, with a "+" menu to save the current colors
         // as a new profile or into an existing one.
-        const modeProfilesGroup = model => {
+        const modeProfilesGroup = (model, sendTo) => {
             const actions = new Gio.SimpleActionGroup();
             const newAction = new Gio.SimpleAction({name: 'new'});
             newAction.connect('activate', () => profileDialog(model.taken, name => {
@@ -280,7 +305,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             return selectorGroup({
                 title: 'Color set', subtitle: 'Create, update or load a color set', model, addButton,
                 describe: () => '',
-                onRefresh: buildAddMenu,
+                onRefresh: buildAddMenu, sendTo,
             });
         };
 
@@ -343,9 +368,9 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             });
         };
 
-        const addTab = (title, icon, suffix, model) => {
+        const addTab = (title, icon, suffix, model, sendTo) => {
             const page = new Adw.PreferencesPage({title, icon_name: icon});
-            page.add(modeProfilesGroup(model));
+            page.add(modeProfilesGroup(model, sendTo));
             for (const [groupTitle, rows] of COLOR_GROUPS) {
                 const group = new Adw.PreferencesGroup({title: groupTitle});
                 for (const [name, label, subtitle, emptyLabel, emptyColor] of rows)
@@ -818,8 +843,8 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
 
         const profiles = createProfiles(s);
         addAppearanceTab(profiles);
-        addTab('Light mode', 'weather-clear-symbolic', '', profiles.light);
-        addTab('Dark mode', 'weather-clear-night-symbolic', '-dark', profiles.dark);
+        addTab('Light mode', 'weather-clear-symbolic', '', profiles.light, {model: profiles.dark, label: 'Dark mode'});
+        addTab('Dark mode', 'weather-clear-night-symbolic', '-dark', profiles.dark, {model: profiles.light, label: 'Light mode'});
         addGeneralTab();
         watchDtp();
     }

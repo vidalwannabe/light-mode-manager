@@ -40,6 +40,19 @@ function profileStore(settings, listKey, activeKey, builtins, isValid) {
         taken: name => reserved.has(name) || own().some(p => p.name === name),
         activeName: () => settings.get_string(activeKey),
         setActive: name => settings.set_string(activeKey, name),
+        // Renames one of the user's profiles, keeping it the applied one if it was.
+        rename(from, to) {
+            settings.set_string(listKey, JSON.stringify(own().map(p => p.name === from ? {...p, name: to} : p)));
+            if (settings.get_string(activeKey) === from)
+                settings.set_string(activeKey, to);
+        },
+        // A name not in use: `name`, or "name (2)", "name (3)"...
+        freeName(name) {
+            let free = name;
+            for (let i = 2; reserved.has(free) || own().some(p => p.name === free); i++)
+                free = `${name} (${i})`;
+            return free;
+        },
         keys: [listKey, activeKey],
     };
 }
@@ -137,5 +150,16 @@ export function createProfiles(settings) {
             'qs-button': '#000000', card: '#000000',
         }},
     ]);
-    return {light, dark, general: generalProfiles(settings, light, dark)};
+    const general = generalProfiles(settings, light, dark);
+    // Renaming a light or dark profile also renames it in the general profiles that use it.
+    for (const [mode, side] of [[light, 'light'], [dark, 'dark']]) {
+        const {rename} = mode;
+        mode.rename = (from, to) => {
+            rename(from, to);
+            const own = general.own();
+            if (own.some(p => p[side] === from))
+                general.save(own.map(p => p[side] === from ? {...p, [side]: to} : p));
+        };
+    }
+    return {light, dark, general};
 }
