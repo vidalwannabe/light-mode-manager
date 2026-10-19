@@ -411,6 +411,9 @@ function heightAtWidth(actor, width) {
 
 const PROFILE_ICON = 'preferences-desktop-appearance-symbolic';
 
+// The applied profile of each tab and the applied general profile: set when a profile is
+// applied, so that change fades like a mode switch.
+const PROFILE_KEYS = ['active-profile', 'active-profile-dark', 'active-general-profile'];
 const AUTO_KEYS = ['auto-switch', 'auto-switch-1-time', 'auto-switch-1-mode', 'auto-switch-2-time'];
 // How often the automatic switch checks the clock. A check is a few comparisons; checking
 // often (instead of one long timer) also catches up right after a suspend.
@@ -851,6 +854,16 @@ export default class LightModeManagerExtension extends Extension {
         });
     }
 
+    // A profile was applied (its colors follow in the same change): the next theme apply fades.
+    _profileApplied() {
+        this._fadeNext = true;
+        this._scheduleApply();
+    }
+
+    _wantsForcedDark() {
+        return !this._isDark() && !this._lockedNative() && this._values(LIGHT_KEYS).every(v => !v);
+    }
+
     // Vanilla GNOME keeps the shell dark in light mode. With every light color on system
     // default (the GNOME profile) the shell is forced to its dark style to match.
     // Main.sessionMode.colorScheme belongs to the current session mode: GNOME sets it again
@@ -859,7 +872,7 @@ export default class LightModeManagerExtension extends Extension {
     // forgets the forced state and calls this again, so the lock screen and the unlocked
     // session both get the right style.
     _syncShellScheme() {
-        const vanilla = !this._isDark() && !this._lockedNative() && this._values(LIGHT_KEYS).every(v => !v);
+        const vanilla = this._wantsForcedDark();
         if (vanilla === this._forcedDark)
             return;
         if (vanilla) {
@@ -1130,18 +1143,27 @@ export default class LightModeManagerExtension extends Extension {
         return css + this._highlightCss(false) + this._borderCss('color-border');
     }
 
-    _applyTheme() {
+    // `fade`: fade from the old look to the new one, as when switching modes.
+    _applyTheme(fade = false) {
         // A pending delayed apply would only repeat this one.
         this._clearSource('_applyId');
-        this._applyStylesheet();
+        this._applyStylesheet(fade);
     }
 
-    _applyStylesheet() {
+    _applyStylesheet(fade = false) {
         let file = null;
+        let faded = false;
         try {
-            this._syncShellScheme();
             // "Use GNOME colors on the lock screen": no stylesheet while locked.
             const css = this._lockedNative() ? '' : this._isDark() ? this._darkCss() : this._lightCss();
+            // Switching profiles in the same mode: GNOME's screen transition snapshots the
+            // screen before the change, then fades it out with the Transition duration.
+            if (fade && this._settings.get_int('transition-duration') > 0 &&
+                (css !== this._lastCss || this._wantsForcedDark() !== this._forcedDark)) {
+                Main.layoutManager.screenTransition.run();
+                faded = true;
+            }
+            this._syncShellScheme();
             // Nothing changed: skip writing and reloading the stylesheet.
             if (css === this._lastCss)
                 return;
@@ -1171,6 +1193,10 @@ export default class LightModeManagerExtension extends Extension {
                     file.delete(null);
                 } catch {}
             }
+        } finally {
+            // The new look is in place: fade the snapshot out with the user's duration.
+            if (faded)
+                this._restartTransition();
         }
     }
 
@@ -1219,7 +1245,9 @@ export default class LightModeManagerExtension extends Extension {
         this._clearSource('_applyId');
         this._applyId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
             this._applyId = 0;
-            this._applyTheme();
+            const fade = this._fadeNext;
+            this._fadeNext = false;
+            this._applyTheme(fade);
             return GLib.SOURCE_REMOVE;
         });
     }
@@ -1244,6 +1272,8 @@ export default class LightModeManagerExtension extends Extension {
                 this._syncQsMenuHeight();
             else if (AUTO_KEYS.includes(key))
                 this._syncAutoSwitch(true);
+            else if (PROFILE_KEYS.includes(key))
+                this._profileApplied();
             else if ((this._isDark() ? DARK_THEME_KEYS : LIGHT_THEME_KEYS).includes(key))
                 this._scheduleApply();
         });
