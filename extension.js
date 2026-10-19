@@ -81,7 +81,7 @@ const DARK_CARD_BUTTONS = ['.quick-toggle-menu', ...CARD_BUTTONS];
 
 // Color settings of each mode.
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button', 'color-panel-fg',
-    'color-qs-active-fg', 'color-qs-active', 'color-dash'];
+    'color-qs-active-fg', 'color-qs-active', 'color-highlight', 'color-dash'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and General tab options);
 // other keys (profiles...) never do.
@@ -89,7 +89,7 @@ const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'hide-b
     'calendar-background'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark',
-    'color-qs-active-fg-dark', 'color-qs-active-dark', ...EFFECT_KEYS];
+    'color-qs-active-fg-dark', 'color-qs-active-dark', 'color-highlight-dark', ...EFFECT_KEYS];
 
 // Accepted color values: #rgb, #rrggbb, rgb()/rgba() or a name. Anything else (edited in
 // dconf or imported) counts as system default, so it can never break the stylesheet.
@@ -791,6 +791,14 @@ export default class LightModeManagerExtension extends Extension {
     }
 
     // ---------- Stylesheet ----------
+    // "Calendar day and sliders color": the filled part of every slider (volume, brightness...)
+    // and today in the calendar, in all its states. Empty: GNOME's accent color.
+    _highlightCss(key, dark) {
+        const [color] = this._values([key]);
+        return color ? rule('.slider', '-barlevel-active-background-color', color) +
+            buttonCss(CALENDAR_TODAY, color, dark) : '';
+    }
+
     // The menu border rule for the given border color setting (none for the system's).
     // Hidden borders stay 1px wide but transparent, so menus keep their size.
     _borderCss(key) {
@@ -838,7 +846,7 @@ export default class LightModeManagerExtension extends Extension {
             css += activeTextCss(active || '-st-accent-fg-color');
         css += this._darkCardsCss(values[DARK_KEYS.indexOf('color-card-dark')],
             ...this._values(['color-qs-button-dark', 'color-qs-active-dark']));
-        return css + this._borderCss('color-border-dark');
+        return css + this._highlightCss('color-highlight-dark', true) + this._borderCss('color-border-dark');
     }
 
     // Cards, inactive Quick Settings buttons and calendar background on GNOME's dark style;
@@ -986,7 +994,7 @@ export default class LightModeManagerExtension extends Extension {
         }, byKey['color-qs-active']);
         if (this._settings.get_boolean('calendar-background'))
             css += calendarCss(translucent(card, cardOpacity), false);
-        return css + this._borderCss('color-border');
+        return css + this._highlightCss('color-highlight', false) + this._borderCss('color-border');
     }
 
     // Loads the stylesheet, then keeps Dash to Panel's panels on this extension's color.

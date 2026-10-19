@@ -22,6 +22,8 @@ const COLOR_ROWS = [
     ['qs-active-fg', 'Active buttons text and icons', 'Text, icons and arrows of Quick Settings toggles that are on', 'Accent text color', '#ffffff'],
     ['qs-active', 'Active buttons background', 'Quick Settings toggles that are on and their arrows',
         'Accent color set in GNOME Settings › Appearance', () => accentColor()],
+    ['highlight', 'Calendar day and sliders color', 'Volume, brightness and other sliders, and today in the calendar',
+        'Accent color set in GNOME Settings › Appearance', () => accentColor()],
     ['border', 'Menu borders', 'Outline of Quick Settings, the calendar and other menus'],
 ];
 
