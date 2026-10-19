@@ -477,7 +477,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         // folder) and followed while the window is open. Not installed: its row is inactive.
         // The first time it is found, a dialog tells about the colors both extensions set.
         const DTP_UUID = 'dash-to-panel@jderose9.github.com';
-        const DTP_SUBTITLE = "Panels, window previews and their titles; Dash to Panel's dynamic opacity and other settings are kept";
+        const DTP_SUBTITLE = "Prioritize this extension's color settings";
         let dtpRow = null;
         const dtpNotice = () => {
             s.set_boolean('dtp-notice-shown', true);
@@ -487,8 +487,10 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 heading: 'Dash to Panel detected',
                 body: 'Dash to Panel paints its panel and window previews with its own color and opacity ' +
                     'settings, so the two extensions can show mismatched colors. Turn on “Use this ' +
-                    "extension's colors in Dash to Panel” (Appearance tab) to paint them with this " +
-                    "extension's colors; Dash to Panel's own settings are kept and come back when it is off.",
+                    "extension's colors in Dash to Panel” (Appearance tab) to prioritize this extension's " +
+                    'color settings.\n\n' +
+                    "Dash to Panel's own color settings are left untouched and take effect again if this " +
+                    'option is turned off.',
             });
             dialog.add_response('later', 'Not now');
             dialog.add_response('on', 'Turn on');
