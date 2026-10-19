@@ -49,7 +49,7 @@ Each tab has a profile selector to apply a set of colors in one click. It shows 
 
 - **Built-in profiles**, which cannot be deleted or overwritten:
   - Light mode: **Default** and **GNOME**.
-  - Dark mode: **Default**, **GNOME** and **Oled** (Default with pure black top bar, overview and menus).
+  - Dark mode: **Default**, **GNOME** and **Oled** (Default with pure black top bar, overview, menus, menu borders, idle buttons and cards).
   - **GNOME** keeps the vanilla GNOME look, the same in light and dark mode.
 - **Your own profiles**: the save button saves the current colors as a new profile, or replaces the colors of one of yours with **Update existing profile**. Your profiles can be deleted from the selector.
 
@@ -80,6 +80,10 @@ Each tab has a profile selector to apply a set of colors in one click. It shows 
 **Automatic switch**
 
 - **Automatic switch**: one row sets a mode (light or dark) and two times of day: the mode is on between them and the opposite one the rest of the day, also across midnight (Dark mode from 19:00 to 07:00, light mode the rest of the day). Equal times turn the switch off, even with **Enable** on; both times are marked and the subtitle says so. Each mode keeps its own profile and colors. Turning it on or changing the schedule applies the current mode right away; a mode picked by hand in between is kept, even after logging in again, until the next switch time.
+
+**Lock screen**
+
+- **Use GNOME colors on the lock screen**: the lock screen shows GNOME's own colors; the extension's stylesheet is unloaded on lock and loaded again on unlock, which can cause a short delay or flicker when unlocking on slower computers. On the lock screen the extension only applies colors through CSS either way.
 
 **Backup**
 

@@ -89,7 +89,7 @@ const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and Appearance tab options);
 // other keys (profiles...) never do.
 const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'match-arrow-buttons', 'merge-arrow-buttons',
-    'calendar-background'];
+    'calendar-background', 'lock-screen-native'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark',
     'color-qs-active-fg-dark', 'color-qs-active-dark', 'color-highlight-dark', 'color-today-dark', 'color-panel-dark',
@@ -485,8 +485,11 @@ class ProfileIndicator extends SystemIndicator {
 //   make the shell flash between GNOME's colors and the user's colors.
 // - The automatic switch (light/dark mode at set times) has to keep its timer while locked,
 //   so a switch time that passes during the lock is applied on time.
-// While locked, the extension only keeps its stylesheet loaded, so what the lock screen
-// shows (the top bar, Quick Settings opened from it, notifications, OSDs and the password
+// "Use GNOME colors on the lock screen" (lock-screen-native, off by default) unloads the
+// stylesheet on lock and loads it again on unlock (_lockedNative, the session mode
+// "updated" handler), for users who want GNOME's own lock screen; the rest below still
+// applies. Without it, while locked the extension only keeps its stylesheet loaded, so what
+// the lock screen shows (the top bar, Quick Settings opened from it, notifications, OSDs and the password
 // field) keeps the user's colors. Nothing interactive of its own is shown there:
 // - the Quick Settings profile switcher is removed on lock and added back on unlock
 //   (_syncQuickSettings, called from the session mode "updated" signal);
@@ -830,7 +833,7 @@ export default class LightModeManagerExtension extends Extension {
     // forgets the forced state and calls this again, so the lock screen and the unlocked
     // session both get the right style.
     _syncShellScheme() {
-        const vanilla = !this._isDark() && this._values(LIGHT_KEYS).every(v => !v);
+        const vanilla = !this._isDark() && !this._lockedNative() && this._values(LIGHT_KEYS).every(v => !v);
         if (vanilla === this._forcedDark)
             return;
         if (vanilla) {
@@ -844,6 +847,12 @@ export default class LightModeManagerExtension extends Extension {
     }
 
     // ---------- Stylesheet ----------
+    // With "Use GNOME colors on the lock screen", the lock screen gets no stylesheet: it
+    // shows GNOME's own colors, and the user's colors come back on unlock.
+    _lockedNative() {
+        return Main.sessionMode.isLocked && this._settings.get_boolean('lock-screen-native');
+    }
+
     // "Sliders" (the filled part of every slider: volume, brightness...) and "Today in the
     // calendar", in all its states. Empty: GNOME's accent color.
     _highlightCss(dark) {
@@ -1092,7 +1101,8 @@ export default class LightModeManagerExtension extends Extension {
         let file = null;
         try {
             this._syncShellScheme();
-            const css = this._isDark() ? this._darkCss() : this._lightCss();
+            // "Use GNOME colors on the lock screen": no stylesheet while locked.
+            const css = this._lockedNative() ? '' : this._isDark() ? this._darkCss() : this._lightCss();
             // Nothing changed: skip writing and reloading the stylesheet.
             if (css === this._lastCss)
                 return;
@@ -1219,6 +1229,9 @@ export default class LightModeManagerExtension extends Extension {
             this._forcedDark = false;
             this._syncShellScheme();
             this._syncQuickSettings();
+            // Unloads the stylesheet on lock and loads it again on unlock.
+            if (this._settings.get_boolean('lock-screen-native'))
+                this._applyTheme();
         });
         this._syncQuickSettings();
         this._syncQsDimming();

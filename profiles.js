@@ -103,8 +103,8 @@ function generalProfiles(settings, light, dark) {
 }
 
 // All profile models: built-in "Default" (the schema defaults), "GNOME" (every row on
-// system default) and, in dark mode, "Oled" (Default with pure black top bar, overview and
-// menu backgrounds).
+// system default) and, in dark mode, "Oled" (Default with pure black top bar, overview,
+// menus, menu borders, idle buttons and cards).
 export function createProfiles(settings) {
     const gnome = {name: 'GNOME', colors: Object.fromEntries(ROW_NAMES.map(n => [n, '']))};
     const light = modeProfiles(settings, '', [{name: 'Default', colors: defaults(settings, '')}, gnome]);
@@ -112,7 +112,10 @@ export function createProfiles(settings) {
     const dark = modeProfiles(settings, '-dark', [
         {name: 'Default', colors: darkDefaults},
         gnome,
-        {name: 'Oled', colors: {...darkDefaults, panel: '#000000', overview: '#000000', general: '#000000'}},
+        {name: 'Oled', colors: {
+            ...darkDefaults, panel: '#000000', overview: '#000000', general: '#000000', border: '#000000',
+            'qs-button': '#000000', card: '#000000',
+        }},
     ]);
     return {light, dark, general: generalProfiles(settings, light, dark)};
 }
