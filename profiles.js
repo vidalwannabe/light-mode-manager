@@ -2,7 +2,7 @@
 // Only uses Gio.Settings, so it runs in both the shell and the preferences process.
 
 // The color rows of the Light mode and Dark mode tabs.
-export const ROW_NAMES = ['general', 'panel-fg', 'fg', 'fg-muted', 'card', 'dash', 'qs-active-fg', 'qs-button', 'border'];
+export const ROW_NAMES = ['general', 'dash', 'panel-fg', 'fg', 'fg-muted', 'card', 'qs-active-fg', 'qs-active', 'qs-button', 'border'];
 
 // Rows added later: a profile saved before them takes the value of the row they came
 // from, so it keeps its look (the top bar used to follow "Text and icons"); the dash takes

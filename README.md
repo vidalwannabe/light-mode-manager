@@ -8,18 +8,19 @@ It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 app
 
 ### Light mode and Dark mode tabs
 
-Each tab has nine colors:
+Each tab has ten colors:
 
 | Color | What it paints |
 | --- | --- |
 | General background | Top bar, menus and dialogs, OSD and window switcher, overview |
-| Top bar content | Top bar text and icons: clock, indicators, the overview button and Dash to Panel's app grid button |
-| Main text and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, menus, dialogs, Quick Settings |
-| Secondary text | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday, toggle subtitles |
-| Cards background | Notifications, banners and calendar widgets: Today, World Clocks and Weather. Search results and app folders keep the system background |
 | Dash background | The overview dock with favorite and running apps. Default: the cards background |
+| Top bar content | Top bar text and icons: clock, indicators, the overview button and Dash to Panel's app grid button |
+| Main idle buttons and cards text and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, menus, dialogs, Quick Settings |
+| Subtitles of idle buttons and cards | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday, toggle subtitles |
+| Cards background | Notifications, banners and calendar widgets: Today, World Clocks and Weather. Search results and app folders keep the system background |
 | Active buttons text and icons | Quick Settings toggles that are on (Wi-Fi, Dark Style…), their arrows and subtitles. Empty: the accent's text color, subtitles included |
-| Idle Quick Settings buttons | Quick Settings toggles that are off, their arrows, the round buttons at the top, the slider buttons (volume, "›", brightness) and the menus toggles open |
+| Active buttons background | Quick Settings toggles that are on, their arrows and the icon of the menu they open. Empty (default): the accent color set in GNOME Settings › Appearance |
+| Idle buttons background | Quick Settings toggles that are off, their arrows, the round buttons at the top, the slider buttons (volume, "›", brightness) and the menus toggles open |
 | Borders | Outline of Quick Settings, the calendar and other menus |
 
 Hover, focus and active states follow these colors automatically. Every color has a button to restore its Default profile value.

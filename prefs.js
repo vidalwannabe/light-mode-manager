@@ -13,15 +13,23 @@ import {createProfiles} from './profiles.js';
 // General tab.
 const COLOR_ROWS = [
     ['general', 'General background', 'Top bar, menus, dialogs, OSD, window switcher and overview'],
-    ['panel-fg', 'Top bar content', 'Clock, indicators, overview button and Dash to Panel app grid icon'],
-    ['fg', 'Main text and icons', 'Titles and icons of notifications, widgets, menus, dialogs and Quick Settings'],
-    ['fg-muted', 'Secondary text', 'Text under titles: notification body, times, locations and subtitles'],
-    ['card', 'Cards background', 'Notifications, banners and calendar widgets: Today, World Clocks and Weather'],
     ['dash', 'Dash background', 'Overview dock with favorite and running apps'],
+    ['panel-fg', 'Top bar content', 'Clock, indicators, overview button and Dash to Panel app grid icon'],
+    ['fg', 'Main idle buttons and cards text and icons', 'Titles and icons of notifications, widgets, menus, dialogs and Quick Settings'],
+    ['fg-muted', 'Subtitles of idle buttons and cards', 'Text under titles: notification body, times, locations and subtitles'],
+    ['card', 'Cards background', 'Notifications, banners and calendar widgets: Today, World Clocks and Weather'],
     ['qs-active-fg', 'Active buttons text and icons', 'Text, icons and arrows of Quick Settings toggles that are on', 'Accent text color', '#ffffff'],
-    ['qs-button', 'Idle Quick Settings buttons', 'Toggles that are off, top round buttons, slider buttons and toggle menus'],
+    ['qs-active', 'Active buttons background', 'Quick Settings toggles that are on and their arrows',
+        'Accent color set in GNOME Settings › Appearance', () => accentColor()],
+    ['qs-button', 'Idle buttons background', 'Toggles that are off, top round buttons, slider buttons and toggle menus'],
     ['border', 'Borders', 'Outline of Quick Settings, the calendar and other menus'],
 ];
+
+// The accent color chosen in GNOME Settings (libadwaita 1.6+), GNOME's blue otherwise.
+const accentColor = () => {
+    const rgba = Adw.StyleManager.get_default().get_accent_color_rgba?.();
+    return rgba ? toHex(rgba) : '#3584e4';
+};
 
 const toHex = c => `#${[c.red, c.green, c.blue]
     .map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('')}`;
@@ -65,7 +73,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 const valid = color.parse(s.get_string(key).trim());
                 row.set_subtitle(valid ? subtitle : emptyLabel);
                 if (!valid)
-                    color.parse(emptyColor);
+                    color.parse(typeof emptyColor === 'function' ? emptyColor() : emptyColor);
                 loading = true;
                 button.set_rgba(color);
                 loading = false;

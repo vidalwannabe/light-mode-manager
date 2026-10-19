@@ -81,7 +81,7 @@ const DARK_CARD_BUTTONS = ['.quick-toggle-menu', ...CARD_BUTTONS];
 
 // Color settings of each mode.
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button', 'color-panel-fg',
-    'color-qs-active-fg', 'color-dash'];
+    'color-qs-active-fg', 'color-qs-active', 'color-dash'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and General tab options);
 // other keys (profiles...) never do.
@@ -89,7 +89,7 @@ const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'hide-b
     'calendar-background'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark',
-    'color-qs-active-fg-dark', ...EFFECT_KEYS];
+    'color-qs-active-fg-dark', 'color-qs-active-dark', ...EFFECT_KEYS];
 
 // Accepted color values: #rgb, #rrggbb, rgb()/rgba() or a name. Anything else (edited in
 // dconf or imported) counts as system default, so it can never break the stylesheet.
@@ -156,6 +156,7 @@ const QS_MENU = '.quick-toggle-menu';
 const menuCss = (color, dark) => buttonCss(QS_MENU, color, dark) +
     rule(`${QS_MENU}:insensitive`, 'background-color', color);
 const QS_CHECKED = '.quick-toggle:checked';
+const QS_MENU_ICON_ON = '.quick-toggle-menu .header .icon.active';
 const QS_FLAT = '.background-apps-quick-toggle';
 
 // Quick Settings arrow buttons ("›"). GNOME 48 draws them a shade apart from their toggle,
@@ -836,13 +837,13 @@ export default class LightModeManagerExtension extends Extension {
         if (fg || muted || active)
             css += activeTextCss(active || '-st-accent-fg-color');
         css += this._darkCardsCss(values[DARK_KEYS.indexOf('color-card-dark')],
-            this._values(['color-qs-button-dark'])[0]);
+            ...this._values(['color-qs-button-dark', 'color-qs-active-dark']));
         return css + this._borderCss('color-border-dark');
     }
 
     // Cards, inactive Quick Settings buttons and calendar background on GNOME's dark style;
     // an empty color is GNOME's own.
-    _darkCardsCss(card, qsButtons) {
+    _darkCardsCss(card, qsButtons, active = '') {
         const opacity = this._settings.get_int('card-opacity');
         const base = card || NATIVE_CARD;
         let css = card || opacity < 100
@@ -851,7 +852,7 @@ export default class LightModeManagerExtension extends Extension {
         // After the cards, so the Quick Settings menus take the inactive buttons color.
         css += this._quickSettingsCss(true, qsButtons, {
             toggle: toggleOff(true), arrow: arrowOff(true), arrowChecked: arrowChecked(true), menu: base,
-        });
+        }, active);
         if (this._settings.get_boolean('calendar-background'))
             css += calendarCss(translucent(base, opacity), true);
         return css;
@@ -859,7 +860,10 @@ export default class LightModeManagerExtension extends Extension {
 
     // Idle Quick Settings buttons, the menus they open and the arrow buttons. An empty
     // color uses `native`: GNOME's own toggle, arrow (off, checked) and menu colors.
-    _quickSettingsCss(dark, color, native) {
+    _quickSettingsCss(dark, color, native, active = '') {
+        // "Active buttons background": toggles that are on, their arrows and the icon of the
+        // menu they open. GNOME's own: the accent color.
+        const accent = active || '-st-accent-color';
         const match = this._settings.get_boolean('match-arrow-buttons');
         const opacity = this._settings.get_int('card-opacity');
         const merged = this._settings.get_boolean('merge-arrow-buttons') ? rule(ARROW_GAP_SEL, 'width', '0') : '';
@@ -870,17 +874,20 @@ export default class LightModeManagerExtension extends Extension {
             if (match)
                 arrow = color || native.toggle;
             css = buttonCss(QS_BUTTONS, translucent(color || native.toggle, opacity), dark) +
-                buttonCss(QS_CHECKED, '-st-accent-color', dark) +
+                buttonCss(QS_CHECKED, accent, dark) +
                 rule(QS_FLAT, 'background-color', 'transparent') +
                 menuCss(translucent(color || native.menu, opacity), dark) +
                 buttonCss(ARROW_SEL, translucent(arrow, opacity), dark);
-        } else if (match) {
-            css = buttonCss(ARROW_SEL, native.toggle, dark);
         } else {
-            return merged;
+            css = (match ? buttonCss(ARROW_SEL, native.toggle, dark) : '') +
+                (active ? buttonCss(QS_CHECKED, accent, dark) : '');
+            if (!css)
+                return merged;
         }
         // Set again after the off colors, which would otherwise also cover the checked arrow.
-        return merged + css + buttonCss(`${ARROW_SEL}:checked`, match ? '-st-accent-color' : native.arrowChecked, dark);
+        const arrowOn = match ? accent : native.arrowChecked.replaceAll('-st-accent-color', accent);
+        css = merged + css + buttonCss(`${ARROW_SEL}:checked`, arrowOn, dark);
+        return active ? css + rule(QS_MENU_ICON_ON, 'background-color', active) : css;
     }
 
     // The template is only read when light mode first needs it.
@@ -976,7 +983,7 @@ export default class LightModeManagerExtension extends Extension {
         css += this._quickSettingsCss(false, byKey['color-qs-button'], {
             toggle: token(toggleOff(false)), arrow: token(arrowOff(false)),
             arrowChecked: token(arrowChecked(false)), menu: card,
-        });
+        }, byKey['color-qs-active']);
         if (this._settings.get_boolean('calendar-background'))
             css += calendarCss(translucent(card, cardOpacity), false);
         return css + this._borderCss('color-border');
