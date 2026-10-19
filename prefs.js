@@ -35,7 +35,7 @@ const COLOR_GROUPS = [
     ['Notification panel', [
         ['fg', 'Cards titles and icons', 'Notifications, calendar and widgets; also menus and dialogs'],
         ['fg-muted', 'Cards subtitles', 'Text under titles: notification body, times, locations and weekdays'],
-        ['card', 'Cards background', 'Notifications, banners and calendar widgets: Today, World Clocks and Weather'],
+        ['card', 'Cards background', 'Notifications, banners, Clear button and Today, World Clocks and Weather'],
         ['today', 'Today in the calendar background', 'Circle behind the current day', ACCENT, () => accentColor()],
         ['today-fg', 'Today in the calendar text', 'Number of the current day'],
     ]],

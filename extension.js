@@ -81,8 +81,10 @@ const DARK_RULES = [
 ].map(([selectors, prop, key]) => [selectors.join(', '), prop, key]);
 
 // Dark mode cards that are buttons: Quick Settings menus, notifications and the cards
-// below the calendar. They get every state, as GNOME draws them (see buttonCss).
-const CARD_BUTTONS = ['.message', '.events-button', '.world-clocks-button', '.weather-button'];
+// below the calendar. They get every state, as GNOME draws them (see buttonCss). The
+// notification list's Clear button follows the cards too.
+const CLEAR_BUTTON = '.message-list-controls .button';
+const CARD_BUTTONS = ['.message', '.events-button', '.world-clocks-button', '.weather-button', CLEAR_BUTTON];
 const DARK_CARD_BUTTONS = ['.quick-toggle-menu', ...CARD_BUTTONS];
 
 // Color settings of each mode.
@@ -1145,8 +1147,8 @@ export default class ShellColorManagerExtension extends Extension {
         // the color settings are used as they are.
         const card = byKey['color-card'] || '#e8e8e8';
         const cardOpacity = this._settings.get_int('card-opacity');
-        if (cardOpacity < 100)
-            css += buttonCss(CARD_BUTTONS, translucent(card, cardOpacity), false);
+        // The template paints the cards with its tokens but the Clear button as a plain button.
+        css += buttonCss(cardOpacity < 100 ? CARD_BUTTONS : CLEAR_BUTTON, translucent(card, cardOpacity), false);
         // The grid gets the template's own card colors back; other colors still filled in.
         const cardColors = new Set(CARD_TOKENS.flatMap(([, color, rgb]) => [color, rgb]));
         css += grid.replace(TOKEN_RE, (m, rgb, alpha) => {
