@@ -301,7 +301,9 @@ function textRolesCss(main, secondary) {
 // "Overview and top bar highlights" on the top bar buttons: a hovered or focused one, and
 // the one whose menu is open, get the color. GNOME fills them with an inset shadow
 // (they fake their padding with a transparent border); the clock fills its inner .clock
-// instead. Lock and login screens keep GNOME's white fills.
+// instead. The lock and login screens show the top bar over the wallpaper, so their buttons
+// keep GNOME's own white fills (17%, 28% and 32% white), set again after ours because
+// extension stylesheets outrank GNOME's.
 const PANEL_BUTTONS = ['#panel .panel-button', '#panel:overview .panel-button'];
 const PANEL_LOCK_BAR_SEL = '#panel.unlock-screen, #panel.login-screen';
 const PANEL_LOCK_BUTTONS = ['#panel.unlock-screen .panel-button', '#panel.login-screen .panel-button'];
@@ -336,6 +338,8 @@ function entriesCss(color, dark, text, hint) {
         (hint ? rule(sel(PROMPT_SEL, ' StLabel.hint-text'), 'color', hint) : '');
 }
 
+// "Top bar text and icons". The lock and login screens keep GNOME's white text and icons,
+// which sit on the wallpaper there.
 const panelTextCss = color => rule(PANEL_TEXT_SEL, 'color', color) + rule(PANEL_LOCK_SEL, 'color', '#ffffff') +
     rule(PANEL_DOTS_SEL, 'background-color', color) + rule(PANEL_SHOW_APPS_SEL, 'color', color);
 
@@ -468,10 +472,30 @@ class ProfileIndicator extends SystemIndicator {
     }
 });
 
-// Runs in the "user" and "unlock-dialog" session modes (metadata.json): staying enabled
-// while locked keeps the theme on the lock screen and avoids a full stylesheet reload on
-// every lock/unlock. Nothing interactive is shown while locked (see _syncQuickSettings);
-// only colors are applied and the automatic switch keeps running.
+// Lock screen ("unlock-dialog" session mode)
+// ------------------------------------------
+// metadata.json lists the "user" and "unlock-dialog" session modes, so GNOME Shell keeps this
+// extension enabled while the screen is locked instead of calling disable() on lock and
+// enable() on unlock. The reasons:
+// - disable() has to give the desktop back as it was: it turns the interface color scheme
+//   from "prefer-light" back to "default" and switches legacy GTK 3 apps back to their
+//   theme. Doing that on every lock would make every open app change its style twice per
+//   lock/unlock, behind the lock screen and again after unlocking.
+// - Unloading and reloading the stylesheet (about 170 KB in light mode) on every unlock would
+//   make the shell flash between GNOME's colors and the user's colors.
+// - The automatic switch (light/dark mode at set times) has to keep its timer while locked,
+//   so a switch time that passes during the lock is applied on time.
+// While locked, the extension only keeps its stylesheet loaded, so what the lock screen
+// shows (the top bar, Quick Settings opened from it, notifications, OSDs and the password
+// field) keeps the user's colors. Nothing interactive of its own is shown there:
+// - the Quick Settings profile switcher is removed on lock and added back on unlock
+//   (_syncQuickSettings, called from the session mode "updated" signal);
+// - the desktop right-click menu entry only exists in the desktop's background menus,
+//   which the lock screen does not have;
+// - Dash to Panel hides its panels on the lock screen itself.
+// The lock and login screens keep GNOME's own look where it sits on the wallpaper: a
+// transparent top bar (_panelCss), white top bar text and icons (panelTextCss) and GNOME's
+// white hover and pressed fills on top bar buttons (panelButtonsCss).
 export default class LightModeManagerExtension extends Extension {
     // ---------- Color scheme ----------
     _getColorScheme() {
@@ -536,7 +560,10 @@ export default class LightModeManagerExtension extends Extension {
     }
 
     // ---------- Quick Settings switcher ----------
-    // Shown when enabled, but never on the lock screen.
+    // Shown when enabled, but never on the lock screen: switching profiles changes colors
+    // for the whole session, so it is not offered to whoever is in front of a locked
+    // screen. Called again from the session mode "updated" signal on every lock and unlock,
+    // which destroys the switcher on lock and creates it again on unlock.
     _syncQuickSettings() {
         const show = this._settings.get_boolean('quick-settings-profiles') && !Main.sessionMode.isLocked;
         if (show && !this._indicator) {
@@ -797,7 +824,11 @@ export default class LightModeManagerExtension extends Extension {
 
     // Vanilla GNOME keeps the shell dark in light mode. With every light color on system
     // default (the GNOME profile) the shell is forced to its dark style to match.
-    // GNOME resets this on every session mode change (lock/unlock), so it is re-synced then.
+    // Main.sessionMode.colorScheme belongs to the current session mode: GNOME sets it again
+    // from the mode's own definition on every session mode change (lock, unlock), which
+    // drops the forced value. The session mode "updated" handler in enable() therefore
+    // forgets the forced state and calls this again, so the lock screen and the unlocked
+    // session both get the right style.
     _syncShellScheme() {
         const vanilla = !this._isDark() && this._values(LIGHT_KEYS).every(v => !v);
         if (vanilla === this._forcedDark)
@@ -828,8 +859,11 @@ export default class LightModeManagerExtension extends Extension {
         const opacity = this._settings.get_boolean('panel-opacity') ? this._settings.get_int('general-opacity') : 100;
         if (!panel && opacity >= 100 && fallback === NATIVE_PANEL)
             return '';
-        // Extension stylesheets outrank GNOME's, so the lock and login screens get their
-        // transparent top bar back.
+        // GNOME draws the top bar of the lock and login screens transparent, over the
+        // wallpaper. Extension stylesheets outrank GNOME's whatever the specificity, so the
+        // #panel rule above would make it solid there (seen after resuming from suspend,
+        // which shows the lock screen); this rule gives those screens their transparent
+        // top bar back. In light mode the template already has it; the rule is harmless.
         return rule('#panel', 'background-color', withOpacity(panel || fallback, opacity)) +
             rule(PANEL_LOCK_BAR_SEL, 'background-color', 'transparent');
     }
@@ -1179,6 +1213,8 @@ export default class LightModeManagerExtension extends Extension {
         // Connected after the initial setup so it does not apply the theme twice.
         this._schemeId = this._interface.connect('changed::color-scheme', () => this._schemeChanged());
 
+        // Lock and unlock change the session mode ("user" <-> "unlock-dialog"); see the
+        // lock screen notes above the class.
         this._sessionId = Main.sessionMode.connect('updated', () => {
             this._forcedDark = false;
             this._syncShellScheme();
@@ -1193,8 +1229,12 @@ export default class LightModeManagerExtension extends Extension {
         this._syncDtp();
     }
 
-    // Also called when the session ends or the extension is turned off, never on lock: the
-    // "unlock-dialog" session mode keeps the colors on the lock screen (see the class comment).
+    // Called when the extension is turned off, uninstalled or updated, or when the session
+    // ends. Never on lock: with the "unlock-dialog" session mode the extension stays enabled
+    // on the lock screen (see the lock screen notes above the class). Everything enable()
+    // set up is undone here: stylesheet, GNOME method overrides, Quick Settings switcher,
+    // desktop menu entry, Dash to Panel settings, timers and signal handlers, and the color
+    // scheme goes back to GNOME's "default".
     disable() {
         this._clearSource('_applyId');
         this._clearSource('_autoId');
