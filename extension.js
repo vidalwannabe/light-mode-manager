@@ -322,12 +322,19 @@ function panelButtonsCss(color) {
         fills(PANEL_LOCK_BUTTONS, white(0.17), white(0.28), white(0.32));
 }
 
-// "Overview and top bar highlights" on the overview search entry, with GNOME's hover shade
-// and focus tint (its focus ring is kept).
-const SEARCH_SEL = '.search-entry';
-const searchCss = (color, dark) => rule(`${SEARCH_SEL}, ${SEARCH_SEL}:insensitive`, 'background-color', color) +
-    rule(`${SEARCH_SEL}:hover`, 'background-color', `${shade(dark)}(${color}, 4%)`) +
-    rule(`${SEARCH_SEL}:focus`, 'background-color', `st-mix(-st-accent-color, ${color}, 5%)`);
+// "Overview and top bar highlights" on the overview search entry and the password entry of
+// the lock and login screens, with GNOME's hover shade and focus tint (its focus ring is
+// kept). The password entry's text takes the titles color and its hint the subtitles one.
+const PROMPT_SEL = ['.unlock-dialog .login-dialog-prompt-entry', '.login-dialog .login-dialog-prompt-entry'];
+const ENTRY_SEL = ['.search-entry', ...PROMPT_SEL];
+function entriesCss(color, dark, text, hint) {
+    const sel = (list, ...states) => list.flatMap(base => states.map(state => base + state)).join(', ');
+    return rule(sel(ENTRY_SEL, '', ':insensitive'), 'background-color', color) +
+        rule(sel(ENTRY_SEL, ':hover'), 'background-color', `${shade(dark)}(${color}, 4%)`) +
+        rule(sel(ENTRY_SEL, ':focus'), 'background-color', `st-mix(-st-accent-color, ${color}, 5%)`) +
+        (text ? rule(sel(PROMPT_SEL, '', ':hover', ':focus'), 'color', text) : '') +
+        (hint ? rule(sel(PROMPT_SEL, ' StLabel.hint-text'), 'color', hint) : '');
+}
 
 const panelTextCss = color => rule(PANEL_TEXT_SEL, 'color', color) + rule(PANEL_LOCK_SEL, 'color', '#ffffff') +
     rule(PANEL_DOTS_SEL, 'background-color', color) + rule(PANEL_SHOW_APPS_SEL, 'color', color);
@@ -852,8 +859,10 @@ export default class LightModeManagerExtension extends Extension {
         const [panel, overview] = this._values(['color-panel-dark', 'color-overview-dark']);
         css += this._panelCss(panel, NATIVE_PANEL);
         const dash = values[DARK_KEYS.indexOf('color-dash-dark')];
-        if (dash)
-            css += searchCss(dash, true) + panelButtonsCss(dash);
+        if (dash) {
+            css += entriesCss(dash, true, values[DARK_KEYS.indexOf('color-fg-dark')],
+                values[DARK_KEYS.indexOf('color-fg-muted-dark')]) + panelButtonsCss(dash);
+        }
         if (overview)
             css += rule(DARK_OPAQUE_SEL, 'background-color', withOpacity(overview, 100));
         // The top bar: "Top bar text and icons".
@@ -1022,12 +1031,12 @@ export default class LightModeManagerExtension extends Extension {
                 return `rgba(${cardColors.has(rgb) ? rgb : byRgb[rgb]}, ${alpha})`;
             return cardColors.has(m.toLowerCase()) ? m : solid[m.toLowerCase()];
         });
-        // "Overview and top bar highlights": dash, search entry and top bar buttons, solid like
-        // the overview (the template's own colors when empty).
+        // "Overview and top bar highlights": dash, search and password entries and top bar
+        // buttons, solid like the overview (the template's own colors when empty).
         if (byKey['color-dash']) {
             const dash = withOpacity(byKey['color-dash'], 100);
             css += rule('#dash .dash-background', 'background-color', dash) +
-                searchCss(dash, false) + panelButtonsCss(dash);
+                entriesCss(dash, false, fill('#222226', solid), fill('#767679', solid)) + panelButtonsCss(dash);
         }
         const token = expression => fill(expression, faded);
         css += this._quickSettingsCss(false, byKey['color-qs-button'], {
