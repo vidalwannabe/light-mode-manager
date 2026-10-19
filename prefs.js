@@ -53,9 +53,9 @@ const flatButton = props => {
 export default class LightModeManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
-        window.set_default_size(600, 855);
+        window.set_default_size(605, 855);
         // Narrower, the color and schedule rows squeeze their titles and controls.
-        window.set_size_request(600, -1);
+        window.set_size_request(605, -1);
         window.set_search_enabled(false);
         // One-line profile rows in the selectors, instead of libadwaita's 50px rows.
         const css = new Gtk.CssProvider();
