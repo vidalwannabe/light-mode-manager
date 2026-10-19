@@ -238,7 +238,7 @@ function activeTextCss(color) {
         rule(insensitive(QS_ACTIVE), 'color', `st-transparentize(${color}, 0.5)`);
 }
 
-// Text roles. "Main text and icons" colors titles and icons, "Secondary text" only the line
+// Text roles. "Idle buttons and cards titles and icons" colors titles and icons, "...subtitles" only the line
 // that comes under a title (a notification's body and time, a location, "No Events"...).
 // GNOME dims some titles too (a notification's app name, "Today", "Weather", weekends), so
 // each role is set here explicitly, after the template or GNOME's own rules.
@@ -821,11 +821,11 @@ export default class LightModeManagerExtension extends Extension {
         } else {
             css += this._nativeOpacityCss();
         }
-        // The top bar: "Top bar content".
+        // The top bar: "Top bar text and icons".
         const [panelFg] = this._values(['color-panel-fg-dark']);
         if (panelFg)
             css += panelTextCss(panelFg);
-        // Titles, subtitles and Quick Settings text: "Main text and icons", "Secondary text"
+        // Titles, subtitles and Quick Settings text: "Idle buttons and cards titles and icons", "...subtitles"
         // and "Active buttons text and icons".
         const fg = values[DARK_KEYS.indexOf('color-fg-dark')];
         const [active] = this._values(['color-qs-active-fg-dark']);
@@ -955,7 +955,7 @@ export default class LightModeManagerExtension extends Extension {
         const panel = byKey['color-general'] || TEMPLATE_PANEL;
         css += rule('#panel', 'background-color',
             withOpacity(panel, this._settings.get_boolean('panel-opacity') ? opacity : 100));
-        // The top bar: "Top bar content".
+        // The top bar: "Top bar text and icons".
         if (byKey['color-panel-fg'])
             css += panelTextCss(byKey['color-panel-fg']);
         // Titles and subtitles (the template's own colors when empty), and active buttons.

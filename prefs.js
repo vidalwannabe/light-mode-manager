@@ -14,15 +14,15 @@ import {createProfiles} from './profiles.js';
 const COLOR_ROWS = [
     ['general', 'General background', 'Top bar, menus, dialogs, OSD, window switcher and overview'],
     ['dash', 'Dash background', 'Overview dock with favorite and running apps'],
-    ['panel-fg', 'Top bar content', 'Clock, indicators, overview button and Dash to Panel app grid icon'],
-    ['fg', 'Main idle buttons and cards text and icons', 'Titles and icons of notifications, widgets, menus, dialogs and Quick Settings'],
-    ['fg-muted', 'Subtitles of idle buttons and cards', 'Text under titles: notification body, times, locations and subtitles'],
+    ['panel-fg', 'Top bar text and icons', 'Clock, indicators, overview button and Dash to Panel app grid icon'],
+    ['fg', 'Idle buttons and cards titles and icons', 'Titles and icons of notifications, widgets, menus, dialogs and Quick Settings'],
+    ['fg-muted', 'Idle buttons and cards subtitles', 'Text under titles: notification body, times, locations and subtitles'],
+    ['qs-button', 'Idle buttons background', 'Toggles that are off, top round buttons, slider buttons and toggle menus'],
     ['card', 'Cards background', 'Notifications, banners and calendar widgets: Today, World Clocks and Weather'],
     ['qs-active-fg', 'Active buttons text and icons', 'Text, icons and arrows of Quick Settings toggles that are on', 'Accent text color', '#ffffff'],
     ['qs-active', 'Active buttons background', 'Quick Settings toggles that are on and their arrows',
         'Accent color set in GNOME Settings › Appearance', () => accentColor()],
-    ['qs-button', 'Idle buttons background', 'Toggles that are off, top round buttons, slider buttons and toggle menus'],
-    ['border', 'Borders', 'Outline of Quick Settings, the calendar and other menus'],
+    ['border', 'Menu borders', 'Outline of Quick Settings, the calendar and other menus'],
 ];
 
 // The accent color chosen in GNOME Settings (libadwaita 1.6+), GNOME's blue otherwise.

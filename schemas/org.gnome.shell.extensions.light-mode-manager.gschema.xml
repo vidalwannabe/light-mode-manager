@@ -3,9 +3,9 @@
   <schema id="org.gnome.shell.extensions.light-mode-manager" path="/org/gnome/shell/extensions/light-mode-manager/">
     <!-- Light mode (empty = system default) -->
     <key name="color-general" type="s"><default>'#fafafb'</default><summary>General background (top bar, menus and dialogs, OSD and switcher, overview)</summary></key>
-    <key name="color-fg" type="s"><default>'#000000'</default><summary>Main idle buttons and cards text and icons</summary></key>
-    <key name="color-panel-fg" type="s"><default>'#000000'</default><summary>Top bar content: text and icons</summary></key>
-    <key name="color-fg-muted" type="s"><default>'#77767b'</default><summary>Subtitles of idle buttons and cards</summary></key>
+    <key name="color-fg" type="s"><default>'#000000'</default><summary>Idle buttons and cards titles and icons</summary></key>
+    <key name="color-panel-fg" type="s"><default>'#000000'</default><summary>Top bar text and icons</summary></key>
+    <key name="color-fg-muted" type="s"><default>'#77767b'</default><summary>Idle buttons and cards subtitles</summary></key>
     <key name="color-card" type="s"><default>'#e6e6e7'</default><summary>Cards background</summary></key>
     <key name="color-dash" type="s"><default>'#e6e6e7'</default><summary>Dash background</summary></key>
     <key name="color-qs-active-fg" type="s"><default>''</default><summary>Active buttons text and icons (empty: accent text color)</summary></key>
@@ -14,9 +14,9 @@
     <key name="color-border" type="s"><default>'#e6e6e7'</default><summary>Menu borders</summary></key>
     <!-- Dark mode (empty = system default) -->
     <key name="color-general-dark" type="s"><default>'#222226'</default><summary>General background</summary></key>
-    <key name="color-fg-dark" type="s"><default>'#ffffff'</default><summary>Main idle buttons and cards text and icons</summary></key>
-    <key name="color-panel-fg-dark" type="s"><default>'#ffffff'</default><summary>Top bar content: text and icons</summary></key>
-    <key name="color-fg-muted-dark" type="s"><default>'#c0bfbc'</default><summary>Subtitles of idle buttons and cards</summary></key>
+    <key name="color-fg-dark" type="s"><default>'#ffffff'</default><summary>Idle buttons and cards titles and icons</summary></key>
+    <key name="color-panel-fg-dark" type="s"><default>'#ffffff'</default><summary>Top bar text and icons</summary></key>
+    <key name="color-fg-muted-dark" type="s"><default>'#c0bfbc'</default><summary>Idle buttons and cards subtitles</summary></key>
     <key name="color-card-dark" type="s"><default>'#343437'</default><summary>Cards background</summary></key>
     <key name="color-dash-dark" type="s"><default>'#343437'</default><summary>Dash background</summary></key>
     <key name="color-qs-active-fg-dark" type="s"><default>''</default><summary>Active buttons text and icons (empty: accent text color)</summary></key>
