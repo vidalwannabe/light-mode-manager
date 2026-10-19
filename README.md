@@ -60,7 +60,7 @@ Each tab has a profile selector to apply a set of colors in one click. Built-in 
 
 **Visual tweaks**
 
-- **Transition**: duration of the fade when switching between light and dark mode or applying a profile, from 0 (instant) to 2000 ms. Default: 500 ms, like GNOME.
+- **Transition**: duration of the fade when switching between light and dark mode, or when a profile or color change shows on screen (the top bar always; the overview and menus while open), from 0 (instant) to 2000 ms. Default: 500 ms, like GNOME.
 - **Shell opacity**: transparency of the menus background (Quick Settings, calendar, menus, OSD and switcher), from 0 to 100%, in both modes. The top bar only gets it with **Enable panel opacity**. The overview and dialogs (Power Off, passwords, "not responding"…) stay opaque so they are easy to read, and below 100% menu shadows are removed so they do not darken translucent menus. Also works with the GNOME profile, on GNOME's own colors.
 - **Card opacity**: transparency of the notification cards (calendar, Today, World Clocks, Weather, notifications) and of the idle Quick Settings buttons with their menus and the slider buttons, from 0 to 100%, in both modes. Also works with the GNOME profile.
 - **Enable panel opacity**: the panel stays solid by default; when on, it also gets the shell opacity.

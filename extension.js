@@ -411,9 +411,11 @@ function heightAtWidth(actor, width) {
 
 const PROFILE_ICON = 'preferences-desktop-appearance-symbolic';
 
-// The applied profile of each tab and the applied general profile: set when a profile is
-// applied, so that change fades like a mode switch.
-const PROFILE_KEYS = ['active-profile', 'active-profile-dark', 'active-general-profile'];
+// Color changes (a profile applied, a color or option edited) fade like a mode switch when
+// they change something on screen: the top bar is always visible, the overview and the menus
+// (Quick Settings, calendar...) only while open. Keys without "-dark".
+const TOP_BAR_KEYS = ['color-panel', 'color-panel-fg', 'panel-opacity'];
+const OVERVIEW_KEYS = ['color-overview', 'color-grid-fg', 'color-dash'];
 const AUTO_KEYS = ['auto-switch', 'auto-switch-1-time', 'auto-switch-1-mode', 'auto-switch-2-time'];
 // How often the automatic switch checks the clock. A check is a few comparisons; checking
 // often (instead of one long timer) also catches up right after a suspend.
@@ -854,10 +856,25 @@ export default class LightModeManagerExtension extends Extension {
         });
     }
 
-    // A profile was applied (its colors follow in the same change): the next theme apply fades.
-    _profileApplied() {
-        this._fadeNext = true;
+    // A color or option changed: applied shortly (a profile changes several keys at once),
+    // remembering what changed to decide whether to fade.
+    _colorChanged(key) {
+        (this._changedKeys ??= new Set()).add(key.replace(/-dark$/, ''));
         this._scheduleApply();
+    }
+
+    // Whether the changes since the last apply show on screen now (see TOP_BAR_KEYS).
+    _changeVisible() {
+        const keys = [...this._changedKeys ?? []];
+        this._changedKeys = null;
+        const panelOpacity = this._settings.get_boolean('panel-opacity');
+        return keys.some(key => {
+            if (TOP_BAR_KEYS.includes(key) || (key === 'general-opacity' && panelOpacity))
+                return true;
+            if (OVERVIEW_KEYS.includes(key))
+                return Main.overview.visible;
+            return !!Main.panel.menuManager?.activeMenu;
+        });
     }
 
     _wantsForcedDark() {
@@ -1156,8 +1173,8 @@ export default class LightModeManagerExtension extends Extension {
         try {
             // "Use GNOME colors on the lock screen": no stylesheet while locked.
             const css = this._lockedNative() ? '' : this._isDark() ? this._darkCss() : this._lightCss();
-            // Switching profiles in the same mode: GNOME's screen transition snapshots the
-            // screen before the change, then fades it out with the Transition duration.
+            // A visible color change: GNOME's screen transition snapshots the screen before
+            // the change, then fades it out with the Transition duration.
             if (fade && this._settings.get_int('transition-duration') > 0 &&
                 (css !== this._lastCss || this._wantsForcedDark() !== this._forcedDark)) {
                 Main.layoutManager.screenTransition.run();
@@ -1245,9 +1262,7 @@ export default class LightModeManagerExtension extends Extension {
         this._clearSource('_applyId');
         this._applyId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
             this._applyId = 0;
-            const fade = this._fadeNext;
-            this._fadeNext = false;
-            this._applyTheme(fade);
+            this._applyTheme(this._changeVisible());
             return GLib.SOURCE_REMOVE;
         });
     }
@@ -1272,10 +1287,8 @@ export default class LightModeManagerExtension extends Extension {
                 this._syncQsMenuHeight();
             else if (AUTO_KEYS.includes(key))
                 this._syncAutoSwitch(true);
-            else if (PROFILE_KEYS.includes(key))
-                this._profileApplied();
             else if ((this._isDark() ? DARK_THEME_KEYS : LIGHT_THEME_KEYS).includes(key))
-                this._scheduleApply();
+                this._colorChanged(key);
         });
         this._syncBackgroundMenu();
         // Dash to Panel may be enabled, disabled or reloaded after this extension.
@@ -1343,7 +1356,7 @@ export default class LightModeManagerExtension extends Extension {
         this._setLegacyColorScheme(this._getColorScheme());
 
         this._settings = this._interface = this._cacheDir = null;
-        this._lastCss = this._modeScheme = this._overrides = null;
+        this._lastCss = this._modeScheme = this._overrides = this._changedKeys = null;
         this._templateHead = this._templateTail = this._templateOpaque = this._templateGrid = null;
         this._templateGridText = null;
     }
