@@ -26,7 +26,7 @@ Each tab has fourteen colors in three groups:
 | Menus background | Quick Settings, the calendar, right-click menus, OSD and window switcher |
 | Menu borders | Outline of Quick Settings, the calendar and other menus |
 
-**Quick Settings and notifications**
+**Quick Settings and notification panel**
 
 | Color | What it paints |
 | --- | --- |

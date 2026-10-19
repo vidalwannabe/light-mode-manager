@@ -23,7 +23,7 @@ const COLOR_GROUPS = [
         ['general', 'Menus background', 'Quick Settings, calendar, right-click menus, OSD and window switcher'],
         ['border', 'Menu borders', 'Outline of Quick Settings, the calendar and other menus'],
     ]],
-    ['Quick Settings and notifications', [
+    ['Quick Settings and notification panel', [
         ['fg', 'Idle buttons and cards titles and icons', 'Notifications, widgets and Quick Settings; also menus and dialogs'],
         ['fg-muted', 'Idle buttons and cards subtitles', 'Text under titles: notification body, times, locations and subtitles'],
         ['qs-button', 'Idle buttons background', 'Toggles that are off, top round buttons, slider buttons and toggle menus'],
