@@ -53,7 +53,7 @@ const flatButton = props => {
 export default class LightModeManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
-        window.set_default_size(600, 910);
+        window.set_default_size(600, 855);
         // Narrower, the color and schedule rows squeeze their titles and controls.
         window.set_size_request(600, -1);
         window.set_search_enabled(false);
@@ -650,8 +650,6 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 'Cards, slider buttons, idle Quick Settings buttons and their menus', 100, 1, '%', 5);
             switchRow(effects, 'panel-opacity', 'Enable panel opacity',
                 'Applies shell opacity to the top bar; solid when off');
-            switchRow(effects, 'hide-borders', 'Disable menu borders',
-                'Hides the outline of Quick Settings, the calendar and other menus');
             switchRow(effects, 'no-qs-dimming', 'Disable Quick Settings dimming',
                 'Keeps Quick Settings bright while a toggle menu is open');
             switchRow(effects, 'match-arrow-buttons', 'Match arrows to toggles',
