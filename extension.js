@@ -293,8 +293,8 @@ function textRolesCss(main, secondary) {
     return css;
 }
 
-// Top bar buttons, with "Dash and top bar buttons background": the button whose menu is open
-// gets the color, a hovered or focused one 30% of it. GNOME fills them with an inset shadow
+// "Overview and top bar highlights" on the top bar buttons: a hovered or focused one, and
+// the one whose menu is open, get the color. GNOME fills them with an inset shadow
 // (they fake their padding with a transparent border); the clock fills its inner .clock
 // instead. Lock and login screens keep GNOME's white fills.
 const PANEL_BUTTONS = ['#panel .panel-button', '#panel:overview .panel-button'];
@@ -312,9 +312,16 @@ function panelButtonsCss(color) {
     }).join('') + rule(select(bases.map(base => `${base}.clock-display`),
         ['', ':hover', ':focus', ':active', ':checked', ':active:hover', ':checked:hover']), 'box-shadow', 'none');
     const white = alpha => `rgba(255, 255, 255, ${alpha})`;
-    return fills(PANEL_BUTTONS, translucent(color, 30), color, color) +
+    return fills(PANEL_BUTTONS, color, color, color) +
         fills(PANEL_LOCK_BUTTONS, white(0.17), white(0.28), white(0.32));
 }
+
+// "Overview and top bar highlights" on the overview search entry, with GNOME's hover shade
+// and focus tint (its focus ring is kept).
+const SEARCH_SEL = '.search-entry';
+const searchCss = (color, dark) => rule(`${SEARCH_SEL}, ${SEARCH_SEL}:insensitive`, 'background-color', color) +
+    rule(`${SEARCH_SEL}:hover`, 'background-color', `${shade(dark)}(${color}, 4%)`) +
+    rule(`${SEARCH_SEL}:focus`, 'background-color', `st-mix(-st-accent-color, ${color}, 5%)`);
 
 const panelTextCss = color => rule(PANEL_TEXT_SEL, 'color', color) + rule(PANEL_LOCK_SEL, 'color', '#ffffff') +
     rule(PANEL_DOTS_SEL, 'background-color', color) + rule(PANEL_SHOW_APPS_SEL, 'color', color);
@@ -849,7 +856,7 @@ export default class LightModeManagerExtension extends Extension {
         css += this._panelCss(panel, NATIVE_PANEL);
         const dash = values[DARK_KEYS.indexOf('color-dash-dark')];
         if (dash)
-            css += panelButtonsCss(dash);
+            css += searchCss(dash, true) + panelButtonsCss(dash);
         if (overview)
             css += rule(DARK_OPAQUE_SEL, 'background-color', withOpacity(overview, 100));
         // The top bar: "Top bar text and icons".
@@ -1018,11 +1025,12 @@ export default class LightModeManagerExtension extends Extension {
                 return `rgba(${cardColors.has(rgb) ? rgb : byRgb[rgb]}, ${alpha})`;
             return cardColors.has(m.toLowerCase()) ? m : solid[m.toLowerCase()];
         });
-        // "Dash and top bar buttons background", solid like the overview (the template's own
-        // color when empty).
+        // "Overview and top bar highlights": dash, search entry and top bar buttons, solid like
+        // the overview (the template's own colors when empty).
         if (byKey['color-dash']) {
-            css += rule('#dash .dash-background', 'background-color', withOpacity(byKey['color-dash'], 100)) +
-                panelButtonsCss(withOpacity(byKey['color-dash'], 100));
+            const dash = withOpacity(byKey['color-dash'], 100);
+            css += rule('#dash .dash-background', 'background-color', dash) +
+                searchCss(dash, false) + panelButtonsCss(dash);
         }
         const token = expression => fill(expression, faded);
         css += this._quickSettingsCss(false, byKey['color-qs-button'], {

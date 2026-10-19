@@ -17,7 +17,7 @@ const COLOR_GROUPS = [
         ['panel', 'Top bar background', 'Panel color; solid unless "Enable panel opacity" is on'],
         ['panel-fg', 'Top bar text and icons', 'Clock, indicators, overview button and Dash to Panel app grid icon'],
         ['overview', 'Overview and dialogs background', 'Overview, Power Off and password dialogs; always solid'],
-        ['dash', 'Dash and top bar buttons background', 'Overview dock and the top bar button whose menu is open'],
+        ['dash', 'Overview and top bar highlights', 'Dash, search bar and hovered or open top bar buttons'],
     ]],
     ['Menus', [
         ['general', 'Menus background', 'Quick Settings, calendar, right-click menus, OSD and window switcher'],
