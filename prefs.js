@@ -9,7 +9,7 @@ import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/ex
 import {createProfiles} from './profiles.js';
 
 // The Light mode and Dark mode tabs show exactly these rows.
-// [key name, title, subtitle, label and swatch when empty]. Transparency is set only in the
+// [key name, title, subtitle, swatch tooltip and color when empty]. Transparency is set only in the
 // Appearance tab.
 const ACCENT = 'Accent color set in GNOME Settings › Appearance';
 const COLOR_GROUPS = [
@@ -88,17 +88,18 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
         });
 
         const colorRow = (group, key, title, subtitle, emptyLabel = 'System default', emptyColor = '#808080') => {
-            const row = new Adw.ActionRow({title});
+            const row = new Adw.ActionRow({title, subtitle});
             const button = new Gtk.ColorDialogButton({
                 dialog: new Gtk.ColorDialog({with_alpha: false}),
                 valign: Gtk.Align.CENTER,
             });
             let loading = false;
             const load = () => {
-                // Empty or unreadable: the shell uses the system default.
+                // Empty or unreadable: the shell uses the system default, named in the swatch's
+                // tooltip.
                 const color = new Gdk.RGBA();
                 const valid = color.parse(s.get_string(key).trim());
-                row.set_subtitle(valid ? subtitle : emptyLabel);
+                button.set_tooltip_text(valid ? null : emptyLabel);
                 if (!valid)
                     color.parse(typeof emptyColor === 'function' ? emptyColor(s, key) : emptyColor);
                 loading = true;
