@@ -187,7 +187,9 @@ function calendarCss(card, dark) {
     const adjust = shade(dark);
     const flat = (...states) => states.flatMap(state => CALENDAR_FLAT.map(sel => sel + state)).join(', ');
     return `.calendar {\n  background-color: ${card};\n  padding: 6px;\n}\n` +
-        rule(flat(''), 'background-color', 'transparent') +
+        // The month name and weekday headings are not reactive, so St marks them
+        // :insensitive, which GNOME paints with the menu color: transparent too.
+        rule(flat('', ':insensitive'), 'background-color', 'transparent') +
         rule(flat(':hover'), 'background-color', `${adjust}(${card}, 7%)`) +
         rule(flat(':active', ':selected'), 'background-color', `${adjust}(${card}, 10%)`) +
         rule(flat(':active:hover', ':selected:hover'), 'background-color', `${adjust}(${card}, 14%)`) +
