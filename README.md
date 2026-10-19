@@ -75,7 +75,7 @@ Each tab has a color set selector to apply a set of colors in one click. Built-i
 **Easy access**
 
 - **Desktop menu entry**: adds "Shell Color Manager…", which opens these preferences, to the desktop right-click menu, below "Change Background…".
-- **Quick Settings switcher**: adds a Color Set button to Quick Settings. Its menu lists the color sets of the current mode (light or dark) and, below a separator, the general color sets, and has a Settings entry that opens these preferences. Its subtitle shows the applied general color set, or the applied color set of the current mode. Hidden on the lock screen.
+- **Quick Settings color sets**: adds a Color Set button to Quick Settings. Its menu lists the color sets of the current mode (light or dark) and has a Settings entry that opens these preferences; its subtitle shows the applied color set of the current mode. Hidden on the lock screen.
 
 **Automatic switch**
 

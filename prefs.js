@@ -184,7 +184,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                     title: profile.name, subtitle: describe(profile), activatable: true, tooltip_text: 'Apply',
                 });
                 // Every row gets the check icon so names stay aligned; only the applied one shows it.
-                row.add_prefix(new Gtk.Image({icon_name: 'object-select-symbolic', opacity: profile === applied ? 1 : 0}));
+                row.add_prefix(new Gtk.Image({icon_name: 'object-select-symbolic', opacity: profile.name === applied?.name ? 1 : 0}));
                 row.connect('activated', () => {
                     popover.popdown();
                     model.apply(profile);
@@ -821,8 +821,8 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             const panel = new Adw.PreferencesGroup({title: 'Easy access'});
             switchRow(panel, 'background-menu-entry', 'Desktop menu entry',
                 'Adds “Shell Color Manager…” to the desktop right-click menu, below Change Background');
-            switchRow(panel, 'quick-settings-profiles', 'Quick Settings switcher',
-                'Adds a Quick Settings toggle to switch color sets');
+            switchRow(panel, 'quick-settings-profiles', 'Quick Settings color sets',
+                'Adds a Quick Settings button to switch the color sets of the current mode');
             page.add(panel);
 
             page.add(autoSwitchGroup());

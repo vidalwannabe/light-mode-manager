@@ -421,10 +421,9 @@ const AUTO_KEYS = ['auto-switch', 'auto-switch-1-time', 'auto-switch-1-mode', 'a
 // often (instead of one long timer) also catches up right after a suspend.
 const AUTO_CHECK_SECONDS = 30;
 
-// Quick Settings button: switches the profiles of the current mode (light or dark) and,
-// below a separator, the general profiles; its menu also opens these preferences (on their
-// first tab, Appearance). The subtitle shows the applied general profile, or the applied
-// profile of the current mode.
+// Quick Settings button: switches the color sets (profiles) of the current mode, light or
+// dark; its menu also opens these preferences (on their first tab, Appearance). The subtitle
+// shows the applied color set of the current mode.
 const ProfileToggle = GObject.registerClass(
 class ProfileToggle extends QuickMenuToggle {
     _init(extension) {
@@ -433,10 +432,7 @@ class ProfileToggle extends QuickMenuToggle {
         this._models = createProfiles(settings);
         this._interface = new Gio.Settings({schema_id: 'org.gnome.desktop.interface'});
         this._modeItems = new PopupMenu.PopupMenuSection();
-        this._generalItems = new PopupMenu.PopupMenuSection();
         this.menu.addMenuItem(this._modeItems);
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this.menu.addMenuItem(this._generalItems);
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this.menu.addAction('Settings', () => {
             Main.panel.closeQuickSettings();
@@ -445,7 +441,7 @@ class ProfileToggle extends QuickMenuToggle {
         this.connect('clicked', () => this.menu.open());
 
         // Applying a profile changes several keys at once; rebuild only once.
-        for (const key of this._models.general.keys)
+        for (const key of [...this._models.light.keys, ...this._models.dark.keys])
             settings.connectObject(`changed::${key}`, () => this._queueSync(), this);
         this._interface.connectObject('changed::color-scheme', () => this._queueSync(), this);
         this._sync();
@@ -466,7 +462,7 @@ class ProfileToggle extends QuickMenuToggle {
         section.removeAll();
         for (const profile of profiles) {
             const item = new PopupMenu.PopupMenuItem(profile.name);
-            item.setOrnament(profile === applied ? PopupMenu.Ornament.CHECK : PopupMenu.Ornament.NONE);
+            item.setOrnament(profile.name === applied?.name ? PopupMenu.Ornament.CHECK : PopupMenu.Ornament.NONE);
             item.connect('activate', () => model.apply(profile));
             section.addMenuItem(item);
         }
@@ -476,9 +472,8 @@ class ProfileToggle extends QuickMenuToggle {
     _sync() {
         const dark = this._interface.get_string('color-scheme') === 'prefer-dark';
         this.menu.setHeader(PROFILE_ICON, 'Color Set', dark ? 'Dark mode' : 'Light mode');
-        const mode = this._fill(this._modeItems, dark ? this._models.dark : this._models.light);
-        const general = this._fill(this._generalItems, this._models.general);
-        this.subtitle = general?.name ?? mode?.name ?? 'Unsaved';
+        const applied = this._fill(this._modeItems, dark ? this._models.dark : this._models.light);
+        this.subtitle = applied?.name ?? 'Unsaved';
     }
 
     destroy() {
