@@ -355,7 +355,7 @@ const AUTO_CHECK_SECONDS = 30;
 const ProfileToggle = GObject.registerClass(
 class ProfileToggle extends QuickMenuToggle {
     _init(extension) {
-        super._init({title: 'Profile', iconName: PROFILE_ICON, toggleMode: false});
+        super._init({title: 'Color Profile', iconName: PROFILE_ICON, toggleMode: false});
         const settings = extension.getSettings();
         this._profiles = createProfiles(settings).general;
         this.menu.setHeader(PROFILE_ICON, 'General profile');
