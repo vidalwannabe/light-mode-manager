@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-  <schema id="org.gnome.shell.extensions.light-mode-manager" path="/org/gnome/shell/extensions/light-mode-manager/">
+  <schema id="org.gnome.shell.extensions.shell-color-manager" path="/org/gnome/shell/extensions/shell-color-manager/">
     <!-- Light mode (empty = system default) -->
     <key name="color-panel" type="s"><default>'#fafafb'</default><summary>Top bar background</summary></key>
     <key name="color-overview" type="s"><default>'#fafafb'</default><summary>Overview and dialogs background</summary></key>
@@ -61,6 +61,6 @@
     <key name="auto-switch-2-time" type="i"><range min="0" max="1439"/><default>1140</default><summary>Time of the second switch</summary></key>
     <key name="auto-switch-applied" type="x"><default>0</default><summary>Unix time of the last automatic switch applied</summary></key>
     <key name="quick-settings-profiles" type="b"><default>false</default><summary>Show a general profile switcher in Quick Settings</summary></key>
-    <key name="background-menu-entry" type="b"><default>false</default><summary>Add "Light Mode Manager…" to the desktop right-click menu</summary></key>
+    <key name="background-menu-entry" type="b"><default>false</default><summary>Add "Shell Color Manager…" to the desktop right-click menu</summary></key>
   </schema>
 </schemalist>

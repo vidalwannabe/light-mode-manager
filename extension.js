@@ -231,7 +231,7 @@ const DTP_UUID = 'dash-to-panel@jderose9.github.com';
 const DTP_FORCED_OFF = ['trans-use-custom-bg', 'trans-use-custom-opacity'];
 const DTP_TITLE_KEY = 'window-preview-title-font-color';
 // The desktop right-click menu entry.
-const MENU_TITLE = 'Light Mode Manager…';
+const MENU_TITLE = 'Shell Color Manager…';
 
 const rule = (selector, prop, value) => `${selector} {\n  ${prop}: ${value};\n}\n`;
 const noShadowCss = rule(SHADOW_SEL, 'box-shadow', 'none');
@@ -530,7 +530,7 @@ class ProfileIndicator extends SystemIndicator {
 // The lock and login screens keep GNOME's own look where it sits on the wallpaper: a
 // transparent top bar (_panelCss), white top bar text and icons (panelTextCss) and GNOME's
 // white hover and pressed fills on top bar buttons (panelButtonsCss).
-export default class LightModeManagerExtension extends Extension {
+export default class ShellColorManagerExtension extends Extension {
     // ---------- Color scheme ----------
     _getColorScheme() {
         return this._interface.get_string('color-scheme');
@@ -768,7 +768,7 @@ export default class LightModeManagerExtension extends Extension {
             this._unhookDtp();
             if (typeof dtpSettings?.get_boolean === 'function')
                 this._hookDtp(dtpSettings);
-        }).catch(e => console.error(`[LightModeManager] ${e.message}`));
+        }).catch(e => console.error(`[ShellColorManager] ${e.message}`));
     }
 
     _hookDtp(settings) {
@@ -803,14 +803,14 @@ export default class LightModeManagerExtension extends Extension {
             try {
                 this._dtpSettings.emit(`changed::${key}`, key);
             } catch (e) {
-                console.error(`[LightModeManager] ${e.message}`);
+                console.error(`[ShellColorManager] ${e.message}`);
             }
         }
     }
 
     // ---------- Desktop menu entry ----------
     // The desktop's right-click menu (one per monitor, rebuilt when the wallpaper or the
-    // monitors change) gets "Light Mode Manager…" below "Change Background…". The entry is
+    // monitors change) gets "Shell Color Manager…" below "Change Background…". The entry is
     // added when a menu opens, so every menu has it whenever it is shown.
     _syncBackgroundMenu(show = this._settings.get_boolean('background-menu-entry')) {
         if (show === !!this._bgMenuOpen)
@@ -1203,7 +1203,7 @@ export default class LightModeManagerExtension extends Extension {
             this._themeFile = file;
             this._lastCss = css;
         } catch (e) {
-            console.error(`[LightModeManager] ${e.message}`);
+            console.error(`[ShellColorManager] ${e.message}`);
             // Do not leave a file behind that never got loaded.
             if (file && file !== this._themeFile) {
                 try {
@@ -1247,7 +1247,7 @@ export default class LightModeManagerExtension extends Extension {
             }
             files.close(null);
         } catch (e) {
-            console.error(`[LightModeManager] ${e.message}`);
+            console.error(`[ShellColorManager] ${e.message}`);
         }
     }
 
@@ -1270,7 +1270,7 @@ export default class LightModeManagerExtension extends Extension {
     enable() {
         this._serial = 0;
         this._forcedDark = false;
-        this._cacheDir = Gio.File.new_for_path(GLib.build_filenamev([GLib.get_user_cache_dir(), 'light-mode-manager']));
+        this._cacheDir = Gio.File.new_for_path(GLib.build_filenamev([GLib.get_user_cache_dir(), 'shell-color-manager']));
         this._clearCache();
 
         this._settings = this.getSettings();

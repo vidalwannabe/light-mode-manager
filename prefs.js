@@ -51,7 +51,7 @@ const flatButton = props => {
     return button;
 };
 
-export default class LightModeManagerPrefs extends ExtensionPreferences {
+export default class ShellColorManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
         window.set_default_size(605, 855);
@@ -583,7 +583,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         };
 
         // ---------- Backup ----------
-        const SETTINGS_FILE = 'light-mode-manager-settings.json';
+        const SETTINGS_FILE = 'shell-color-manager-settings.json';
         // Internal state stays out of backups: an old switch time would switch the mode on import.
         const backupKeys = () => s.settings_schema.list_keys()
             .filter(k => !['auto-switch-applied', 'dtp-notice-shown'].includes(k));
@@ -620,11 +620,13 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         // Reads and validates a settings file: every key of the schema as a GVariant,
         // or null when the file lacks it. Throws on anything invalid, before any change.
         const PROFILE_KEYS = ['profiles', 'profiles-dark', 'general-profiles'];
+        const LEGACY_UUID = 'light-mode-manager@vidalwannabe.github.io';
         const readSettingsFile = file => {
             const [, bytes] = file.load_contents(null);
             const data = JSON.parse(new TextDecoder().decode(bytes));
-            if (data?.extension !== this.uuid || typeof data.settings !== 'object' || !data.settings)
-                throw new Error('not a Light Mode Manager settings file');
+            // Backups made before the rename to Shell Color Manager carry the old UUID.
+            if (![this.uuid, LEGACY_UUID].includes(data?.extension) || typeof data.settings !== 'object' || !data.settings)
+                throw new Error('not a Shell Color Manager settings file');
             const schema = s.settings_schema;
             return new Map(backupKeys().map(k => {
                 const text = data.settings[k];
@@ -793,7 +795,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             const page = new Adw.PreferencesPage({title: 'General', icon_name: 'preferences-other-symbolic'});
             const panel = new Adw.PreferencesGroup({title: 'Easy access'});
             switchRow(panel, 'background-menu-entry', 'Desktop menu entry',
-                'Adds “Light Mode Manager…” to the desktop right-click menu, below Change Background');
+                'Adds “Shell Color Manager…” to the desktop right-click menu, below Change Background');
             switchRow(panel, 'quick-settings-profiles', 'Quick Settings switcher',
                 'Adds a Quick Settings toggle to switch general profiles');
             page.add(panel);

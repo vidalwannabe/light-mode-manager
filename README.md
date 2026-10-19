@@ -1,6 +1,6 @@
-# Light Mode Manager
+# Shell Color Manager
 
-GNOME Shell extension (GNOME 48) that brings light mode to the parts of the shell GNOME keeps dark (top bar, menus, quick settings, notifications, overview, dash…), and lets you customize the shell colors in both light and dark mode.
+GNOME Shell extension (GNOME 48) that customizes the shell's colors in light and dark mode. It brings light mode to the parts of the shell GNOME keeps dark (top bar, menus, Quick Settings, notifications, overview, dash…), with color profiles, automatic light/dark switching, opacity and Dash to Panel support. Formerly Light Mode Manager.
 
 It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 apps only follow light and dark mode, when their theme has a dark variant installed (Adwaita / Adwaita-dark).
 
@@ -75,7 +75,7 @@ Each tab has a profile selector to apply a set of colors in one click. Built-in 
 
 **Easy access**
 
-- **Desktop menu entry**: adds "Light Mode Manager…", which opens these preferences, to the desktop right-click menu, below "Change Background…".
+- **Desktop menu entry**: adds "Shell Color Manager…", which opens these preferences, to the desktop right-click menu, below "Change Background…".
 - **Quick Settings switcher**: adds a Color Profile button to Quick Settings. Its menu lists the profiles of the current mode (light or dark) and, below a separator, the general profiles, and has a Settings entry that opens these preferences. Its subtitle shows the applied general profile, or the applied profile of the current mode. Hidden on the lock screen.
 
 **Automatic switch**
@@ -93,19 +93,19 @@ Each tab has a profile selector to apply a set of colors in one click. Built-in 
 ## Installation from source
 
 ```sh
-git clone https://github.com/vidalwannabe/light-mode-manager.git
+git clone https://github.com/vidalwannabe/shell-color-manager.git
 mkdir -p ~/.local/share/gnome-shell/extensions
-ln -s "$PWD/light-mode-manager" ~/.local/share/gnome-shell/extensions/light-mode-manager@vidalwannabe.github.io
-glib-compile-schemas light-mode-manager/schemas
+ln -s "$PWD/shell-color-manager" ~/.local/share/gnome-shell/extensions/shell-color-manager@vidalwannabe.github.io
+glib-compile-schemas shell-color-manager/schemas
 ```
 
 Log out and back in, then enable the extension in Extension Manager or with:
 
 ```sh
-gnome-extensions enable light-mode-manager@vidalwannabe.github.io
+gnome-extensions enable shell-color-manager@vidalwannabe.github.io
 ```
 
-Your colors and profiles are stored in dconf (`/org/gnome/shell/extensions/light-mode-manager/`), not in the extension folder.
+Your colors and profiles are stored in dconf (`/org/gnome/shell/extensions/shell-color-manager/`), not in the extension folder.
 
 ## Credits and license
 
