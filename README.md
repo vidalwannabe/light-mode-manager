@@ -21,7 +21,7 @@ Each tab has eleven colors:
 | Cards background | Notifications, banners and calendar widgets: Today, World Clocks and Weather. Search results and app folders keep the system background |
 | Active buttons text and icons | Quick Settings toggles that are on (Wi-Fi, Dark Style…), their arrows and subtitles. Empty: the accent's text color, subtitles included |
 | Active buttons background | Quick Settings toggles that are on, their arrows and the icon of the menu they open. Empty (default): the accent color set in GNOME Settings › Appearance |
-| Calendar day and sliders color | The filled part of the volume, brightness and other sliders, and today in the calendar. Empty (default): the accent color set in GNOME Settings › Appearance |
+| Sliders and today's date | The filled part of the volume, brightness and other sliders, and today in the calendar. Empty (default): the accent color set in GNOME Settings › Appearance |
 | Menu borders | Outline of Quick Settings, the calendar and other menus |
 
 Hover, focus and active states follow these colors automatically. Every color has a button to restore its Default profile value.

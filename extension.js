@@ -791,7 +791,7 @@ export default class LightModeManagerExtension extends Extension {
     }
 
     // ---------- Stylesheet ----------
-    // "Calendar day and sliders color": the filled part of every slider (volume, brightness...)
+    // "Sliders and today's date": the filled part of every slider (volume, brightness...)
     // and today in the calendar, in all its states. Empty: GNOME's accent color.
     _highlightCss(key, dark) {
         const [color] = this._values([key]);
