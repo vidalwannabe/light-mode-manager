@@ -64,7 +64,6 @@ Each tab has a profile selector to apply a set of colors in one click. Built-in 
 - **Shell opacity**: transparency of the menus background (Quick Settings, calendar, menus, OSD and switcher), from 0 to 100%, in both modes. The top bar only gets it with **Enable panel opacity**. The overview and dialogs (Power Off, passwords, "not responding"…) stay opaque so they are easy to read, and below 100% menu shadows are removed so they do not darken translucent menus. Also works with the GNOME profile, on GNOME's own colors.
 - **Card opacity**: transparency of the notification cards (calendar, Today, World Clocks, Weather, notifications) and of the idle Quick Settings buttons with their menus and the slider buttons, from 0 to 100%, in both modes. Also works with the GNOME profile.
 - **Enable panel opacity**: the panel stays solid by default; when on, it also gets the shell opacity.
-- **Keep menu shadows**: below 100% shell opacity, menu shadows are removed because they show through translucent menus and darken them; this keeps them.
 - **Disable Quick Settings dimming**: Quick Settings is no longer darkened while one of its menus (Wi-Fi, Power Off…) is open.
 - **Match arrows to toggles**: the arrow (›) next to Quick Settings toggles such as Wi-Fi or Bluetooth uses the same color as its toggle, on and off, instead of GNOME's separate shade.
 - **Merge arrows into toggles**: removes the 1px gap line between a Quick Settings toggle and its arrow (›), so both read as one button. Works with any profile.
