@@ -44,15 +44,6 @@ const COLOR_GROUPS = [
     ]],
 ];
 
-// A set color's tooltip: a swatch and its code, both in the color. On the dark tooltip, colors
-// too dark to read keep the swatch but write the code in the tooltip's own text color.
-const codeMarkup = rgba => {
-    const hex = toHex(rgba).toUpperCase();
-    const luminance = 0.2126 * rgba.red + 0.7152 * rgba.green + 0.0722 * rgba.blue;
-    const code = luminance < 0.25 ? hex : `<span foreground="${hex}">${hex}</span>`;
-    return `<span foreground="${hex}">■</span> <b>${code}</b>`;
-};
-
 // The accent color chosen in GNOME Settings (libadwaita 1.6+), GNOME's blue otherwise.
 const accentColor = () => {
     const rgba = Adw.StyleManager.get_default().get_accent_color_rgba?.();
@@ -108,10 +99,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                 // tooltip.
                 const color = new Gdk.RGBA();
                 const valid = color.parse(s.get_string(key).trim());
-                if (valid)
-                    button.set_tooltip_markup(codeMarkup(color));
-                else
-                    button.set_tooltip_text(emptyLabel);
+                button.set_tooltip_text(valid ? toHex(color).toUpperCase() : emptyLabel);
                 if (!valid)
                     color.parse(typeof emptyColor === 'function' ? emptyColor(s, key) : emptyColor);
                 loading = true;
