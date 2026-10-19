@@ -17,6 +17,7 @@ const COLOR_GROUPS = [
         ['panel', 'Top bar background', 'Panel color; solid unless "Enable panel opacity" is on'],
         ['panel-fg', 'Top bar text and icons', 'Clock, indicators, overview button and Dash to Panel app grid icon'],
         ['overview', 'Overview and dialogs background', 'Overview, Power Off and password dialogs; always solid'],
+        ['grid-fg', 'App grid text', 'App and folder names, folder titles and page arrows in the app grid'],
         ['dash', 'Overview and top bar highlights', 'Dash, search and password fields, and hovered or open top bar buttons'],
     ]],
     ['Menus', [
@@ -287,15 +288,52 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         const generalProfilesGroup = (model, light, dark) => {
             const side = (mode, name) => model.exists(mode, name) ? name : `${name} (deleted)`;
 
-            const addButton = flatButton({icon_name: 'media-floppy-symbolic', tooltip_text: 'New general profile'});
-            addButton.connect('clicked', () => profileDialog(model.taken, (name, l, d) => {
+            const newGeneral = () => profileDialog(model.taken, (name, l, d) => {
                 // Only saved: applying it here would overwrite unsaved colors.
                 model.save([...model.own(), {name, light: l, dark: d}]);
             }, [
                 // The profiles applied in each tab, or Default when a tab's colors are unsaved.
                 {title: 'Light mode profile', names: light.all().map(p => p.name), selected: light.applied()?.name ?? 'Default'},
                 {title: 'Dark mode profile', names: dark.all().map(p => p.name), selected: dark.applied()?.name ?? 'Default'},
-            ], 'New general profile'));
+            ], 'New general profile');
+
+            // A tab with unsaved colors is offered to be saved as a new profile first, so the
+            // general profile can use it; skipping uses Default, cancelling stops.
+            const saveUnsaved = (pending, done) => {
+                const next = pending.shift();
+                if (!next) {
+                    done();
+                    return;
+                }
+                const [mode, label] = next;
+                const dialog = new Adw.AlertDialog({
+                    heading: `Save ${label} colors?`,
+                    body: `The ${label} tab has unsaved colors. Save them as a new profile to use them in ` +
+                        'this general profile, or skip to use Default.',
+                });
+                dialog.add_response('cancel', 'Cancel');
+                dialog.add_response('skip', 'Skip');
+                dialog.add_response('save', 'Save…');
+                dialog.set_response_appearance('save', Adw.ResponseAppearance.SUGGESTED);
+                dialog.set_default_response('save');
+                dialog.set_close_response('cancel');
+                dialog.connect('response', (_d, response) => {
+                    if (response === 'skip') {
+                        saveUnsaved(pending, done);
+                    } else if (response === 'save') {
+                        profileDialog(mode.taken, name => {
+                            mode.save([...mode.own(), {name, colors: mode.current()}]);
+                            mode.setActive(name);
+                            saveUnsaved(pending, done);
+                        }, [], `New ${label} profile`);
+                    }
+                });
+                dialog.present(window);
+            };
+
+            const addButton = flatButton({icon_name: 'media-floppy-symbolic', tooltip_text: 'New general profile'});
+            addButton.connect('clicked', () => saveUnsaved(
+                [[light, 'Light mode'], [dark, 'Dark mode']].filter(([mode]) => !mode.applied()), newGeneral));
 
             return selectorGroup({
                 groupTitle: 'General profiles', title: 'Profile',

@@ -9,6 +9,7 @@
     <key name="color-panel-fg" type="s"><default>'#000000'</default><summary>Top bar text and icons</summary></key>
     <key name="color-fg-muted" type="s"><default>'#77767b'</default><summary>Idle buttons and cards subtitles</summary></key>
     <key name="color-card" type="s"><default>'#e6e6e7'</default><summary>Cards background</summary></key>
+    <key name="color-grid-fg" type="s"><default>'#000000'</default><summary>App grid text</summary></key>
     <key name="color-dash" type="s"><default>'#e6e6e7'</default><summary>Overview and top bar highlights</summary></key>
     <key name="color-qs-active-fg" type="s"><default>''</default><summary>Active buttons text and icons (empty: accent text color)</summary></key>
     <key name="color-qs-active" type="s"><default>''</default><summary>Active buttons background (empty: GNOME accent color)</summary></key>
@@ -24,6 +25,7 @@
     <key name="color-panel-fg-dark" type="s"><default>'#ffffff'</default><summary>Top bar text and icons</summary></key>
     <key name="color-fg-muted-dark" type="s"><default>'#c0bfbc'</default><summary>Idle buttons and cards subtitles</summary></key>
     <key name="color-card-dark" type="s"><default>'#343437'</default><summary>Cards background</summary></key>
+    <key name="color-grid-fg-dark" type="s"><default>'#ffffff'</default><summary>App grid text</summary></key>
     <key name="color-dash-dark" type="s"><default>'#343437'</default><summary>Overview and top bar highlights</summary></key>
     <key name="color-qs-active-fg-dark" type="s"><default>''</default><summary>Active buttons text and icons (empty: accent text color)</summary></key>
     <key name="color-qs-active-dark" type="s"><default>''</default><summary>Active buttons background (empty: GNOME accent color)</summary></key>

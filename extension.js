@@ -59,6 +59,10 @@ const DARK_RULES = [
         '#dash .dash-background',
     ], 'background-color', 'color-dash-dark'],
     [[
+        '.overview-tile', '.grid-search-result', '.app-folder', '.app-folder-dialog',
+        '.app-folder-dialog .folder-name-container .folder-name-label', '.page-navigation-arrow',
+    ], 'color', 'color-grid-fg-dark'],
+    [[
         'stage', '.popup-menu', '.popup-menu-item', '.popup-inactive-menu-item', '.message',
         '.quick-toggle-menu', '.events-button', '.world-clocks-button', '.weather-button',
         '.datemenu-today-button', '.calendar .calendar-day', '.calendar .calendar-month-header .calendar-month-label',
@@ -83,7 +87,7 @@ const DARK_CARD_BUTTONS = ['.quick-toggle-menu', ...CARD_BUTTONS];
 
 // Color settings of each mode.
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button', 'color-panel-fg',
-    'color-qs-active-fg', 'color-qs-active', 'color-highlight', 'color-today', 'color-dash', 'color-panel',
+    'color-qs-active-fg', 'color-qs-active', 'color-highlight', 'color-today', 'color-dash', 'color-grid-fg', 'color-panel',
     'color-overview'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and Appearance tab options);
@@ -118,9 +122,10 @@ const LIGHT_OPAQUE_RE = /overview|grid-search-result|modal-dialog|audio-device-s
 // colors back.
 const GRID_RE = /#dash|search|app-folder/;
 const CARD_TOKENS = TOKENS.filter(([key]) => key === 'color-card');
-// The app grid (app and folder names, folder dialogs, page arrows) keeps the system's text
-// colors: "Idle buttons and cards titles and icons" does not paint it. In light mode the
-// template paints it with the text token, so those rules get the template's own color back.
+// The app grid (app and folder names, folder dialogs, page arrows) has its own text color,
+// "App grid text": "Idle buttons and cards titles and icons" does not paint it. In light mode
+// the template paints it with the text token, so those rules are repeated with that color
+// (the template's own when empty).
 const APP_GRID_RE = /overview-tile|app-folder|grid-search-result|page-navigation-arrow/;
 const TEXT_TOKEN_RE = /#222226|34, 34, 38/;
 
@@ -1104,7 +1109,10 @@ export default class LightModeManagerExtension extends Extension {
                 return `rgba(${cardColors.has(rgb) ? rgb : byRgb[rgb]}, ${alpha})`;
             return cardColors.has(m.toLowerCase()) ? m : solid[m.toLowerCase()];
         });
-        css += gridText;
+        // "App grid text": the template's app grid text rules, recolored.
+        const gridFg = byKey['color-grid-fg'];
+        const gridRgb = gridFg && colorToRgb(gridFg);
+        css += gridFg ? gridText.replace(/#222226/g, gridFg).replace(/34, 34, 38/g, gridRgb ?? '34, 34, 38') : gridText;
         // "Overview and top bar highlights": dash, search and password entries and top bar
         // buttons, solid like the overview (the template's own colors when empty).
         if (byKey['color-dash']) {

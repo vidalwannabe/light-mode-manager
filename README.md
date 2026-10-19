@@ -8,7 +8,7 @@ It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 app
 
 ### Light mode and Dark mode tabs
 
-Each tab has fourteen colors in three groups:
+Each tab has fifteen colors in three groups:
 
 **Top bar and overview**
 
@@ -17,6 +17,7 @@ Each tab has fourteen colors in three groups:
 | Top bar background | The panel; solid unless **Enable panel opacity** is on |
 | Top bar text and icons | Top bar text and icons: clock, indicators, the overview button and Dash to Panel's app grid button |
 | Overview and dialogs background | The overview and dialogs (Power Off, passwords, "not responding"…), always solid |
+| App grid text | App and folder names, folder titles and page arrows in the app grid. Default: black in light mode, white in dark mode |
 | Overview and top bar highlights | The overview dock (dash) and search bar, the password field of the lock and login screens (its text in the titles color) and top bar buttons that are hovered or have their menu open (not on the lock screen). Default: the cards background |
 
 **Menus**
@@ -30,7 +31,7 @@ Each tab has fourteen colors in three groups:
 
 | Color | What it paints |
 | --- | --- |
-| Idle buttons and cards titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, menus, dialogs, Quick Settings. App and folder names in the app grid keep the system color |
+| Idle buttons and cards titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, menus, dialogs, Quick Settings (not the app grid, see App grid text) |
 | Idle buttons and cards subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday, toggle subtitles |
 | Idle buttons background | Quick Settings toggles that are off, their arrows, the round buttons at the top, the slider buttons (volume, "›", brightness) and the menus toggles open |
 | Cards background | Notifications, banners and calendar widgets: Today, World Clocks and Weather. Search results and app folders keep the system background |
@@ -55,7 +56,7 @@ Each tab has a profile selector to apply a set of colors in one click. Built-in 
 
 ### Appearance tab
 
-- **General profile**: pairs a light mode profile with a dark mode profile and applies both at once. Built-in **Default** and **GNOME** general profiles are included. Adding a profile (with the save button or by importing) only saves it; it is applied from the selector.
+- **General profile**: pairs a light mode profile with a dark mode profile and applies both at once. Built-in **Default** and **GNOME** general profiles are included. Adding a profile (with the save button or by importing) only saves it; it is applied from the selector. The save button preselects the profiles applied in each tab, and offers to save a tab with unsaved colors as a new profile first (skipping uses Default).
 
 **Visual tweaks**
 
