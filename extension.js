@@ -85,11 +85,11 @@ const DARK_RULES = [
 // notification list's Clear button follows the cards too.
 const CLEAR_BUTTON = '.message-list-controls .button';
 const CARD_BUTTONS = ['.message', '.events-button', '.world-clocks-button', '.weather-button', CLEAR_BUTTON];
-const DARK_CARD_BUTTONS = ['.quick-toggle-menu', ...CARD_BUTTONS];
 
 // Color settings of each mode.
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button', 'color-panel-fg',
-    'color-qs-active-fg', 'color-qs-active', 'color-highlight', 'color-today', 'color-today-fg', 'color-qs-fg', 'color-qs-fg-muted', 'color-dash', 'color-grid-fg', 'color-panel',
+    'color-qs-active-fg', 'color-qs-active', 'color-highlight', 'color-today', 'color-today-fg', 'color-qs-fg', 'color-qs-fg-muted', 'color-qs-menu', 'color-qs-active-menu',
+    'color-dash', 'color-grid-fg', 'color-panel',
     'color-overview'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and Appearance tab options);
@@ -99,7 +99,8 @@ const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'hide-b
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark',
     'color-qs-active-fg-dark', 'color-qs-active-dark', 'color-highlight-dark', 'color-today-dark', 'color-today-fg-dark',
-    'color-qs-fg-dark', 'color-qs-fg-muted-dark', 'color-panel-dark',
+    'color-qs-fg-dark', 'color-qs-fg-muted-dark', 'color-qs-menu-dark',
+    'color-qs-active-menu-dark', 'color-panel-dark',
     'color-overview-dark', ...EFFECT_KEYS];
 
 // Accepted color values: #rgb, #rrggbb, rgb()/rgba() or a name. Anything else (edited in
@@ -120,13 +121,13 @@ const DARK_OPAQUE_SEL = '#overviewGroup, .modal-dialog';
 // Light template rules of the overview and dialogs that use the general background.
 const LIGHT_OPAQUE_RE = /overview|grid-search-result|modal-dialog|audio-device-selection-dialog/;
 // The overview's grid (dash, search results, app folder icons and the dialog a folder
-// opens) keeps the system's colors: "Cards background" only paints cards. In light mode the
+// opens) keeps the system's colors: "Card background" only paints cards. In light mode the
 // template paints it with the card tokens, so those rules get the template's own card
 // colors back.
 const GRID_RE = /#dash|search|app-folder/;
 const CARD_TOKENS = TOKENS.filter(([key]) => key === 'color-card');
 // The app grid (app and folder names, folder dialogs, page arrows) has its own text color,
-// "App grid text": "Cards titles and icons" does not paint it. In light mode
+// "App grid text": "Card titles and icons" does not paint it. In light mode
 // the template paints it with the text token, so those rules are repeated with that color
 // (the template's own when empty).
 const APP_GRID_RE = /overview-tile|app-folder|grid-search-result|page-navigation-arrow/;
@@ -160,18 +161,22 @@ function buttonCss(selectors, base, dark) {
         'background-color', color)).join('');
 }
 
-// Idle Quick Settings buttons: toggles that are off and the round buttons at the top;
-// the menus they expand (Wi-Fi, Power Off...) use the same color. Checked toggles get
+// Idle Quick Settings buttons: toggles that are off and the round buttons at the top.
+// The menus they expand (Wi-Fi, Power Off...) have their own colors (menuCss). Checked toggles get
 // GNOME's accent states again after them, and the Background Apps item (also a toggle)
 // its transparent background, which still gives way to the hover.
 // The slider buttons (volume icon and "›", brightness icon) are flat buttons GNOME paints in
 // the menu's own color, a pill that shows on a translucent menu: they join them.
 const QS_BUTTONS = ['.quick-toggle', '.quick-settings-system-item .icon-button', '.quick-slider .icon-button'];
 const QS_MENU = '.quick-toggle-menu';
+// "Active expanded menu": the menu of a toggle that is on. CSS cannot see the toggle's
+// state from its menu, so _trackActiveMenus() gives the menu this class while it is on.
+const ACTIVE_MENU_CLASS = 'scm-active';
+const QS_ACTIVE_MENU = `${QS_MENU}.${ACTIVE_MENU_CLASS}`;
 // The open menu is not reactive, so St gives it :insensitive, which GNOME (and buttonCss)
 // draws a shade lighter: it keeps its own color instead.
-const menuCss = (color, dark) => buttonCss(QS_MENU, color, dark) +
-    rule(`${QS_MENU}:insensitive`, 'background-color', color);
+const menuCss = (color, dark, selector = QS_MENU) => buttonCss(selector, color, dark) +
+    rule(`${selector}:insensitive`, 'background-color', color);
 const QS_CHECKED = '.quick-toggle:checked';
 const QS_MENU_ICON_ON = '.quick-toggle-menu .header .icon.active';
 const QS_FLAT = '.background-apps-quick-toggle';
@@ -240,10 +245,10 @@ const rule = (selector, prop, value) => `${selector} {\n  ${prop}: ${value};\n}\
 const noShadowCss = rule(SHADOW_SEL, 'box-shadow', 'none');
 const insensitive = selectors => selectors.map(s => `${s}:insensitive`).join(', ');
 
-// "Idle buttons titles and icons": Quick Settings toggles and their arrows, the round buttons
+// "Idle button titles and icons": Quick Settings toggles and their arrows, the round buttons
 // at the top, the slider buttons and the heading of the menus toggles open. "Idle buttons
 // subtitles": the line under a toggle or menu heading, and device subtitles (Bluetooth...).
-// Toggles that are on get "Active buttons text and icons" afterwards (activeTextCss).
+// Toggles that are on get "Active button text and icons" afterwards (activeTextCss).
 const QS_TEXT = ['.quick-settings .button', '.quick-settings .icon-button'];
 const QS_TITLE = [...QS_TEXT, '.quick-toggle-menu .header .title'];
 const QS_SUBTITLE = ['.quick-settings .quick-toggle .quick-toggle-subtitle', '.quick-toggle-menu .header .subtitle',
@@ -259,7 +264,7 @@ function quickSettingsTextCss(main, secondary) {
     return css;
 }
 
-// "Active buttons text and icons": Quick Settings toggles that are on (and their arrows and
+// "Active button text and icons": Quick Settings toggles that are on (and their arrows and
 // subtitles), and the icon of the menu they open. GNOME's own: the accent's text color.
 const QS_ACTIVE = ['.quick-settings .quick-toggle:checked',
     '.quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked'];
@@ -270,7 +275,7 @@ function activeTextCss(color) {
         rule(insensitive(QS_ACTIVE), 'color', `st-transparentize(${color}, 0.5)`);
 }
 
-// Text roles. "Cards titles and icons" colors titles and icons, "Cards subtitles" only the line
+// Text roles. "Card titles and icons" colors titles and icons, "Card subtitles" only the line
 // that comes under a title (a notification's body and time, a location, "No Events"...).
 // GNOME dims some titles too (a notification's app name, "Today", "Weather", weekends), so
 // each role is set here explicitly, after the template or GNOME's own rules.
@@ -703,6 +708,38 @@ export default class ShellColorManagerExtension extends Extension {
         menu._grid.queue_relayout();
     }
 
+    // "Active expanded menu": each Quick Settings menu gets ACTIVE_MENU_CLASS while its
+    // toggle is on, so the stylesheet can tell them apart. Items added later (by other
+    // extensions too) are followed through the grid's child-added signal.
+    _trackActiveMenus(track = true) {
+        const grid = Main.panel.statusArea.quickSettings?.menu?._grid;
+        if (!grid)
+            return;
+        const items = grid.get_children().filter(item => item.menu?.box);
+        if (!track) {
+            grid.disconnectObject(this);
+            for (const item of items) {
+                item.disconnectObject(this);
+                item.menu.box.remove_style_class_name(ACTIVE_MENU_CLASS);
+            }
+            return;
+        }
+        const follow = item => {
+            if (!item.menu?.box)
+                return;
+            const sync = () => {
+                if (item.checked)
+                    item.menu.box.add_style_class_name(ACTIVE_MENU_CLASS);
+                else
+                    item.menu.box.remove_style_class_name(ACTIVE_MENU_CLASS);
+            };
+            item.connectObject('notify::checked', sync, this);
+            sync();
+        };
+        items.forEach(follow);
+        grid.connectObject('child-added', (_grid, item) => follow(item), this);
+    }
+
     // ---------- Automatic switch ----------
     // Two times of day: the first sets the chosen mode, the second the opposite one. The
     // most recent switch time that has passed is applied once (its moment is kept in dconf),
@@ -846,7 +883,7 @@ export default class ShellColorManagerExtension extends Extension {
         }
     }
 
-    // Opacity on GNOME's own menu backgrounds, for "Menus background" on system default.
+    // Opacity on GNOME's own menu backgrounds, for "Menu background" on system default.
     _nativeOpacityCss() {
         const opacity = this._settings.get_int('general-opacity');
         if (opacity >= 100)
@@ -983,8 +1020,8 @@ export default class ShellColorManagerExtension extends Extension {
         const [panelFg] = this._values(['color-panel-fg-dark']);
         if (panelFg)
             css += panelTextCss(panelFg);
-        // Titles and subtitles: "Cards titles and icons", "Cards subtitles", "Idle buttons titles
-        // and icons", "Idle buttons subtitles" and "Active buttons text and icons".
+        // Titles and subtitles: "Card titles and icons", "Card subtitles", "Idle button titles
+        // and icons", "Idle button subtitles" and "Active button text and icons".
         const fg = values[DARK_KEYS.indexOf('color-fg-dark')];
         const muted = values[DARK_KEYS.indexOf('color-fg-muted-dark')];
         const [qsFg, qsMuted, active] = this._values(['color-qs-fg-dark', 'color-qs-fg-muted-dark',
@@ -994,22 +1031,20 @@ export default class ShellColorManagerExtension extends Extension {
         if (fg || muted || qsFg || qsMuted || active)
             css += activeTextCss(active || '-st-accent-fg-color');
         css += this._darkCardsCss(values[DARK_KEYS.indexOf('color-card-dark')],
-            ...this._values(['color-qs-button-dark', 'color-qs-active-dark']));
+            ...this._values(['color-qs-button-dark', 'color-qs-active-dark']),
+            this._values(['color-qs-menu-dark', 'color-qs-active-menu-dark']));
         return css + this._highlightCss(true) + this._borderCss('color-border-dark');
     }
 
     // Cards, inactive Quick Settings buttons and calendar background on GNOME's dark style;
     // an empty color is GNOME's own.
-    _darkCardsCss(card, qsButtons, active = '') {
+    _darkCardsCss(card, qsButtons, active = '', menus = ['', '']) {
         const opacity = this._settings.get_int('card-opacity');
         const base = card || NATIVE_CARD;
-        let css = card || opacity < 100
-            ? buttonCss(DARK_CARD_BUTTONS, translucent(base, opacity), true) + menuCss(translucent(base, opacity), true)
-            : '';
-        // After the cards, so the Quick Settings menus take the inactive buttons color.
+        let css = card || opacity < 100 ? buttonCss(CARD_BUTTONS, translucent(base, opacity), true) : '';
         css += this._quickSettingsCss(true, qsButtons, {
-            toggle: toggleOff(true), arrow: arrowOff(true), arrowChecked: arrowChecked(true), menu: base,
-        }, active);
+            toggle: toggleOff(true), arrow: arrowOff(true), arrowChecked: arrowChecked(true), menu: NATIVE_CARD,
+        }, active, ...menus);
         if (this._settings.get_boolean('calendar-background'))
             css += calendarCss(translucent(base, opacity), true);
         return css;
@@ -1017,8 +1052,9 @@ export default class ShellColorManagerExtension extends Extension {
 
     // Idle Quick Settings buttons, the menus they open and the arrow buttons. An empty
     // color uses `native`: GNOME's own toggle, arrow (off, checked) and menu colors.
-    _quickSettingsCss(dark, color, native, active = '') {
-        // "Active buttons background": toggles that are on, their arrows and the icon of the
+    // `menu` and `activeMenu`: "Idle expanded menu" and "Active expanded menu".
+    _quickSettingsCss(dark, color, native, active = '', menu = '', activeMenu = '') {
+        // "Active button background": toggles that are on, their arrows and the icon of the
         // menu they open. GNOME's own: the accent color.
         const accent = active || '-st-accent-color';
         const match = this._settings.get_boolean('match-arrow-buttons');
@@ -1033,14 +1069,19 @@ export default class ShellColorManagerExtension extends Extension {
             css = buttonCss(QS_BUTTONS, translucent(color || native.toggle, opacity), dark) +
                 buttonCss(QS_CHECKED, accent, dark) +
                 rule(QS_FLAT, 'background-color', 'transparent') +
-                menuCss(translucent(color || native.menu, opacity), dark) +
                 buttonCss(ARROW_SEL, translucent(arrow, opacity), dark);
         } else {
             css = (match ? buttonCss(ARROW_SEL, native.toggle, dark) : '') +
                 (active ? buttonCss(QS_CHECKED, accent, dark) : '');
-            if (!css)
-                return merged;
         }
+        // The light template paints the menus with the card token, so in light mode they
+        // always get their own color back. An active menu without a color keeps the idle one.
+        let menus = menu || opacity < 100 || !dark ? menuCss(translucent(menu || native.menu, opacity), dark) : '';
+        if (activeMenu)
+            menus += menuCss(translucent(activeMenu, opacity), dark, QS_ACTIVE_MENU);
+        if (!css)
+            return merged + menus;
+        css += menus;
         // Set again after the off colors, which would otherwise also cover the checked arrow.
         const arrowOn = match ? accent : native.arrowChecked.replaceAll('-st-accent-color', accent);
         css = merged + css + buttonCss(`${ARROW_SEL}:checked`, arrowOn, dark);
@@ -1170,8 +1211,8 @@ export default class ShellColorManagerExtension extends Extension {
         const token = expression => fill(expression, faded);
         css += this._quickSettingsCss(false, byKey['color-qs-button'], {
             toggle: token(toggleOff(false)), arrow: token(arrowOff(false)),
-            arrowChecked: token(arrowChecked(false)), menu: card,
-        }, byKey['color-qs-active']);
+            arrowChecked: token(arrowChecked(false)), menu: '#e8e8e8',
+        }, byKey['color-qs-active'], byKey['color-qs-menu'], byKey['color-qs-active-menu']);
         if (this._settings.get_boolean('calendar-background'))
             css += calendarCss(translucent(card, cardOpacity), false);
         return css + this._highlightCss(false) + this._borderCss('color-border');
@@ -1335,6 +1376,7 @@ export default class ShellColorManagerExtension extends Extension {
         this._syncQuickSettings();
         this._syncQsDimming();
         this._syncQsMenuHeight();
+        this._trackActiveMenus();
 
         this._syncAutoSwitch();
         this._applyTheme();
@@ -1363,6 +1405,7 @@ export default class ShellColorManagerExtension extends Extension {
         this._indicator = null;
         this._syncQsDimming(false);
         this._syncQsMenuHeight(false);
+        this._trackActiveMenus(false);
         if (this._forcedDark) {
             Main.sessionMode.colorScheme = this._modeScheme;
             St.Settings.get().notify('color-scheme');

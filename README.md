@@ -8,7 +8,7 @@ It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 app
 
 ### Light mode and Dark mode tabs
 
-Each tab has eighteen colors in four groups:
+Each tab has twenty colors in four groups:
 
 **Top bar and overview**
 
@@ -24,31 +24,33 @@ Each tab has eighteen colors in four groups:
 
 | Color | What it paints |
 | --- | --- |
-| Menus background | Quick Settings, the calendar, right-click menus, OSD and window switcher |
+| Menu background | Quick Settings, the calendar, right-click menus, OSD and window switcher |
 | Menu borders | Outline of Quick Settings, the calendar and other menus |
 
 **Quick Settings**
 
 | Color | What it paints |
 | --- | --- |
-| Idle buttons titles and icons | Quick Settings toggles that are off and their arrows, the round buttons at the top, the slider buttons and the heading of the menus toggles open |
-| Idle buttons subtitles | The line under a toggle or a toggle menu heading (the connected network, the audio device…) and device subtitles |
-| Idle buttons background | Quick Settings toggles that are off, their arrows, the round buttons at the top, the slider buttons (volume, "›", brightness) and the menus toggles open |
-| Active buttons text and icons | Quick Settings toggles that are on (Wi-Fi, Dark Style…), their arrows and subtitles. Empty: the accent's text color, subtitles included |
-| Active buttons background | Quick Settings toggles that are on, their arrows and the icon of the menu they open. Empty (default): the accent color set in GNOME Settings › Appearance |
+| Idle button titles and icons | Quick Settings toggles that are off and their arrows, the round buttons at the top, the slider buttons and the heading of the menus toggles open |
+| Idle button subtitles | The line under a toggle or a toggle menu heading (the connected network, the audio device…) and device subtitles |
+| Idle button background | Quick Settings toggles that are off, their arrows, the round buttons at the top and the slider buttons (volume, "›", brightness) |
+| Idle expanded menu | The menu a toggle opens (Wi-Fi, Bluetooth, Power Off…) while the toggle is off. Empty: system default |
+| Active button text and icons | Quick Settings toggles that are on (Wi-Fi, Dark Style…), their arrows and subtitles. Empty: the accent's text color, subtitles included |
+| Active button background | Quick Settings toggles that are on, their arrows and the icon of the menu they open. Empty (default): the accent color set in GNOME Settings › Appearance |
+| Active expanded menu | The menu a toggle opens while the toggle is on. Empty (default): same as Idle expanded menu |
 | Volume and brightness sliders | The filled part of the volume, brightness and other sliders. Empty (default): the accent color set in GNOME Settings › Appearance |
 
 **Notification panel**
 
 | Color | What it paints |
 | --- | --- |
-| Cards titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, and also menus and dialogs (not the app grid, see App grid text) |
-| Cards subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday |
-| Cards background | Notifications, banners, the Clear button and calendar widgets: Today, World Clocks and Weather. Search results and app folders keep the system background |
+| Card titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, and also menus and dialogs (not the app grid, see App grid text) |
+| Card subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday |
+| Card background | Notifications, banners, the Clear button and calendar widgets: Today, World Clocks and Weather. Search results and app folders keep the system background |
 | Today in the calendar background | The circle behind the current day. Empty (default): the accent color |
 | Today in the calendar text | The number of the current day. Empty (default): system default |
 
-Color sets saved before a color existed take it from the color it came from (top bar and overview from the menus background, today from the sliders, idle buttons text from the cards text), so they keep their look.
+Color sets saved before a color existed take it from the color it came from (top bar and overview from the menu background, today from the sliders, idle button text from the card text, the idle expanded menu from the idle button background), so they keep their look.
 
 Hover, focus and active states follow these colors automatically. Every color has a button to set it to system default. Ctrl+Z undoes the last color change in the open tab; the Light mode and Dark mode tabs each keep their own history, and applying a color set is undone in one step.
 
@@ -57,7 +59,7 @@ Hover, focus and active states follow these colors automatically. Every color ha
 Each tab has a color set selector to apply a set of colors in one click. Built-in color sets come first, then your own in alphabetical order. It shows the color set the current colors match, in real time (editing a color back to its saved value shows the color set again), or **Unsaved** when they match none.
 
 - **Built-in color sets**, which cannot be deleted or overwritten:
-  - Both tabs offer the same four, the tab's own default first: **Light Default** and **Dark Default** (the default colors of each mode), **GNOME** and **Oled** (Dark Default with pure black top bar, overview, menus, menu borders, idle buttons and cards). A dark color set can be applied in light mode too (or the other way around), for example to keep two slightly different dark looks one mode switch apart.
+  - Both tabs offer the same four, the tab's own default first: **Light Default** and **Dark Default** (the default colors of each mode), **GNOME** and **Oled** (Dark Default with pure black top bar, overview, menus, menu borders, idle buttons, idle expanded menus and cards). A dark color set can be applied in light mode too (or the other way around), for example to keep two slightly different dark looks one mode switch apart.
   - **GNOME** keeps the vanilla GNOME look, the same in light and dark mode.
 - **Your own color sets**: the save button saves the current colors as a new color set, or replaces the colors of one of yours with **Update existing color set**. Your color sets can be deleted from the selector. In the selector, each of your own color sets has three buttons: **Send to Dark mode** (or Light mode), which copies it with the same colors to the other tab's list (numbered if the name is in use there); **Rename**, which also updates the general color sets that use it; and **Delete**.
 

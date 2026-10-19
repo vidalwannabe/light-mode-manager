@@ -21,21 +21,24 @@ const COLOR_GROUPS = [
         ['dash', 'Overview and top bar highlights', 'Dash, search and password fields, and hovered or open top bar buttons'],
     ]],
     ['Menus', [
-        ['general', 'Menus background', 'Quick Settings, calendar, right-click menus, OSD and window switcher'],
+        ['general', 'Menu background', 'Quick Settings, calendar, right-click menus, OSD and window switcher'],
         ['border', 'Menu borders', 'Outline of Quick Settings, the calendar and other menus'],
     ]],
     ['Quick Settings', [
-        ['qs-fg', 'Idle buttons titles and icons', 'Toggles that are off, top round buttons, slider buttons and menu headings'],
-        ['qs-fg-muted', 'Idle buttons subtitles', 'Text under toggle and menu headings, such as the connected network'],
-        ['qs-button', 'Idle buttons background', 'Toggles that are off, top round buttons, slider buttons and toggle menus'],
-        ['qs-active-fg', 'Active buttons text and icons', 'Text, icons and arrows of Quick Settings toggles that are on', 'Accent text color', '#ffffff'],
-        ['qs-active', 'Active buttons background', 'Quick Settings toggles that are on and their arrows', ACCENT, () => accentColor()],
+        ['qs-fg', 'Idle button titles and icons', 'Toggles that are off, top round buttons, slider buttons and menu headings'],
+        ['qs-fg-muted', 'Idle button subtitles', 'Text under toggle and menu headings, such as the connected network'],
+        ['qs-button', 'Idle button background', 'Toggles that are off, top round buttons and slider buttons'],
+        ['qs-menu', 'Idle expanded menu', 'Menu opened by a toggle that is off, such as Wi-Fi or Bluetooth'],
+        ['qs-active-fg', 'Active button text and icons', 'Text, icons and arrows of Quick Settings toggles that are on', 'Accent text color', '#ffffff'],
+        ['qs-active', 'Active button background', 'Quick Settings toggles that are on and their arrows', ACCENT, () => accentColor()],
+        ['qs-active-menu', 'Active expanded menu', 'Menu opened by a toggle that is on', 'Same as idle expanded menu',
+            (settings, key) => settings.get_string(key.replace('active-menu', 'menu')).trim() || '#808080'],
         ['highlight', 'Volume and brightness sliders', 'Filled part of the volume, brightness and other sliders', ACCENT, () => accentColor()],
     ]],
     ['Notification panel', [
-        ['fg', 'Cards titles and icons', 'Notifications, calendar and widgets; also menus and dialogs'],
-        ['fg-muted', 'Cards subtitles', 'Text under titles: notification body, times, locations and weekdays'],
-        ['card', 'Cards background', 'Notifications, banners, Clear button and Today, World Clocks and Weather'],
+        ['fg', 'Card titles and icons', 'Notifications, calendar and widgets; also menus and dialogs'],
+        ['fg-muted', 'Card subtitles', 'Text under titles: notification body, times, locations and weekdays'],
+        ['card', 'Card background', 'Notifications, banners, Clear button and Today, World Clocks and Weather'],
         ['today', 'Today in the calendar background', 'Circle behind the current day', ACCENT, () => accentColor()],
         ['today-fg', 'Today in the calendar text', 'Number of the current day'],
     ]],
@@ -97,7 +100,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                 const valid = color.parse(s.get_string(key).trim());
                 row.set_subtitle(valid ? subtitle : emptyLabel);
                 if (!valid)
-                    color.parse(typeof emptyColor === 'function' ? emptyColor() : emptyColor);
+                    color.parse(typeof emptyColor === 'function' ? emptyColor(s, key) : emptyColor);
                 loading = true;
                 button.set_rgba(color);
                 loading = false;
@@ -114,6 +117,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             row.add_suffix(button);
             row.add_suffix(reset);
             group.add(row);
+            return load;
         };
 
         // Asks for a new profile name, plus one choice per entry of `combos`
@@ -431,7 +435,10 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                 const group = new Adw.PreferencesGroup({title: groupTitle});
                 for (const [name, label, subtitle, emptyLabel, emptyColor] of rows) {
                     keys.push(`color-${name}${suffix}`);
-                    colorRow(group, `color-${name}${suffix}`, label, subtitle, emptyLabel, emptyColor);
+                    const load = colorRow(group, `color-${name}${suffix}`, label, subtitle, emptyLabel, emptyColor);
+                    // The active menu's empty swatch shows the idle menu's color.
+                    if (name === 'qs-active-menu')
+                        watch(`color-qs-menu${suffix}`, load);
                 }
                 page.add(group);
             }
