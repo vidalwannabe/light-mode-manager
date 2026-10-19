@@ -308,8 +308,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 const [mode, label] = next;
                 const dialog = new Adw.AlertDialog({
                     heading: `Save ${label} colors?`,
-                    body: `Your colors on the ${label} tab aren't saved. Save them as a new profile to use ` +
-                        'them in this new general profile, or skip to choose another one.',
+                    body: `Your color set on the ${label} tab isn't saved. Save it as a new profile to use ` +
+                        'it in this new general profile, or skip to choose another one.',
                 });
                 dialog.add_response('cancel', 'Cancel');
                 dialog.add_response('skip', 'Skip');
