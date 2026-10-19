@@ -68,7 +68,7 @@ Each tab has a profile selector to apply a set of colors in one click. It shows 
 - **Merge arrows into toggles**: removes the 1px gap line between a Quick Settings toggle and its arrow (›), so both read as one button. Works with any profile.
 - **Calendar as card**: the month calendar gets the color of the cards below it (Today, World Clocks, Weather), without a pill behind each day. With the GNOME profile it follows GNOME's own card color.
 - **Fix menu overlap** (on by default): GNOME sizes the menus Quick Settings toggles open without their width, so a menu with wrapped text (Bluetooth when off) covers the buttons below it ([GNOME issue 7622](https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/7622)). This measures them at their real width, in any language.
-- **Override Dash to Panel colors**: Dash to Panel's panels and window previews (shown when hovering an open app) always use this extension's panel color and opacity (or GNOME's own with the GNOME profile) instead of Dash to Panel's color and transparency settings, which are left unchanged. Window previews keep Dash to Panel's own opacity if it has a custom preview opacity set.
+- **Use this extension's colors in Dash to Panel**: Dash to Panel's panels and window previews take this extension's top bar color and opacity (or GNOME's own with the GNOME profile), and preview titles turn black in light mode and white in dark mode. Dash to Panel's settings are never changed and everything else it does is kept: dynamic opacity when a window touches the panel, gradients, borders and preview opacity. Inactive when Dash to Panel is not installed; the first time it is found, the preferences explain the color conflict and offer to turn this on.
 
 ### General tab
 

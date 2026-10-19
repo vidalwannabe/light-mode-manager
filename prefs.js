@@ -66,12 +66,14 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
 
         // Settings handlers and pending idles are dropped when the window closes,
         // so they never run on dead widgets.
+        let closed = false;
         const cleanups = [() => Gtk.StyleContext.remove_provider_for_display(window.get_display(), css)];
         const watch = (key, fn) => {
             const id = s.connect(`changed::${key}`, fn);
             cleanups.push(() => s.disconnect(id));
         };
         window.connect('close-request', () => {
+            closed = true;
             cleanups.splice(0).forEach(fn => fn());
             return false;
         });
@@ -470,10 +472,80 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             return group;
         };
 
+        // ---------- Dash to Panel ----------
+        // Whether Dash to Panel is installed, asked to GNOME Shell over D-Bus (any install
+        // folder) and followed while the window is open. Not installed: its row is inactive.
+        // The first time it is found, a dialog tells about the colors both extensions set.
+        const DTP_UUID = 'dash-to-panel@jderose9.github.com';
+        const DTP_SUBTITLE = "Panels, window previews and their titles; Dash to Panel's dynamic opacity and other settings are kept";
+        let dtpRow = null;
+        const dtpNotice = () => {
+            s.set_boolean('dtp-notice-shown', true);
+            if (s.get_boolean('override-dtp-colors'))
+                return;
+            const dialog = new Adw.AlertDialog({
+                heading: 'Dash to Panel detected',
+                body: 'Dash to Panel paints its panel and window previews with its own color and opacity ' +
+                    'settings, so the two extensions can show mismatched colors. Turn on “Use this ' +
+                    "extension's colors in Dash to Panel” (Appearance tab) to paint them with this " +
+                    "extension's colors; Dash to Panel's own settings are kept and come back when it is off.",
+            });
+            dialog.add_response('later', 'Not now');
+            dialog.add_response('on', 'Turn on');
+            dialog.set_response_appearance('on', Adw.ResponseAppearance.SUGGESTED);
+            dialog.set_default_response('on');
+            dialog.set_close_response('later');
+            dialog.connect('response', (_d, response) => {
+                if (response === 'on')
+                    s.set_boolean('override-dtp-colors', true);
+            });
+            dialog.present(window);
+        };
+        const showDtp = installed => {
+            if (!dtpRow || closed)
+                return;
+            dtpRow.set_sensitive(installed);
+            dtpRow.set_subtitle(installed ? DTP_SUBTITLE : 'Dash to Panel is not installed');
+            if (installed && !s.get_boolean('dtp-notice-shown'))
+                dtpNotice();
+        };
+        const SHELL_EXTENSIONS = ['org.gnome.Shell.Extensions', '/org/gnome/Shell/Extensions', 'org.gnome.Shell.Extensions'];
+        const UNINSTALLED = 99;
+        const watchDtp = () => {
+            Gio.bus_get(Gio.BusType.SESSION, null, (_o, busRes) => {
+                let bus;
+                try {
+                    bus = Gio.bus_get_finish(busRes);
+                } catch {
+                    showDtp(false);
+                    return;
+                }
+                if (closed)
+                    return;
+                bus.call(...SHELL_EXTENSIONS, 'GetExtensionInfo', new GLib.Variant('(s)', [DTP_UUID]),
+                    null, Gio.DBusCallFlags.NONE, -1, null, (_b, res) => {
+                        try {
+                            const [info] = bus.call_finish(res).recursiveUnpack();
+                            showDtp(Object.keys(info).length > 0 && info.state !== UNINSTALLED);
+                        } catch {
+                            showDtp(false);
+                        }
+                    });
+                const id = bus.signal_subscribe(SHELL_EXTENSIONS[0], SHELL_EXTENSIONS[2], 'ExtensionStateChanged',
+                    SHELL_EXTENSIONS[1], null, Gio.DBusSignalFlags.NONE, (...args) => {
+                        const [uuid, info] = args[5].recursiveUnpack();
+                        if (uuid === DTP_UUID)
+                            showDtp(info.state !== UNINSTALLED);
+                    });
+                cleanups.push(() => bus.signal_unsubscribe(id));
+            });
+        };
+
         // ---------- Backup ----------
         const SETTINGS_FILE = 'light-mode-manager-settings.json';
         // Internal state stays out of backups: an old switch time would switch the mode on import.
-        const backupKeys = () => s.settings_schema.list_keys().filter(k => k !== 'auto-switch-applied');
+        const backupKeys = () => s.settings_schema.list_keys()
+            .filter(k => !['auto-switch-applied', 'dtp-notice-shown'].includes(k));
         const toast = title => window.add_toast(new Adw.Toast({title}));
         const jsonFilter = () => {
             const filter = new Gtk.FileFilter({name: 'JSON files'});
@@ -668,8 +740,9 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 'Gives the calendar the card background and removes the circles behind days');
             switchRow(effects, 'fix-qs-menu-height', 'Fix menu overlap',
                 'Stops wrapped-text menus (Bluetooth off) from covering buttons below');
-            switchRow(effects, 'override-dtp-colors', 'Override Dash to Panel colors',
-                "Dash to Panel and its window previews use this extension's color and opacity");
+            dtpRow = switchRow(effects, 'override-dtp-colors', "Use this extension's colors in Dash to Panel",
+                DTP_SUBTITLE);
+            dtpRow.set_sensitive(false);
             page.add(effects);
             window.add(page);
         };
@@ -696,5 +769,6 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         addTab('Light mode', 'weather-clear-symbolic', '', profiles.light);
         addTab('Dark mode', 'weather-clear-night-symbolic', '-dark', profiles.dark);
         addGeneralTab();
+        watchDtp();
     }
 }
