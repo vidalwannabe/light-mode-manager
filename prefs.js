@@ -112,6 +112,22 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             });
             watch(key, load);
 
+            // Right-click copies the color code shown, unless the swatch is only the gray
+            // placeholder of a color left on system default.
+            const copy = new Gtk.GestureClick({button: Gdk.BUTTON_SECONDARY});
+            copy.set_propagation_phase(Gtk.PropagationPhase.CAPTURE);
+            copy.connect('pressed', () => {
+                const hex = toHex(button.get_rgba()).toUpperCase();
+                if (!new Gdk.RGBA().parse(s.get_string(key).trim()) && hex === '#808080') {
+                    window.add_toast(new Adw.Toast({title: 'System default has no color code', timeout: 2}));
+                    return;
+                }
+                button.get_clipboard().set_content(Gdk.ContentProvider.new_for_bytes('text/plain;charset=utf-8',
+                    new GLib.Bytes(new TextEncoder().encode(hex))));
+                window.add_toast(new Adw.Toast({title: `Color code copied (${hex})`, timeout: 2}));
+            });
+            button.add_controller(copy);
+
             const reset = flatButton({icon_name: 'edit-undo-symbolic', tooltip_text: 'Restore system default'});
             reset.connect('clicked', () => s.set_string(key, ''));
             row.add_suffix(button);
