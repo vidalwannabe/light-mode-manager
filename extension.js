@@ -428,7 +428,7 @@ const AUTO_CHECK_SECONDS = 30;
 const ProfileToggle = GObject.registerClass(
 class ProfileToggle extends QuickMenuToggle {
     _init(extension) {
-        super._init({title: 'Color Profile', iconName: PROFILE_ICON, toggleMode: false});
+        super._init({title: 'Color Set', iconName: PROFILE_ICON, toggleMode: false});
         const settings = extension.getSettings();
         this._models = createProfiles(settings);
         this._interface = new Gio.Settings({schema_id: 'org.gnome.desktop.interface'});
@@ -475,7 +475,7 @@ class ProfileToggle extends QuickMenuToggle {
 
     _sync() {
         const dark = this._interface.get_string('color-scheme') === 'prefer-dark';
-        this.menu.setHeader(PROFILE_ICON, 'Color Profile', dark ? 'Dark mode' : 'Light mode');
+        this.menu.setHeader(PROFILE_ICON, 'Color Set', dark ? 'Dark mode' : 'Light mode');
         const mode = this._fill(this._modeItems, dark ? this._models.dark : this._models.light);
         const general = this._fill(this._generalItems, this._models.general);
         this.subtitle = general?.name ?? mode?.name ?? 'Unsaved';

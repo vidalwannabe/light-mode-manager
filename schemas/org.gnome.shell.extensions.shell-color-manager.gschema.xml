@@ -13,7 +13,7 @@
     <key name="color-dash" type="s"><default>'#e6e6e7'</default><summary>Overview and top bar highlights</summary></key>
     <key name="color-qs-active-fg" type="s"><default>''</default><summary>Active buttons text and icons (empty: accent text color)</summary></key>
     <key name="color-qs-active" type="s"><default>''</default><summary>Active buttons background (empty: GNOME accent color)</summary></key>
-    <key name="color-highlight" type="s"><default>''</default><summary>Sliders (empty: GNOME accent color)</summary></key>
+    <key name="color-highlight" type="s"><default>''</default><summary>Volume and brightness sliders (empty: GNOME accent color)</summary></key>
     <key name="color-today" type="s"><default>''</default><summary>Today in the calendar (empty: GNOME accent color)</summary></key>
     <key name="color-qs-button" type="s"><default>'#e6e6e7'</default><summary>Idle buttons background</summary></key>
     <key name="color-border" type="s"><default>''</default><summary>Menu borders</summary></key>
@@ -29,18 +29,18 @@
     <key name="color-dash-dark" type="s"><default>'#343437'</default><summary>Overview and top bar highlights</summary></key>
     <key name="color-qs-active-fg-dark" type="s"><default>''</default><summary>Active buttons text and icons (empty: accent text color)</summary></key>
     <key name="color-qs-active-dark" type="s"><default>''</default><summary>Active buttons background (empty: GNOME accent color)</summary></key>
-    <key name="color-highlight-dark" type="s"><default>''</default><summary>Sliders (empty: GNOME accent color)</summary></key>
+    <key name="color-highlight-dark" type="s"><default>''</default><summary>Volume and brightness sliders (empty: GNOME accent color)</summary></key>
     <key name="color-today-dark" type="s"><default>''</default><summary>Today in the calendar (empty: GNOME accent color)</summary></key>
     <key name="color-qs-button-dark" type="s"><default>'#343437'</default><summary>Idle buttons background</summary></key>
     <key name="color-border-dark" type="s"><default>''</default><summary>Menu borders</summary></key>
     <!-- Saved color profiles: JSON list of {"name": ..., "colors": {row: color}} -->
-    <key name="profiles" type="s"><default>'[]'</default><summary>Light mode profiles</summary></key>
-    <key name="profiles-dark" type="s"><default>'[]'</default><summary>Dark mode profiles</summary></key>
-    <key name="active-profile" type="s"><default>'Default'</default><summary>Last applied light mode profile</summary></key>
-    <key name="active-profile-dark" type="s"><default>'Default'</default><summary>Last applied dark mode profile</summary></key>
+    <key name="profiles" type="s"><default>'[]'</default><summary>Light mode color sets</summary></key>
+    <key name="profiles-dark" type="s"><default>'[]'</default><summary>Dark mode color sets</summary></key>
+    <key name="active-profile" type="s"><default>'Default'</default><summary>Last applied light mode color set</summary></key>
+    <key name="active-profile-dark" type="s"><default>'Default'</default><summary>Last applied dark mode color set</summary></key>
     <!-- General profiles: JSON list of {"name": ..., "light": profile name, "dark": profile name} -->
-    <key name="general-profiles" type="s"><default>'[]'</default><summary>General profiles</summary></key>
-    <key name="active-general-profile" type="s"><default>'Default'</default><summary>Last applied general profile</summary></key>
+    <key name="general-profiles" type="s"><default>'[]'</default><summary>General color sets</summary></key>
+    <key name="active-general-profile" type="s"><default>'Default'</default><summary>Last applied general color set</summary></key>
     <!-- General tab -->
     <key name="transition-duration" type="i"><range min="0" max="2000"/><default>500</default><summary>Fade duration in ms when switching between light and dark mode</summary></key>
     <key name="fix-qs-menu-height" type="b"><default>true</default><summary>Expanded Quick Settings menus are measured at their real width, so they never cover the buttons below</summary></key>
@@ -60,7 +60,7 @@
     <key name="auto-switch-1-mode" type="s"><choices><choice value='light'/><choice value='dark'/></choices><default>'light'</default><summary>Mode turned on at the first switch; the second turns on the other</summary></key>
     <key name="auto-switch-2-time" type="i"><range min="0" max="1439"/><default>1140</default><summary>Time of the second switch</summary></key>
     <key name="auto-switch-applied" type="x"><default>0</default><summary>Unix time of the last automatic switch applied</summary></key>
-    <key name="quick-settings-profiles" type="b"><default>false</default><summary>Show a general profile switcher in Quick Settings</summary></key>
+    <key name="quick-settings-profiles" type="b"><default>false</default><summary>Show a general color set switcher in Quick Settings</summary></key>
     <key name="background-menu-entry" type="b"><default>false</default><summary>Add "Shell Color Manager…" to the desktop right-click menu</summary></key>
   </schema>
 </schemalist>
