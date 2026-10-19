@@ -32,7 +32,8 @@ const COLOR_GROUPS = [
         ['qs-active-fg', 'Active buttons text and icons', 'Text, icons and arrows of Quick Settings toggles that are on', 'Accent text color', '#ffffff'],
         ['qs-active', 'Active buttons background', 'Quick Settings toggles that are on and their arrows', ACCENT, () => accentColor()],
         ['highlight', 'Volume and brightness sliders', 'Filled part of the volume, brightness and other sliders', ACCENT, () => accentColor()],
-        ['today', 'Today in the calendar', 'Circle behind the current day', ACCENT, () => accentColor()],
+        ['today', 'Today in the calendar background', 'Circle behind the current day', ACCENT, () => accentColor()],
+        ['today-fg', 'Today in the calendar text', 'Number of the current day'],
     ]],
 ];
 

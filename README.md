@@ -8,7 +8,7 @@ It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 app
 
 ### Light mode and Dark mode tabs
 
-Each tab has fifteen colors in three groups:
+Each tab has sixteen colors in three groups:
 
 **Top bar and overview**
 
@@ -38,7 +38,8 @@ Each tab has fifteen colors in three groups:
 | Active buttons text and icons | Quick Settings toggles that are on (Wi-Fi, Dark Style…), their arrows and subtitles. Empty: the accent's text color, subtitles included |
 | Active buttons background | Quick Settings toggles that are on, their arrows and the icon of the menu they open. Empty (default): the accent color set in GNOME Settings › Appearance |
 | Volume and brightness sliders | The filled part of the volume, brightness and other sliders. Empty (default): the accent color set in GNOME Settings › Appearance |
-| Today in the calendar | The circle behind the current day. Empty (default): the accent color |
+| Today in the calendar background | The circle behind the current day. Empty (default): the accent color |
+| Today in the calendar text | The number of the current day. Empty (default): system default |
 
 Color sets saved before a color existed take it from the color it came from (top bar and overview from the menus background, today from the sliders), so they keep their look.
 

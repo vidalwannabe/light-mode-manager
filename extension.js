@@ -87,7 +87,7 @@ const DARK_CARD_BUTTONS = ['.quick-toggle-menu', ...CARD_BUTTONS];
 
 // Color settings of each mode.
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button', 'color-panel-fg',
-    'color-qs-active-fg', 'color-qs-active', 'color-highlight', 'color-today', 'color-dash', 'color-grid-fg', 'color-panel',
+    'color-qs-active-fg', 'color-qs-active', 'color-highlight', 'color-today', 'color-today-fg', 'color-dash', 'color-grid-fg', 'color-panel',
     'color-overview'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and Appearance tab options);
@@ -96,7 +96,8 @@ const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'match-
     'calendar-background', 'lock-screen-native'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark',
-    'color-qs-active-fg-dark', 'color-qs-active-dark', 'color-highlight-dark', 'color-today-dark', 'color-panel-dark',
+    'color-qs-active-fg-dark', 'color-qs-active-dark', 'color-highlight-dark', 'color-today-dark', 'color-today-fg-dark',
+    'color-panel-dark',
     'color-overview-dark', ...EFFECT_KEYS];
 
 // Accepted color values: #rgb, #rrggbb, rgb()/rgba() or a name. Anything else (edited in
@@ -907,10 +908,13 @@ export default class ShellColorManagerExtension extends Extension {
     // "Sliders" (the filled part of every slider: volume, brightness...) and "Today in the
     // calendar", in all its states. Empty: GNOME's accent color.
     _highlightCss(dark) {
-        const [slider, today] = this._values(dark ? ['color-highlight-dark', 'color-today-dark']
-            : ['color-highlight', 'color-today']);
+        const [slider, today, todayFg] = this._values(dark
+            ? ['color-highlight-dark', 'color-today-dark', 'color-today-fg-dark']
+            : ['color-highlight', 'color-today', 'color-today-fg']);
+        // The day number comes after textRolesCss, which sets it to the accent text color.
         return (slider ? rule('.slider', '-barlevel-active-background-color', slider) : '') +
-            (today ? buttonCss(CALENDAR_TODAY, today, dark) : '');
+            (today ? buttonCss(CALENDAR_TODAY, today, dark) : '') +
+            (todayFg ? rule(CALENDAR_TODAY, 'color', todayFg) : '');
     }
 
     // "Top bar background": with "Enable panel opacity" it also gets the shell opacity.
