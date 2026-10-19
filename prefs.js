@@ -11,20 +11,28 @@ import {createProfiles} from './profiles.js';
 // The Light mode and Dark mode tabs show exactly these rows.
 // [key name, title, subtitle, label and swatch when empty]. Transparency is set only in the
 // General tab.
-const COLOR_ROWS = [
-    ['general', 'General background', 'Top bar, menus, dialogs, OSD, window switcher and overview'],
-    ['dash', 'Dash background', 'Overview dock with favorite and running apps'],
-    ['panel-fg', 'Top bar text and icons', 'Clock, indicators, overview button and Dash to Panel app grid icon'],
-    ['fg', 'Idle buttons and cards titles and icons', 'Titles and icons of notifications, widgets, menus, dialogs and Quick Settings'],
-    ['fg-muted', 'Idle buttons and cards subtitles', 'Text under titles: notification body, times, locations and subtitles'],
-    ['qs-button', 'Idle buttons background', 'Toggles that are off, top round buttons, slider buttons and toggle menus'],
-    ['card', 'Cards background', 'Notifications, banners and calendar widgets: Today, World Clocks and Weather'],
-    ['qs-active-fg', 'Active buttons text and icons', 'Text, icons and arrows of Quick Settings toggles that are on', 'Accent text color', '#ffffff'],
-    ['qs-active', 'Active buttons background', 'Quick Settings toggles that are on and their arrows',
-        'Accent color set in GNOME Settings › Appearance', () => accentColor()],
-    ['highlight', "Sliders and today's date", 'Volume, brightness and other sliders, and today in the calendar',
-        'Accent color set in GNOME Settings › Appearance', () => accentColor()],
-    ['border', 'Menu borders', 'Outline of Quick Settings, the calendar and other menus'],
+const ACCENT = 'Accent color set in GNOME Settings › Appearance';
+const COLOR_GROUPS = [
+    ['Top bar and overview', [
+        ['panel', 'Top bar background', 'Panel color; solid unless "Enable panel opacity" is on'],
+        ['panel-fg', 'Top bar text and icons', 'Clock, indicators, overview button and Dash to Panel app grid icon'],
+        ['overview', 'Overview and dialogs background', 'Overview, Power Off and password dialogs; always solid'],
+        ['dash', 'Dash background', 'Overview dock with favorite and running apps'],
+    ]],
+    ['Menus', [
+        ['general', 'Menus background', 'Quick Settings, calendar, right-click menus, OSD and window switcher'],
+        ['border', 'Menu borders', 'Outline of Quick Settings, the calendar and other menus'],
+    ]],
+    ['Quick Settings and notifications', [
+        ['fg', 'Idle buttons and cards titles and icons', 'Notifications, widgets and Quick Settings; also menus and dialogs'],
+        ['fg-muted', 'Idle buttons and cards subtitles', 'Text under titles: notification body, times, locations and subtitles'],
+        ['qs-button', 'Idle buttons background', 'Toggles that are off, top round buttons, slider buttons and toggle menus'],
+        ['card', 'Cards background', 'Notifications, banners and calendar widgets: Today, World Clocks and Weather'],
+        ['qs-active-fg', 'Active buttons text and icons', 'Text, icons and arrows of Quick Settings toggles that are on', 'Accent text color', '#ffffff'],
+        ['qs-active', 'Active buttons background', 'Quick Settings toggles that are on and their arrows', ACCENT, () => accentColor()],
+        ['highlight', 'Sliders', 'Filled part of the volume, brightness and other sliders', ACCENT, () => accentColor()],
+        ['today', 'Today in the calendar', 'Circle behind the current day', ACCENT, () => accentColor()],
+    ]],
 ];
 
 // The accent color chosen in GNOME Settings (libadwaita 1.6+), GNOME's blue otherwise.
@@ -290,10 +298,12 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         const addTab = (title, icon, suffix, model) => {
             const page = new Adw.PreferencesPage({title, icon_name: icon});
             page.add(modeProfilesGroup(model));
-            const group = new Adw.PreferencesGroup({title: 'Colors'});
-            for (const [name, label, subtitle, emptyLabel, emptyColor] of COLOR_ROWS)
-                colorRow(group, `color-${name}${suffix}`, label, subtitle, emptyLabel, emptyColor);
-            page.add(group);
+            for (const [groupTitle, rows] of COLOR_GROUPS) {
+                const group = new Adw.PreferencesGroup({title: groupTitle});
+                for (const [name, label, subtitle, emptyLabel, emptyColor] of rows)
+                    colorRow(group, `color-${name}${suffix}`, label, subtitle, emptyLabel, emptyColor);
+                page.add(group);
+            }
             window.add(page);
         };
 

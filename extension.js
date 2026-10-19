@@ -47,7 +47,7 @@ const PANEL_LOCK_SEL = '#panel.unlock-screen .panel-button, #panel.login-screen 
 // [selectors, property, setting key]
 const DARK_RULES = [
     [[
-        '#panel', '.popup-menu-content', '.candidate-popup-content', '.modal-dialog',
+        '.popup-menu-content', '.candidate-popup-content',
         '.switcher-list', '.osd-window', '.workspace-switcher', '.resize-popup',
     ], 'background-color', 'color-general-dark'],
     [[
@@ -81,7 +81,8 @@ const DARK_CARD_BUTTONS = ['.quick-toggle-menu', ...CARD_BUTTONS];
 
 // Color settings of each mode.
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button', 'color-panel-fg',
-    'color-qs-active-fg', 'color-qs-active', 'color-highlight', 'color-dash'];
+    'color-qs-active-fg', 'color-qs-active', 'color-highlight', 'color-today', 'color-dash', 'color-panel',
+    'color-overview'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and General tab options);
 // other keys (profiles...) never do.
@@ -89,7 +90,8 @@ const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'hide-b
     'calendar-background'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark',
-    'color-qs-active-fg-dark', 'color-qs-active-dark', 'color-highlight-dark', ...EFFECT_KEYS];
+    'color-qs-active-fg-dark', 'color-qs-active-dark', 'color-highlight-dark', 'color-today-dark', 'color-panel-dark',
+    'color-overview-dark', ...EFFECT_KEYS];
 
 // Accepted color values: #rgb, #rrggbb, rgb()/rgba() or a name. Anything else (edited in
 // dconf or imported) counts as system default, so it can never break the stylesheet.
@@ -201,8 +203,9 @@ function calendarCss(card, dark) {
 // GNOME 48's own (dark) backgrounds of the general background elements. With the general
 // background on system default (GNOME profile) the shell uses this dark style in both
 // modes, so the opacity is applied to these colors. Dialogs are left out: always opaque.
+// GNOME 48's own (dark) top bar color.
+const NATIVE_PANEL = '#000000';
 const NATIVE_GENERAL = [
-    ['#panel', '#000000'],
     ['.popup-menu-content, .candidate-popup-content', '#36363a'],
     ['.switcher-list, .osd-window, .workspace-switcher, .resize-popup', '#2e2e33'],
 ];
@@ -752,15 +755,12 @@ export default class LightModeManagerExtension extends Extension {
         }
     }
 
-    // Opacity on GNOME's own general backgrounds, for a general background on system
-    // default. The panel only gets it with "Enable panel opacity".
+    // Opacity on GNOME's own menu backgrounds, for "Menus background" on system default.
     _nativeOpacityCss() {
         const opacity = this._settings.get_int('general-opacity');
         if (opacity >= 100)
             return '';
-        const solid = !this._settings.get_boolean('panel-opacity');
         return NATIVE_GENERAL
-            .filter(([selector]) => !(solid && selector === '#panel'))
             .map(([selector, color]) => rule(selector, 'background-color', withOpacity(color, opacity)))
             .join('') + noShadowCss;
     }
@@ -791,12 +791,22 @@ export default class LightModeManagerExtension extends Extension {
     }
 
     // ---------- Stylesheet ----------
-    // "Sliders and today's date": the filled part of every slider (volume, brightness...)
-    // and today in the calendar, in all its states. Empty: GNOME's accent color.
-    _highlightCss(key, dark) {
-        const [color] = this._values([key]);
-        return color ? rule('.slider', '-barlevel-active-background-color', color) +
-            buttonCss(CALENDAR_TODAY, color, dark) : '';
+    // "Sliders" (the filled part of every slider: volume, brightness...) and "Today in the
+    // calendar", in all its states. Empty: GNOME's accent color.
+    _highlightCss(dark) {
+        const [slider, today] = this._values(dark ? ['color-highlight-dark', 'color-today-dark']
+            : ['color-highlight', 'color-today']);
+        return (slider ? rule('.slider', '-barlevel-active-background-color', slider) : '') +
+            (today ? buttonCss(CALENDAR_TODAY, today, dark) : '');
+    }
+
+    // "Top bar background": with "Enable panel opacity" it also gets the shell opacity.
+    // `fallback` is the color used on system default.
+    _panelCss(panel, fallback) {
+        const opacity = this._settings.get_boolean('panel-opacity') ? this._settings.get_int('general-opacity') : 100;
+        if (!panel && opacity >= 100 && fallback === NATIVE_PANEL)
+            return '';
+        return rule('#panel', 'background-color', withOpacity(panel || fallback, opacity));
     }
 
     // The menu border rule for the given border color setting (none for the system's).
@@ -819,16 +829,15 @@ export default class LightModeManagerExtension extends Extension {
             if (values[i])
                 css += rule(selector, prop, values[i]);
         });
-        // The overview and dialogs stay opaque, and the panel too unless "Enable panel opacity".
-        if (opaque) {
-            css += rule(DARK_OPAQUE_SEL, 'background-color', opaque);
-            if (!this._settings.get_boolean('panel-opacity'))
-                css += rule('#panel', 'background-color', opaque);
-            if (opacity < 100)
-                css += noShadowCss;
-        } else {
+        if (!opaque)
             css += this._nativeOpacityCss();
-        }
+        else if (opacity < 100)
+            css += noShadowCss;
+        // "Top bar background" and "Overview and dialogs background" (always opaque).
+        const [panel, overview] = this._values(['color-panel-dark', 'color-overview-dark']);
+        css += this._panelCss(panel, NATIVE_PANEL);
+        if (overview)
+            css += rule(DARK_OPAQUE_SEL, 'background-color', withOpacity(overview, 100));
         // The top bar: "Top bar text and icons".
         const [panelFg] = this._values(['color-panel-fg-dark']);
         if (panelFg)
@@ -846,7 +855,7 @@ export default class LightModeManagerExtension extends Extension {
             css += activeTextCss(active || '-st-accent-fg-color');
         css += this._darkCardsCss(values[DARK_KEYS.indexOf('color-card-dark')],
             ...this._values(['color-qs-button-dark', 'color-qs-active-dark']));
-        return css + this._highlightCss('color-highlight-dark', true) + this._borderCss('color-border-dark');
+        return css + this._highlightCss(true) + this._borderCss('color-border-dark');
     }
 
     // Cards, inactive Quick Settings buttons and calendar background on GNOME's dark style;
@@ -929,7 +938,8 @@ export default class LightModeManagerExtension extends Extension {
         // Every color on system default (GNOME profile): the shell keeps its own dark style
         // (see _syncShellScheme), so only the General tab options apply, on GNOME's colors.
         if (values.every(v => !v))
-            return this._darkCardsCss('', '') + this._borderCss(null) + this._nativeOpacityCss();
+            return this._darkCardsCss('', '') + this._borderCss(null) + this._nativeOpacityCss() +
+                this._panelCss('', NATIVE_PANEL);
 
         // An empty color keeps the template's original one.
         const byKey = Object.fromEntries(LIGHT_KEYS.map((key, i) => [key, values[i]]));
@@ -947,22 +957,32 @@ export default class LightModeManagerExtension extends Extension {
         }
         // rgba() variants keep their own alpha. Text ("color:") is always solid: the opacity
         // is for backgrounds only.
-        const fill = (text, colors) => text.replace(TOKEN_RE, (m, rgb, alpha, offset) => {
+        const fill = (text, colors, rgbs = byRgb) => text.replace(TOKEN_RE, (m, rgb, alpha, offset) => {
             if (rgb)
-                return `rgba(${byRgb[rgb]}, ${alpha})`;
+                return `rgba(${rgbs[rgb]}, ${alpha})`;
             return (propertyAt(text, offset) === 'color' ? solid : colors)[m.toLowerCase()];
         });
 
         const [head, tail, opaque, grid] = this._template();
         let css = fill(head, faded) + tail;
-        // Translucent general background: the overview and dialogs stay opaque and shadows are removed.
+        // "Overview and dialogs background": the template's overview and dialog rules again,
+        // opaque, with this color (the template's own when empty) instead of the menus one.
+        const overview = byKey['color-overview'];
+        if (overview || opacity < 100) {
+            const colors = {...solid};
+            const rgbs = {...byRgb};
+            for (const [, color, rgb] of TOKENS.filter(([key]) => key === 'color-general')) {
+                colors[color] = overview ? withOpacity(overview, 100) : color;
+                rgbs[rgb] = (overview && colorToRgb(overview)) || rgb;
+            }
+            css += fill(opaque, colors, rgbs);
+        }
+        // Translucent menus: shadows are removed.
         if (opacity < 100)
-            css += fill(opaque, solid) + noShadowCss;
+            css += noShadowCss;
 
-        // The template's top bar color is not a token, so it gets its own rule.
-        const panel = byKey['color-general'] || TEMPLATE_PANEL;
-        css += rule('#panel', 'background-color',
-            withOpacity(panel, this._settings.get_boolean('panel-opacity') ? opacity : 100));
+        // "Top bar background": the template's top bar color is not a token.
+        css += this._panelCss(byKey['color-panel'], TEMPLATE_PANEL);
         // The top bar: "Top bar text and icons".
         if (byKey['color-panel-fg'])
             css += panelTextCss(byKey['color-panel-fg']);
@@ -994,7 +1014,7 @@ export default class LightModeManagerExtension extends Extension {
         }, byKey['color-qs-active']);
         if (this._settings.get_boolean('calendar-background'))
             css += calendarCss(translucent(card, cardOpacity), false);
-        return css + this._highlightCss('color-highlight', false) + this._borderCss('color-border');
+        return css + this._highlightCss(false) + this._borderCss('color-border');
     }
 
     // Loads the stylesheet, then keeps Dash to Panel's panels on this extension's color.
