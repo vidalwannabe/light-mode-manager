@@ -36,6 +36,9 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
         window.set_default_size(600, 910);
+        window.set_size_request(600, -1);
+        // Narrower, the color and schedule rows squeeze their titles and controls.
+        window.set_size_request(600, -1);
         window.set_search_enabled(false);
 
         // Settings handlers and pending idles are dropped when the window closes,
