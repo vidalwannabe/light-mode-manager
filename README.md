@@ -56,7 +56,7 @@ Each tab has a profile selector to apply a set of colors in one click. Built-in 
 
 ### Appearance tab
 
-- **General profile**: pairs a light mode profile with a dark mode profile and applies both at once. Built-in **Default** and **GNOME** general profiles are included. Adding a profile (with the save button or by importing) only saves it; it is applied from the selector. The save button preselects the profiles applied in each tab, and offers to save a tab with unsaved colors as a new profile first (skipping uses Default).
+- **General profile**: pairs a light mode profile with a dark mode profile and applies both at once. Built-in **Default** and **GNOME** general profiles are included. Adding a profile (with the save button or by importing) only saves it; it is applied from the selector. The save button preselects the profiles applied in each tab, and offers to save a tab with unsaved colors as a new profile first (skipping lets you choose another profile, Default preselected).
 
 **Visual tweaks**
 
