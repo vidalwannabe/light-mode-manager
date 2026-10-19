@@ -272,13 +272,12 @@ const SECONDARY_TEXT = [
 // the accent.
 const CALENDAR_OTHER_MONTH = '.calendar .calendar-day.calendar-other-month, ' +
     '.calendar .calendar-day.calendar-other-month.calendar-weekend';
-const CALENDAR_TODAY_TEXT = '.calendar .calendar-day.calendar-today';
 function textRolesCss(main, secondary) {
     let css = '';
     if (main) {
         css += rule(MAIN_TEXT.join(', '), 'color', main) +
             rule(CALENDAR_OTHER_MONTH, 'color', `st-transparentize(${main}, 0.5)`) +
-            rule(CALENDAR_TODAY_TEXT, 'color', '-st-accent-fg-color');
+            rule(CALENDAR_TODAY, 'color', '-st-accent-fg-color');
     }
     if (secondary)
         css += rule(SECONDARY_TEXT.join(', '), 'color', secondary);
@@ -619,10 +618,7 @@ export default class LightModeManagerExtension extends Extension {
     // only a switch time newer than the last applied one does, so a mode picked by hand stays
     // until the next switch.
     _syncAutoSwitch(changed = false) {
-        if (this._autoId) {
-            GLib.Source.remove(this._autoId);
-            this._autoId = 0;
-        }
+        this._clearSource('_autoId');
         if (!this._settings.get_boolean('auto-switch'))
             return;
         if (changed)
@@ -837,15 +833,10 @@ export default class LightModeManagerExtension extends Extension {
         return css + this._borderCss('color-border-dark');
     }
 
-    // "Card opacity": cards, notifications and inactive Quick Settings buttons.
-    _cardOpacity() {
-        return this._settings.get_int('card-opacity');
-    }
-
     // Cards, inactive Quick Settings buttons and calendar background on GNOME's dark style;
     // an empty color is GNOME's own.
     _darkCardsCss(card, qsButtons) {
-        const opacity = this._cardOpacity();
+        const opacity = this._settings.get_int('card-opacity');
         const base = card || NATIVE_CARD;
         let css = card || opacity < 100
             ? buttonCss(DARK_CARD_BUTTONS, translucent(base, opacity), true) + menuCss(translucent(base, opacity), true)
@@ -863,7 +854,7 @@ export default class LightModeManagerExtension extends Extension {
     // color uses `native`: GNOME's own toggle, arrow (off, checked) and menu colors.
     _quickSettingsCss(dark, color, native) {
         const match = this._settings.get_boolean('match-arrow-buttons');
-        const opacity = this._cardOpacity();
+        const opacity = this._settings.get_int('card-opacity');
         let css;
         if (color || opacity < 100) {
             const amount = ARROW_SHADE[dark ? 'dark' : 'light'];
@@ -892,13 +883,14 @@ export default class LightModeManagerExtension extends Extension {
             const idx = template.indexOf(MARKER);
             this._templateHead = idx >= 0 ? template.slice(0, idx) : template;
             this._templateTail = idx >= 0 ? template.slice(idx) : '';
+            const rules = [...this._templateHead.matchAll(/([^{}]+)\{([^{}]*)\}/g)];
             // The overview and dialog rules that use the general background, to repeat them opaque.
-            this._templateOpaque = [...this._templateHead.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+            this._templateOpaque = rules
                 .filter(([, selector, body]) => LIGHT_OPAQUE_RE.test(selector) &&
                     TOKENS.some(([key, color]) => key === 'color-general' && body.toLowerCase().includes(color)))
                 .map(([text]) => text.trim()).join('\n') + '\n';
             // The grid rules painted with the card color, reduced to their backgrounds.
-            this._templateGrid = [...this._templateHead.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+            this._templateGrid = rules
                 .filter(([, selector, body]) => selector.replace(/\/\*[^]*?\*\//g, '').split(',')
                     .every(part => GRID_RE.test(part)) &&
                     CARD_TOKENS.some(([, color, rgb]) => body.toLowerCase().includes(color) || body.includes(rgb)))
@@ -959,7 +951,7 @@ export default class LightModeManagerExtension extends Extension {
         // calendar background. GNOME's light expressions get the template's tokens filled in;
         // the color settings are used as they are.
         const card = byKey['color-card'] || '#e8e8e8';
-        const cardOpacity = this._cardOpacity();
+        const cardOpacity = this._settings.get_int('card-opacity');
         if (cardOpacity < 100)
             css += buttonCss(CARD_BUTTONS, translucent(card, cardOpacity), false);
         // The grid gets the template's own card colors back; other colors still filled in.
@@ -985,10 +977,7 @@ export default class LightModeManagerExtension extends Extension {
     // Loads the stylesheet, then keeps Dash to Panel's panels on this extension's color.
     _applyTheme() {
         // A pending delayed apply would only repeat this one.
-        if (this._applyId) {
-            GLib.Source.remove(this._applyId);
-            this._applyId = 0;
-        }
+        this._clearSource('_applyId');
         try {
             this._applyStylesheet();
         } finally {
@@ -1067,9 +1056,15 @@ export default class LightModeManagerExtension extends Extension {
         }
     }
 
+    // Removes the GLib source kept in this[name], if any.
+    _clearSource(name) {
+        if (this[name])
+            GLib.Source.remove(this[name]);
+        this[name] = 0;
+    }
+
     _scheduleApply() {
-        if (this._applyId)
-            GLib.Source.remove(this._applyId);
+        this._clearSource('_applyId');
         this._applyId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
             this._applyId = 0;
             this._applyTheme();
@@ -1130,10 +1125,8 @@ export default class LightModeManagerExtension extends Extension {
     }
 
     disable() {
-        if (this._applyId) {
-            GLib.Source.remove(this._applyId);
-            this._applyId = 0;
-        }
+        this._clearSource('_applyId');
+        this._clearSource('_autoId');
         Main.sessionMode.disconnect(this._sessionId);
         this._settings.disconnect(this._settingsId);
         this._interface.disconnect(this._schemeId);
@@ -1146,10 +1139,6 @@ export default class LightModeManagerExtension extends Extension {
         this._indicator = null;
         this._syncQsDimming(false);
         this._syncQsMenuHeight(false);
-        if (this._autoId) {
-            GLib.Source.remove(this._autoId);
-            this._autoId = 0;
-        }
         if (this._forcedDark) {
             Main.sessionMode.colorScheme = this._modeScheme;
             St.Settings.get().notify('color-scheme');
