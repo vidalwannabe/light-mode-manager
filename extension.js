@@ -93,7 +93,7 @@ const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and Appearance tab options);
 // other keys (profiles...) never do.
 const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'match-arrow-buttons', 'merge-arrow-buttons',
-    'calendar-background', 'lock-screen-native'];
+    'calendar-background', 'lock-screen-native', 'keep-menu-shadows'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark',
     'color-qs-active-fg-dark', 'color-qs-active-dark', 'color-highlight-dark', 'color-today-dark', 'color-panel-dark',
@@ -840,7 +840,7 @@ export default class LightModeManagerExtension extends Extension {
             return '';
         return NATIVE_GENERAL
             .map(([selector, color]) => rule(selector, 'background-color', withOpacity(color, opacity)))
-            .join('') + noShadowCss;
+            .join('') + this._noShadowCss();
     }
 
     // The colors of the given keys; empty means system default.
@@ -873,6 +873,11 @@ export default class LightModeManagerExtension extends Extension {
     }
 
     // ---------- Stylesheet ----------
+    // Below 100% shell opacity menu shadows are removed, unless "Keep menu shadows".
+    _noShadowCss() {
+        return this._settings.get_boolean('keep-menu-shadows') ? '' : noShadowCss;
+    }
+
     // With "Use GNOME colors on the lock screen", the lock screen gets no stylesheet: it
     // shows GNOME's own colors, and the user's colors come back on unlock.
     _lockedNative() {
@@ -923,7 +928,7 @@ export default class LightModeManagerExtension extends Extension {
         if (!opaque)
             css += this._nativeOpacityCss();
         else if (opacity < 100)
-            css += noShadowCss;
+            css += this._noShadowCss();
         // "Top bar background" and "Overview and dialogs background" (always opaque).
         const [panel, overview] = this._values(['color-panel-dark', 'color-overview-dark']);
         css += this._panelCss(panel, NATIVE_PANEL);
@@ -1084,7 +1089,7 @@ export default class LightModeManagerExtension extends Extension {
         }
         // Translucent menus: shadows are removed.
         if (opacity < 100)
-            css += noShadowCss;
+            css += this._noShadowCss();
 
         // "Top bar background": the template's top bar color is not a token.
         css += this._panelCss(byKey['color-panel'], TEMPLATE_PANEL);

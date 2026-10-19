@@ -45,6 +45,7 @@
     <key name="transition-duration" type="i"><range min="0" max="2000"/><default>500</default><summary>Fade duration in ms when switching between light and dark mode</summary></key>
     <key name="fix-qs-menu-height" type="b"><default>true</default><summary>Expanded Quick Settings menus are measured at their real width, so they never cover the buttons below</summary></key>
     <key name="override-dtp-colors" type="b"><default>false</default><summary>Dash to Panel takes its panel color and opacity from this extension, with preview titles in black or white</summary></key>
+    <key name="keep-menu-shadows" type="b"><default>false</default><summary>Keep menu shadows below 100% shell opacity</summary></key>
     <key name="lock-screen-native" type="b"><default>false</default><summary>No stylesheet on the lock screen: GNOME's own colors while locked</summary></key>
     <key name="dtp-notice-shown" type="b"><default>false</default><summary>The Dash to Panel notice was shown</summary></key>
     <key name="panel-opacity" type="b"><default>false</default><summary>The general background opacity also applies to the panel (solid otherwise)</summary></key>
