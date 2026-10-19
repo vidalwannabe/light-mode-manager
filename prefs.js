@@ -260,8 +260,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
 
             const addButton = flatButton({icon_name: 'list-add-symbolic', tooltip_text: 'New general profile'});
             addButton.connect('clicked', () => profileDialog(model.taken, (name, l, d) => {
+                // Only saved: applying it here would overwrite unsaved colors.
                 model.save([...model.own(), {name, light: l, dark: d}]);
-                model.apply({name, light: l, dark: d});
             }, [
                 {title: 'Light mode profile', names: light.all().map(p => p.name), selected: 'Default'},
                 {title: 'Dark mode profile', names: dark.all().map(p => p.name), selected: 'Default'},
