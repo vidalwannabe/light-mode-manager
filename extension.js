@@ -150,6 +150,10 @@ function buttonCss(selectors, base, dark) {
 // the menu's own color, a pill that shows on a translucent menu: they join them.
 const QS_BUTTONS = ['.quick-toggle', '.quick-settings-system-item .icon-button', '.quick-slider .icon-button'];
 const QS_MENU = '.quick-toggle-menu';
+// The open menu is not reactive, so St gives it :insensitive, which GNOME (and buttonCss)
+// draws a shade lighter: it keeps its own color instead.
+const menuCss = (color, dark) => buttonCss(QS_MENU, color, dark) +
+    rule(`${QS_MENU}:insensitive`, 'background-color', color);
 const QS_CHECKED = '.quick-toggle:checked';
 const QS_FLAT = '.background-apps-quick-toggle';
 
@@ -843,7 +847,9 @@ export default class LightModeManagerExtension extends Extension {
     _darkCardsCss(card, qsButtons) {
         const opacity = this._cardOpacity();
         const base = card || NATIVE_CARD;
-        let css = card || opacity < 100 ? buttonCss(DARK_CARD_BUTTONS, translucent(base, opacity), true) : '';
+        let css = card || opacity < 100
+            ? buttonCss(DARK_CARD_BUTTONS, translucent(base, opacity), true) + menuCss(translucent(base, opacity), true)
+            : '';
         // After the cards, so the Quick Settings menus take the inactive buttons color.
         css += this._quickSettingsCss(true, qsButtons, {
             toggle: toggleOff(true), arrow: arrowOff(true), arrowChecked: arrowChecked(true), menu: base,
@@ -867,7 +873,7 @@ export default class LightModeManagerExtension extends Extension {
             css = buttonCss(QS_BUTTONS, translucent(color || native.toggle, opacity), dark) +
                 buttonCss(QS_CHECKED, '-st-accent-color', dark) +
                 rule(QS_FLAT, 'background-color', 'transparent') +
-                buttonCss(QS_MENU, translucent(color || native.menu, opacity), dark) +
+                menuCss(translucent(color || native.menu, opacity), dark) +
                 buttonCss(ARROW_SEL, translucent(arrow, opacity), dark);
         } else if (match) {
             css = buttonCss(ARROW_SEL, native.toggle, dark);
