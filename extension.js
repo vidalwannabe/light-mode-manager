@@ -62,8 +62,8 @@ const DARK_RULES = [
         'stage', '.popup-menu', '.popup-menu-item', '.popup-inactive-menu-item', '.message',
         '.quick-toggle-menu', '.events-button', '.world-clocks-button', '.weather-button',
         '.datemenu-today-button', '.calendar .calendar-day', '.calendar .calendar-month-header .calendar-month-label',
-        '.modal-dialog', '.osd-window', '.switcher-list .item-box', '.overview-tile', '.grid-search-result',
-        '.list-search-result', '.search-section-content', '.app-folder-dialog',
+        '.modal-dialog', '.osd-window', '.switcher-list .item-box',
+        '.list-search-result', '.search-section-content',
     ], 'color', 'color-fg-dark'],
     [[
         '.message .message-header', '.message .message-header .message-header-content .event-time',
@@ -118,6 +118,11 @@ const LIGHT_OPAQUE_RE = /overview|grid-search-result|modal-dialog|audio-device-s
 // colors back.
 const GRID_RE = /#dash|search|app-folder/;
 const CARD_TOKENS = TOKENS.filter(([key]) => key === 'color-card');
+// The app grid (app and folder names, folder dialogs, page arrows) keeps the system's text
+// colors: "Idle buttons and cards titles and icons" does not paint it. In light mode the
+// template paints it with the text token, so those rules get the template's own color back.
+const APP_GRID_RE = /overview-tile|app-folder|grid-search-result|page-navigation-arrow/;
+const TEXT_TOKEN_RE = /#222226|34, 34, 38/;
 
 // GNOME draws a shadow under the whole menu, so a translucent menu showed it through
 // and looked darker than the panel. Below 100% opacity these shadows are removed.
@@ -406,17 +411,22 @@ const AUTO_KEYS = ['auto-switch', 'auto-switch-1-time', 'auto-switch-1-mode', 'a
 // often (instead of one long timer) also catches up right after a suspend.
 const AUTO_CHECK_SECONDS = 30;
 
-// Quick Settings button: shows the applied general profile and switches it from its menu,
-// which also opens these preferences (on their first tab, Appearance).
+// Quick Settings button: switches the profiles of the current mode (light or dark) and,
+// below a separator, the general profiles; its menu also opens these preferences (on their
+// first tab, Appearance). The subtitle shows the applied general profile, or the applied
+// profile of the current mode.
 const ProfileToggle = GObject.registerClass(
 class ProfileToggle extends QuickMenuToggle {
     _init(extension) {
         super._init({title: 'Color Profile', iconName: PROFILE_ICON, toggleMode: false});
         const settings = extension.getSettings();
-        this._profiles = createProfiles(settings).general;
-        this.menu.setHeader(PROFILE_ICON, 'General profile');
-        this._items = new PopupMenu.PopupMenuSection();
-        this.menu.addMenuItem(this._items);
+        this._models = createProfiles(settings);
+        this._interface = new Gio.Settings({schema_id: 'org.gnome.desktop.interface'});
+        this._modeItems = new PopupMenu.PopupMenuSection();
+        this._generalItems = new PopupMenu.PopupMenuSection();
+        this.menu.addMenuItem(this._modeItems);
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        this.menu.addMenuItem(this._generalItems);
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this.menu.addAction('Settings', () => {
             Main.panel.closeQuickSettings();
@@ -425,8 +435,9 @@ class ProfileToggle extends QuickMenuToggle {
         this.connect('clicked', () => this.menu.open());
 
         // Applying a profile changes several keys at once; rebuild only once.
-        for (const key of this._profiles.keys)
+        for (const key of this._models.general.keys)
             settings.connectObject(`changed::${key}`, () => this._queueSync(), this);
+        this._interface.connectObject('changed::color-scheme', () => this._queueSync(), this);
         this._sync();
     }
 
@@ -438,23 +449,33 @@ class ProfileToggle extends QuickMenuToggle {
         });
     }
 
-    _sync() {
-        const profiles = this._profiles.all();
-        const applied = this._profiles.applied(profiles);
-        this.subtitle = applied?.name ?? 'Unsaved';
-        this._items.removeAll();
+    // Fills a menu section with a model's profiles, the applied one checked; returns it.
+    _fill(section, model) {
+        const profiles = model.all();
+        const applied = model.applied(profiles);
+        section.removeAll();
         for (const profile of profiles) {
             const item = new PopupMenu.PopupMenuItem(profile.name);
             item.setOrnament(profile === applied ? PopupMenu.Ornament.CHECK : PopupMenu.Ornament.NONE);
-            item.connect('activate', () => this._profiles.apply(profile));
-            this._items.addMenuItem(item);
+            item.connect('activate', () => model.apply(profile));
+            section.addMenuItem(item);
         }
+        return applied;
+    }
+
+    _sync() {
+        const dark = this._interface.get_string('color-scheme') === 'prefer-dark';
+        this.menu.setHeader(PROFILE_ICON, 'Color Profile', dark ? 'Dark mode' : 'Light mode');
+        const mode = this._fill(this._modeItems, dark ? this._models.dark : this._models.light);
+        const general = this._fill(this._generalItems, this._models.general);
+        this.subtitle = general?.name ?? mode?.name ?? 'Unsaved';
     }
 
     destroy() {
         if (this._syncId)
             GLib.Source.remove(this._syncId);
         this._syncId = 0;
+        this._interface.disconnectObject(this);
         super.destroy();
     }
 });
@@ -999,8 +1020,17 @@ export default class LightModeManagerExtension extends Extension {
                 .map(([, selector, body]) => [...body.matchAll(/(?:^|[^-])background-color:\s*([^;]+);/g)]
                     .map(([, value]) => rule(selector.trim(), 'background-color', value.trim())).join(''))
                 .join('');
+            // The app grid's text colors, as the template has them (not filled in).
+            this._templateGridText = rules.map(([, selector, body]) => {
+                const parts = selector.replace(/\/\*[^]*?\*\//g, '').split(',').map(part => part.trim())
+                    .filter(part => APP_GRID_RE.test(part) && !part.startsWith('#dash'));
+                const colors = [...body.matchAll(/(?:^|[;\s])color:\s*([^;]+);/g)].map(([, value]) => value.trim())
+                    .filter(value => TEXT_TOKEN_RE.test(value));
+                return parts.length && colors.length ? rule(parts.join(', '), 'color', colors.at(-1)) : '';
+            }).join('');
         }
-        return [this._templateHead, this._templateTail, this._templateOpaque, this._templateGrid];
+        return [this._templateHead, this._templateTail, this._templateOpaque, this._templateGrid,
+            this._templateGridText];
     }
 
     _lightCss() {
@@ -1033,7 +1063,7 @@ export default class LightModeManagerExtension extends Extension {
             return (propertyAt(text, offset) === 'color' ? solid : colors)[m.toLowerCase()];
         });
 
-        const [head, tail, opaque, grid] = this._template();
+        const [head, tail, opaque, grid, gridText] = this._template();
         let css = fill(head, faded) + tail;
         // "Overview and dialogs background": the template's overview and dialog rules again,
         // opaque, with this color (the template's own when empty) instead of the menus one.
@@ -1074,6 +1104,7 @@ export default class LightModeManagerExtension extends Extension {
                 return `rgba(${cardColors.has(rgb) ? rgb : byRgb[rgb]}, ${alpha})`;
             return cardColors.has(m.toLowerCase()) ? m : solid[m.toLowerCase()];
         });
+        css += gridText;
         // "Overview and top bar highlights": dash, search and password entries and top bar
         // buttons, solid like the overview (the template's own colors when empty).
         if (byKey['color-dash']) {
@@ -1276,5 +1307,6 @@ export default class LightModeManagerExtension extends Extension {
         this._settings = this._interface = this._cacheDir = null;
         this._lastCss = this._modeScheme = this._overrides = null;
         this._templateHead = this._templateTail = this._templateOpaque = this._templateGrid = null;
+        this._templateGridText = null;
     }
 }

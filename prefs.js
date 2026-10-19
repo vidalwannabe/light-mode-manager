@@ -78,7 +78,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             return false;
         });
 
-        const colorRow = (group, key, title, subtitle, emptyLabel = 'System default', emptyColor = '#808080') => {
+        const colorRow = (group, key, title, subtitle, restore, emptyLabel = 'System default', emptyColor = '#808080') => {
             const row = new Adw.ActionRow({title});
             const button = new Gtk.ColorDialogButton({
                 dialog: new Gtk.ColorDialog({with_alpha: false}),
@@ -103,8 +103,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             });
             watch(key, load);
 
-            const reset = flatButton({icon_name: 'edit-undo-symbolic', tooltip_text: 'Restore the Default profile color'});
-            reset.connect('clicked', () => s.reset(key));
+            const reset = flatButton({icon_name: 'edit-undo-symbolic', tooltip_text: 'Restore the applied profile color'});
+            reset.connect('clicked', restore);
             row.add_suffix(button);
             row.add_suffix(reset);
             group.add(row);
@@ -310,7 +310,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             for (const [groupTitle, rows] of COLOR_GROUPS) {
                 const group = new Adw.PreferencesGroup({title: groupTitle});
                 for (const [name, label, subtitle, emptyLabel, emptyColor] of rows)
-                    colorRow(group, `color-${name}${suffix}`, label, subtitle, emptyLabel, emptyColor);
+                    colorRow(group, `color-${name}${suffix}`, label, subtitle, () => model.restore(name), emptyLabel, emptyColor);
                 page.add(group);
             }
             window.add(page);

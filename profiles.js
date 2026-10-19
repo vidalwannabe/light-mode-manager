@@ -34,7 +34,8 @@ function profileStore(settings, listKey, activeKey, builtins, isValid) {
     };
     return {
         builtins, own, isValid,
-        all: () => [...builtins, ...own()],
+        // Built-ins first, then the user's own profiles in alphabetical order.
+        all: () => [...builtins, ...own().sort((a, b) => a.name.localeCompare(b.name, undefined, {sensitivity: 'base'}))],
         save: list => settings.set_string(listKey, JSON.stringify(list)),
         taken: name => reserved.has(name) || own().some(p => p.name === name),
         activeName: () => settings.get_string(activeKey),
@@ -65,6 +66,16 @@ function modeProfiles(settings, suffix, builtins) {
                 else
                     settings.set_string(colorKey(n), value);
             }
+        },
+        // Restores one row to the last applied profile's color (the schema default when that
+        // profile no longer exists), not always to the Default profile.
+        restore(n) {
+            const profile = store.all().find(p => p.name === store.activeName());
+            const value = profile ? rowColor(profile.colors, n) : undefined;
+            if (typeof value !== 'string' || value === defaultColors[n])
+                settings.reset(colorKey(n));
+            else
+                settings.set_string(colorKey(n), value);
         },
         // The applied profile; it stops counting once a color is changed.
         applied(profiles = store.all()) {

@@ -30,7 +30,7 @@ Each tab has fourteen colors in three groups:
 
 | Color | What it paints |
 | --- | --- |
-| Idle buttons and cards titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, menus, dialogs, Quick Settings |
+| Idle buttons and cards titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, menus, dialogs, Quick Settings. App and folder names in the app grid keep the system color |
 | Idle buttons and cards subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday, toggle subtitles |
 | Idle buttons background | Quick Settings toggles that are off, their arrows, the round buttons at the top, the slider buttons (volume, "›", brightness) and the menus toggles open |
 | Cards background | Notifications, banners and calendar widgets: Today, World Clocks and Weather. Search results and app folders keep the system background |
@@ -41,11 +41,11 @@ Each tab has fourteen colors in three groups:
 
 Profiles saved before a color existed take it from the color it came from (top bar and overview from the menus background, today from the sliders), so they keep their look.
 
-Hover, focus and active states follow these colors automatically. Every color has a button to restore its Default profile value.
+Hover, focus and active states follow these colors automatically. Every color has a button to restore its value in the applied profile (or the last one applied, after editing).
 
 ### Profiles
 
-Each tab has a profile selector to apply a set of colors in one click. It shows **Unsaved** when the current colors match no profile.
+Each tab has a profile selector to apply a set of colors in one click. Built-in profiles come first, then your own in alphabetical order. It shows **Unsaved** when the current colors match no profile.
 
 - **Built-in profiles**, which cannot be deleted or overwritten:
   - Light mode: **Default** and **GNOME**.
@@ -75,7 +75,7 @@ Each tab has a profile selector to apply a set of colors in one click. It shows 
 **Easy access**
 
 - **Desktop menu entry**: adds "Light Mode Manager…", which opens these preferences, to the desktop right-click menu, below "Change Background…".
-- **Quick Settings switcher**: adds a button to Quick Settings that shows the applied general profile and switches it from its menu, which also has a Settings entry that opens these preferences. Hidden on the lock screen.
+- **Quick Settings switcher**: adds a Color Profile button to Quick Settings. Its menu lists the profiles of the current mode (light or dark) and, below a separator, the general profiles, and has a Settings entry that opens these preferences. Its subtitle shows the applied general profile, or the applied profile of the current mode. Hidden on the lock screen.
 
 **Automatic switch**
 
