@@ -19,8 +19,12 @@ const defaults = (settings, suffix) => Object.fromEntries(
 // Profiles saved as JSON in `listKey`, after the fixed `builtins`, remembering the
 // applied one by name in `activeKey` (so two equal profiles are never both marked).
 // isValid(p) checks the fields of a saved profile.
+// Before "Light Default" and "Dark Default", each tab's own default was named "Default":
+// that name stays reserved and still means the tab's own default (first built-in).
+const LEGACY_DEFAULT = 'Default';
+
 function profileStore(settings, listKey, activeKey, builtins, isValid) {
-    const reserved = new Set(builtins.map(p => p.name));
+    const reserved = new Set([...builtins.map(p => p.name), LEGACY_DEFAULT]);
     // The user's own profiles (a saved one can never shadow a built-in name).
     const own = () => {
         try {
@@ -34,6 +38,10 @@ function profileStore(settings, listKey, activeKey, builtins, isValid) {
     };
     return {
         builtins, own, isValid,
+        // A profile by name, the legacy "Default" included.
+        byName(name) {
+            return this.all().find(p => p.name === name) ?? (name === LEGACY_DEFAULT ? builtins[0] : undefined);
+        },
         // Built-ins first, then the user's own profiles in alphabetical order.
         all: () => [...builtins, ...own().sort((a, b) => a.name.localeCompare(b.name, undefined, {sensitivity: 'base'}))],
         save: list => settings.set_string(listKey, JSON.stringify(list)),
@@ -83,7 +91,7 @@ function modeProfiles(settings, suffix, builtins) {
         // Restores one row to the last applied profile's color (the schema default when that
         // profile no longer exists), not always to the Default profile.
         restore(n) {
-            const profile = store.all().find(p => p.name === store.activeName());
+            const profile = store.byName(store.activeName());
             const value = profile ? rowColor(profile.colors, n) : undefined;
             if (typeof value !== 'string' || value === defaultColors[n])
                 settings.reset(colorKey(n));
@@ -93,7 +101,7 @@ function modeProfiles(settings, suffix, builtins) {
         // The profile the current colors match, found in real time: the last applied one
         // first, otherwise any profile with exactly these colors; null when none does.
         applied(profiles = store.all()) {
-            const active = profiles.find(q => q.name === store.activeName());
+            const active = store.byName(store.activeName());
             if (active && matches(active.colors))
                 return active;
             return profiles.find(q => matches(q.colors)) ?? null;
@@ -104,10 +112,10 @@ function modeProfiles(settings, suffix, builtins) {
 // General profiles pair a light and a dark profile and apply both.
 function generalProfiles(settings, light, dark) {
     const store = profileStore(settings, 'general-profiles', 'active-general-profile', [
-        {name: 'Default', light: 'Default', dark: 'Default'},
+        {name: 'Default', light: 'Light Default', dark: 'Dark Default'},
         {name: 'GNOME', light: 'GNOME', dark: 'GNOME'},
     ], p => typeof p.light === 'string' && typeof p.dark === 'string');
-    const find = (mode, name) => mode.all().find(p => p.name === name);
+    const find = (mode, name) => mode.byName(name);
     return {
         ...store,
         keys: [...store.keys, ...light.keys, ...dark.keys],
@@ -128,28 +136,29 @@ function generalProfiles(settings, light, dark) {
             const [l, d] = [light.applied()?.name, dark.applied()?.name];
             if (!l || !d)
                 return null;
-            const pairs = p => p.light === l && p.dark === d;
-            const active = profiles.find(q => q.name === store.activeName());
+            const pairs = p => find(light, p.light)?.name === l && find(dark, p.dark)?.name === d;
+            const active = store.byName(store.activeName());
             return active && pairs(active) ? active : profiles.find(pairs) ?? null;
         },
     };
 }
 
-// All profile models: built-in "Default" (the schema defaults), "GNOME" (every row on
-// system default) and, in dark mode, "Oled" (Default with pure black top bar, overview,
-// menus, menu borders, idle buttons and cards).
+// All profile models. Both tabs offer the same built-ins, the tab's own default first:
+// "Light Default" and "Dark Default" (each mode's schema defaults), "GNOME" (every row on
+// system default) and "Oled" (Dark Default with pure black top bar, overview, menus, menu
+// borders, idle buttons and cards). So a dark color set can be used, or started from, in
+// light mode and the other way around.
 export function createProfiles(settings) {
+    const lightDefault = {name: 'Light Default', colors: defaults(settings, '')};
+    const darkColors = defaults(settings, '-dark');
+    const darkDefault = {name: 'Dark Default', colors: darkColors};
     const gnome = {name: 'GNOME', colors: Object.fromEntries(ROW_NAMES.map(n => [n, '']))};
-    const light = modeProfiles(settings, '', [{name: 'Default', colors: defaults(settings, '')}, gnome]);
-    const darkDefaults = defaults(settings, '-dark');
-    const dark = modeProfiles(settings, '-dark', [
-        {name: 'Default', colors: darkDefaults},
-        gnome,
-        {name: 'Oled', colors: {
-            ...darkDefaults, panel: '#000000', overview: '#000000', general: '#000000', border: '#000000',
-            'qs-button': '#000000', card: '#000000',
-        }},
-    ]);
+    const oled = {name: 'Oled', colors: {
+        ...darkColors, panel: '#000000', overview: '#000000', general: '#000000', border: '#000000',
+        'qs-button': '#000000', card: '#000000',
+    }};
+    const light = modeProfiles(settings, '', [lightDefault, darkDefault, gnome, oled]);
+    const dark = modeProfiles(settings, '-dark', [darkDefault, lightDefault, gnome, oled]);
     const general = generalProfiles(settings, light, dark);
     // Renaming a light or dark profile also renames it in the general profiles that use it.
     for (const [mode, side] of [[light, 'light'], [dark, 'dark']]) {

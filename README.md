@@ -49,14 +49,13 @@ Hover, focus and active states follow these colors automatically. Every color ha
 Each tab has a color set selector to apply a set of colors in one click. Built-in color sets come first, then your own in alphabetical order. It shows the color set the current colors match, in real time (editing a color back to its saved value shows the color set again), or **Unsaved** when they match none.
 
 - **Built-in color sets**, which cannot be deleted or overwritten:
-  - Light mode: **Default** and **GNOME**.
-  - Dark mode: **Default**, **GNOME** and **Oled** (Default with pure black top bar, overview, menus, menu borders, idle buttons and cards).
+  - Both tabs offer the same four, the tab's own default first: **Light Default** and **Dark Default** (the default colors of each mode), **GNOME** and **Oled** (Dark Default with pure black top bar, overview, menus, menu borders, idle buttons and cards). A dark color set can be applied in light mode too (or the other way around), for example to keep two slightly different dark looks one mode switch apart.
   - **GNOME** keeps the vanilla GNOME look, the same in light and dark mode.
 - **Your own color sets**: the save button saves the current colors as a new color set, or replaces the colors of one of yours with **Update existing color set**. Your color sets can be deleted from the selector. In the selector, each of your own color sets has three buttons: **Send to Dark mode** (or Light mode), which copies it with the same colors to the other tab's list (numbered if the name is in use there); **Rename**, which also updates the general color sets that use it; and **Delete**.
 
 ### Appearance tab
 
-- **General color set**: pairs a light mode color set with a dark mode color set and applies both at once. Built-in **Default** and **GNOME** general color sets are included. The selector shows the general color set that pairs the color sets the Light and Dark tabs show, in real time, even right after saving it. Adding a color set (with the save button or by importing) only saves it; it is applied from the selector. The save button preselects the color sets applied in each tab, and offers to save a tab with unsaved colors as a new color set first (skipping lets you choose another color set, Default preselected).
+- **General color set**: pairs a light mode color set with a dark mode color set and applies both at once. Built-in **Default** (Light Default + Dark Default) and **GNOME** general color sets are included. The selector shows the general color set that pairs the color sets the Light and Dark tabs show, in real time, even right after saving it. Adding a color set (with the save button or by importing) only saves it; it is applied from the selector. The save button preselects the color sets applied in each tab, and offers to save a tab with unsaved colors as a new color set first (skipping lets you choose another color set, Default preselected).
 
 **Visual tweaks**
 

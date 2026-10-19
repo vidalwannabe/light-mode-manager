@@ -318,8 +318,8 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                 model.save([...model.own(), {name, light: l, dark: d}]);
             }, [
                 // The profiles applied in each tab, or Default when a tab's colors are unsaved.
-                {title: 'Light mode color set', names: light.all().map(p => p.name), selected: light.applied()?.name ?? 'Default'},
-                {title: 'Dark mode color set', names: dark.all().map(p => p.name), selected: dark.applied()?.name ?? 'Default'},
+                {title: 'Light mode color set', names: light.all().map(p => p.name), selected: light.applied()?.name ?? light.builtins[0].name},
+                {title: 'Dark mode color set', names: dark.all().map(p => p.name), selected: dark.applied()?.name ?? dark.builtins[0].name},
             ], 'New general color set');
 
             // A tab with unsaved colors is offered to be saved as a new profile first, so the

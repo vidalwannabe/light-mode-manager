@@ -36,8 +36,8 @@
     <!-- Saved color profiles: JSON list of {"name": ..., "colors": {row: color}} -->
     <key name="profiles" type="s"><default>'[]'</default><summary>Light mode color sets</summary></key>
     <key name="profiles-dark" type="s"><default>'[]'</default><summary>Dark mode color sets</summary></key>
-    <key name="active-profile" type="s"><default>'Default'</default><summary>Last applied light mode color set</summary></key>
-    <key name="active-profile-dark" type="s"><default>'Default'</default><summary>Last applied dark mode color set</summary></key>
+    <key name="active-profile" type="s"><default>'Light Default'</default><summary>Last applied light mode color set</summary></key>
+    <key name="active-profile-dark" type="s"><default>'Dark Default'</default><summary>Last applied dark mode color set</summary></key>
     <!-- General profiles: JSON list of {"name": ..., "light": profile name, "dark": profile name} -->
     <key name="general-profiles" type="s"><default>'[]'</default><summary>General color sets</summary></key>
     <key name="active-general-profile" type="s"><default>'Default'</default><summary>Last applied general color set</summary></key>
