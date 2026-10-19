@@ -303,6 +303,7 @@ function textRolesCss(main, secondary) {
 // (they fake their padding with a transparent border); the clock fills its inner .clock
 // instead. Lock and login screens keep GNOME's white fills.
 const PANEL_BUTTONS = ['#panel .panel-button', '#panel:overview .panel-button'];
+const PANEL_LOCK_BAR_SEL = '#panel.unlock-screen, #panel.login-screen';
 const PANEL_LOCK_BUTTONS = ['#panel.unlock-screen .panel-button', '#panel.login-screen .panel-button'];
 function panelButtonsCss(color) {
     const select = (bases, states, child = '') =>
@@ -820,7 +821,10 @@ export default class LightModeManagerExtension extends Extension {
         const opacity = this._settings.get_boolean('panel-opacity') ? this._settings.get_int('general-opacity') : 100;
         if (!panel && opacity >= 100 && fallback === NATIVE_PANEL)
             return '';
-        return rule('#panel', 'background-color', withOpacity(panel || fallback, opacity));
+        // Extension stylesheets outrank GNOME's, so the lock and login screens get their
+        // transparent top bar back.
+        return rule('#panel', 'background-color', withOpacity(panel || fallback, opacity)) +
+            rule(PANEL_LOCK_BAR_SEL, 'background-color', 'transparent');
     }
 
     // The menu border rule for the given border color setting (none for the system's).
