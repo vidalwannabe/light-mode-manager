@@ -252,7 +252,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 .forEach(a => actions.add_action(a));
 
             const addButton = new Gtk.MenuButton({
-                icon_name: 'list-add-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Save current colors',
+                icon_name: 'document-save-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Save current colors',
             });
             addButton.add_css_class('flat');
             addButton.insert_action_group('profile', actions);
@@ -285,7 +285,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         const generalProfilesGroup = (model, light, dark) => {
             const side = (mode, name) => model.exists(mode, name) ? name : `${name} (deleted)`;
 
-            const addButton = flatButton({icon_name: 'list-add-symbolic', tooltip_text: 'New general profile'});
+            const addButton = flatButton({icon_name: 'document-save-symbolic', tooltip_text: 'New general profile'});
             addButton.connect('clicked', () => profileDialog(model.taken, (name, l, d) => {
                 // Only saved: applying it here would overwrite unsaved colors.
                 model.save([...model.own(), {name, light: l, dark: d}]);
