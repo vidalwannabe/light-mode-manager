@@ -17,7 +17,7 @@ Each tab has fourteen colors in three groups:
 | Top bar background | The panel; solid unless **Enable panel opacity** is on |
 | Top bar text and icons | Top bar text and icons: clock, indicators, the overview button and Dash to Panel's app grid button |
 | Overview and dialogs background | The overview and dialogs (Power Off, passwords, "not responding"…), always solid |
-| Dash background | The overview dock with favorite and running apps. Default: the cards background |
+| Dash and top bar buttons background | The overview dock, and the top bar button whose menu is open (30% of it when hovered; lock screen excluded). Default: the cards background |
 
 **Menus**
 
