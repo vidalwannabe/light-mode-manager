@@ -11,7 +11,7 @@ import {createProfiles} from './profiles.js';
 // The Light mode and Dark mode tabs show exactly these rows.
 // [key name, title, subtitle, swatch tooltip and color when empty]; a set color's tooltip is
 // its code. Transparency is set only in the Appearance tab.
-const ACCENT = 'Accent color set in GNOME Settings › Appearance';
+const ACCENT = 'Accent color set in\nGNOME Settings › Appearance';
 const COLOR_GROUPS = [
     ['Top bar and overview', [
         ['panel', 'Top bar background', 'Panel color; solid unless "Enable panel opacity" is on'],
@@ -95,15 +95,24 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                 dialog: new Gtk.ColorDialog({with_alpha: false}),
                 valign: Gtk.Align.CENTER,
             });
+            // Centered, for the two- and three-line tooltips of colors on system default.
+            let tooltip = '';
+            button.set_has_tooltip(true);
+            button.connect('query-tooltip', (_b, _x, _y, _keyboard, tip) => {
+                tip.set_custom(new Gtk.Label({label: tooltip, justify: Gtk.Justification.CENTER}));
+                return true;
+            });
             let loading = false;
             const load = () => {
                 // Empty or unreadable: the shell uses the system default, named in the swatch's
-                // tooltip.
+                // tooltip under the code of the color it stands for (the accent...); the gray
+                // placeholder has no code.
                 const color = new Gdk.RGBA();
                 const valid = color.parse(s.get_string(key).trim());
-                button.set_tooltip_text(valid ? toHex(color).toUpperCase() : emptyLabel);
                 if (!valid)
                     color.parse(typeof emptyColor === 'function' ? emptyColor(s, key) : emptyColor);
+                const hex = toHex(color).toUpperCase();
+                tooltip = valid ? hex : [hex === '#808080' ? null : hex, emptyLabel].filter(Boolean).join('\n');
                 loading = true;
                 button.set_rgba(color);
                 loading = false;
