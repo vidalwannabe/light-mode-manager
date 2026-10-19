@@ -15,7 +15,7 @@
     <key name="color-highlight" type="s"><default>''</default><summary>Sliders (empty: GNOME accent color)</summary></key>
     <key name="color-today" type="s"><default>''</default><summary>Today in the calendar (empty: GNOME accent color)</summary></key>
     <key name="color-qs-button" type="s"><default>'#e6e6e7'</default><summary>Idle buttons background</summary></key>
-    <key name="color-border" type="s"><default>'#e6e6e7'</default><summary>Menu borders</summary></key>
+    <key name="color-border" type="s"><default>''</default><summary>Menu borders</summary></key>
     <!-- Dark mode (empty = system default) -->
     <key name="color-panel-dark" type="s"><default>'#222226'</default><summary>Top bar background</summary></key>
     <key name="color-overview-dark" type="s"><default>'#222226'</default><summary>Overview and dialogs background</summary></key>
@@ -30,7 +30,7 @@
     <key name="color-highlight-dark" type="s"><default>''</default><summary>Sliders (empty: GNOME accent color)</summary></key>
     <key name="color-today-dark" type="s"><default>''</default><summary>Today in the calendar (empty: GNOME accent color)</summary></key>
     <key name="color-qs-button-dark" type="s"><default>'#343437'</default><summary>Idle buttons background</summary></key>
-    <key name="color-border-dark" type="s"><default>'#343437'</default><summary>Menu borders</summary></key>
+    <key name="color-border-dark" type="s"><default>''</default><summary>Menu borders</summary></key>
     <!-- Saved color profiles: JSON list of {"name": ..., "colors": {row: color}} -->
     <key name="profiles" type="s"><default>'[]'</default><summary>Light mode profiles</summary></key>
     <key name="profiles-dark" type="s"><default>'[]'</default><summary>Dark mode profiles</summary></key>
