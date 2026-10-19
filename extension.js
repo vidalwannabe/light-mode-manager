@@ -1124,6 +1124,8 @@ export default class LightModeManagerExtension extends Extension {
         this._syncDtpPanels();
     }
 
+    // Also called when the session ends or the extension is turned off, never on lock: the
+    // "unlock-dialog" session mode keeps the colors on the lock screen (see the class comment).
     disable() {
         this._clearSource('_applyId');
         this._clearSource('_autoId');
