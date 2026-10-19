@@ -292,8 +292,9 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 // Only saved: applying it here would overwrite unsaved colors.
                 model.save([...model.own(), {name, light: l, dark: d}]);
             }, [
-                {title: 'Light mode profile', names: light.all().map(p => p.name), selected: 'Default'},
-                {title: 'Dark mode profile', names: dark.all().map(p => p.name), selected: 'Default'},
+                // The profiles applied in each tab, or Default when a tab's colors are unsaved.
+                {title: 'Light mode profile', names: light.all().map(p => p.name), selected: light.applied()?.name ?? 'Default'},
+                {title: 'Dark mode profile', names: dark.all().map(p => p.name), selected: dark.applied()?.name ?? 'Default'},
             ], 'New general profile'));
 
             return selectorGroup({
