@@ -7,6 +7,7 @@ import GLib from 'gi://GLib';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import {BackgroundMenu} from 'resource:///org/gnome/shell/ui/backgroundMenu.js';
 import {QuickMenuToggle, QuickSettingsItem, SystemIndicator} from 'resource:///org/gnome/shell/ui/quickSettings.js';
 
 import {createProfiles} from './profiles.js';
@@ -213,10 +214,9 @@ const NATIVE_GENERAL = [
 // GNOME's own delay before fading out the snapshot of the old screen.
 const TRANSITION_DELAY = 250;
 
-// Dash to Panel offers its own settings for extra entries in its panel right-click menu.
 const DTP_UUID = 'dash-to-panel@jderose9.github.com';
-const DTP_SCHEMA = 'org.gnome.shell.extensions.dash-to-panel';
-const MENU_TITLE = 'Light Mode Manager';
+// The desktop right-click menu entry.
+const MENU_TITLE = 'Light Mode Manager…';
 
 const rule = (selector, prop, value) => `${selector} {\n  ${prop}: ${value};\n}\n`;
 const noShadowCss = rule(SHADOW_SEL, 'box-shadow', 'none');
@@ -716,42 +716,33 @@ export default class LightModeManagerExtension extends Extension {
         this._dtpCreatedId = 0;
     }
 
-    // ---------- Dash to Panel menu entry ----------
-    _dtpSettings() {
-        const dir = Main.extensionManager.lookup(DTP_UUID)?.dir.get_child('schemas');
-        if (!dir?.query_exists(null))
-            return null;
-        const source = Gio.SettingsSchemaSource.new_from_directory(
-            dir.get_path(), Gio.SettingsSchemaSource.get_default(), false);
-        const schema = source.lookup(DTP_SCHEMA, false);
-        return schema ? new Gio.Settings({settings_schema: schema}) : null;
-    }
-
-    // Adds or removes our entry in Dash to Panel's own list of extra menu entries
-    // (panel-context-menu-commands/titles). Only our entry is ever added or removed; the
-    // user's entries are left untouched. Removed again in disable().
-    _syncPanelMenu(show) {
-        try {
-            const dtp = this._dtpSettings();
-            if (!dtp)
-                return;
-            const commands = dtp.get_strv('panel-context-menu-commands');
-            const titles = dtp.get_strv('panel-context-menu-titles');
-            const command = `gnome-extensions prefs ${this.uuid}`;
-            const i = commands.indexOf(command);
-            if (show === (i >= 0) || commands.length !== titles.length)
-                return;
-            if (show) {
-                commands.push(command);
-                titles.push(MENU_TITLE);
-            } else {
-                commands.splice(i, 1);
-                titles.splice(i, 1);
+    // ---------- Desktop menu entry ----------
+    // The desktop's right-click menu (one per monitor, rebuilt when the wallpaper or the
+    // monitors change) gets "Light Mode Manager…" below "Change Background…". The entry is
+    // added when a menu opens, so every menu has it whenever it is shown.
+    _syncBackgroundMenu(show = this._settings.get_boolean('background-menu-entry')) {
+        if (show === !!this._bgMenuOpen)
+            return;
+        if (show) {
+            const {open} = BackgroundMenu.prototype;
+            const extension = this;
+            this._bgMenuOpen = function (...args) {
+                if (!this._lightModeItem) {
+                    this._lightModeItem = this.addAction(MENU_TITLE, () => extension.openPreferences());
+                    this.moveMenuItem(this._lightModeItem, 1);
+                }
+                return open.apply(this, args);
+            };
+            this._override(BackgroundMenu.prototype, 'open', this._bgMenuOpen);
+        } else {
+            this._restore(this._bgMenuOpen);
+            this._bgMenuOpen = null;
+            for (const manager of Main.layoutManager._bgManagers ?? []) {
+                const menu = manager.backgroundActor?._backgroundMenu;
+                menu?._lightModeItem?.destroy();
+                if (menu)
+                    delete menu._lightModeItem;
             }
-            dtp.set_strv('panel-context-menu-commands', commands);
-            dtp.set_strv('panel-context-menu-titles', titles);
-        } catch (e) {
-            console.error(`[LightModeManager] ${e.message}`);
         }
     }
 
@@ -1120,8 +1111,8 @@ export default class LightModeManagerExtension extends Extension {
 
         this._settings = this.getSettings();
         this._settingsId = this._settings.connect('changed', (_s, key) => {
-            if (key === 'panel-menu-entry')
-                this._syncPanelMenu(this._settings.get_boolean(key));
+            if (key === 'background-menu-entry')
+                this._syncBackgroundMenu();
             else if (key === 'override-dtp-colors')
                 this._syncDtpPanels();
             else if (key === 'quick-settings-profiles')
@@ -1135,7 +1126,7 @@ export default class LightModeManagerExtension extends Extension {
             else if ((this._isDark() ? DARK_THEME_KEYS : LIGHT_THEME_KEYS).includes(key))
                 this._scheduleApply();
         });
-        this._syncPanelMenu(this._settings.get_boolean('panel-menu-entry'));
+        this._syncBackgroundMenu();
         // Dash to Panel may be enabled, disabled or reloaded after this extension.
         Main.extensionManager.connectObject('extension-state-changed', (_m, ext) => {
             if (ext.uuid === DTP_UUID)
@@ -1174,7 +1165,7 @@ export default class LightModeManagerExtension extends Extension {
         this._interface.disconnect(this._schemeId);
 
         this._unloadTheme();
-        this._syncPanelMenu(false);
+        this._syncBackgroundMenu(false);
         Main.extensionManager.disconnectObject(this);
         this._unhookDtpPanels();
         this._indicator?.destroy();

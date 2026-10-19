@@ -665,8 +665,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             page.add(effects);
 
             const panel = new Adw.PreferencesGroup({title: 'Easy access'});
-            switchRow(panel, 'panel-menu-entry', 'Panel menu entry',
-                "Adds “Light Mode Manager” to Dash to Panel's right-click menu");
+            switchRow(panel, 'background-menu-entry', 'Desktop menu entry',
+                'Adds “Light Mode Manager…” to the desktop right-click menu, below Change Background');
             switchRow(panel, 'quick-settings-profiles', 'Quick Settings switcher',
                 'Adds a Quick Settings toggle to switch general profiles');
             page.add(panel);
