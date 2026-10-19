@@ -17,7 +17,7 @@ Each tab has nine colors:
 | Main text and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, menus, dialogs, Quick Settings |
 | Secondary text | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday, toggle subtitles |
 | Cards background | Notifications, banners and calendar widgets: Today, World Clocks and Weather. Search results and app folders keep the system background |
-| Dash background | The overview dock with favorite and running apps. Default: the general background |
+| Dash background | The overview dock with favorite and running apps. Default: the cards background |
 | Active buttons text and icons | Quick Settings toggles that are on (Wi-Fi, Dark Style…), their arrows and subtitles. Empty: the accent's text color, subtitles included |
 | Idle Quick Settings buttons | Quick Settings toggles that are off, their arrows, the round buttons at the top, the slider buttons (volume, "›", brightness) and the menus toggles open |
 | Borders | Outline of Quick Settings, the calendar and other menus |

@@ -6,8 +6,8 @@ export const ROW_NAMES = ['general', 'panel-fg', 'fg', 'fg-muted', 'card', 'dash
 
 // Rows added later: a profile saved before them takes the value of the row they came
 // from, so it keeps its look (the top bar used to follow "Text and icons"); the dash takes
-// the general background, as in the Default profile.
-const LEGACY_ROWS = {'panel-fg': 'fg', 'dash': 'general'};
+// the cards background, as in the Default profile.
+const LEGACY_ROWS = {'panel-fg': 'fg', 'dash': 'card'};
 const rowColor = (colors, n) => colors[n] ?? colors[LEGACY_ROWS[n]];
 
 // The schema default of every row of a mode ('' for light, '-dark' for dark).
