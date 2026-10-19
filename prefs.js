@@ -428,8 +428,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                         button.remove_css_class('error');
                 }
                 row.set_subtitle(t1 === t2
-                    ? 'Choose two different times; switching is off until then'
-                    : `${MODES[Number(dark)][1]} from ${clock(t1)} to ${clock(t2)}; ` +
+                    ? 'Choose two different times, switching is off until then'
+                    : `${MODES[Number(dark)][1]} from ${clock(t1)} to ${clock(t2)}, ` +
                       `${MODES[Number(!dark)][1].toLowerCase()} the rest of the day`);
             };
             load();
