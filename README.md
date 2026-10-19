@@ -83,10 +83,6 @@ gnome-extensions enable light-mode-manager@vidalwannabe.github.io
 
 Your colors and profiles are stored in dconf (`/org/gnome/shell/extensions/light-mode-manager/`), not in the extension folder.
 
-## Related
-
-Corner radius settings live in the companion extension [Border Radius Manager](https://github.com/vidalwannabe/border-radius-manager).
-
 ## Credits and license
 
 Derived from [Luminus](https://gitlab.com/dikasetyaprayogi/luminus-project) by dikasp. Licensed under the GPL (see COPYING).
