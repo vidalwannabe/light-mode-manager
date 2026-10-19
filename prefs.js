@@ -70,7 +70,9 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
         const css = new Gtk.CssProvider();
         css.load_from_string('list.lmm-profile-list > row, list.lmm-profile-list > row > box.header { min-height: 0; }' +
             'list.lmm-profile-list > row > box.header { padding-top: 2px; padding-bottom: 2px; }' +
-            'list.lmm-profile-list button { min-height: 26px; min-width: 26px; padding: 0; }');
+            'list.lmm-profile-list button { min-height: 26px; min-width: 26px; padding: 0; }' +
+            // The notes at the end of the mode tabs, sized like row subtitles (dim-label colors them).
+            'label.lmm-note { font-size: smaller; }');
         Gtk.StyleContext.add_provider_for_display(window.get_display(), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
 
         // Settings handlers and pending idles are dropped when the window closes,
@@ -475,11 +477,12 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             for (const text of [
                 'Ctrl+Z undoes the last color change in this tab. Each tab keeps its own history.',
                 'Ctrl+Shift+Z redoes the last change you undid.',
+                'Hover over a color swatch to see its color code.',
                 'Right-click a color swatch to copy its color code to the clipboard.',
             ]) {
                 const label = new Gtk.Label({label: text, wrap: true, justify: Gtk.Justification.CENTER, margin_bottom: 6});
                 label.add_css_class('dim-label');
-                label.add_css_class('caption');
+                label.add_css_class('lmm-note');
                 notes.add(label);
             }
             page.add(notes);
