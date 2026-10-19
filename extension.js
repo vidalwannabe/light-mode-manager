@@ -92,7 +92,7 @@ const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'col
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and Appearance tab options);
 // other keys (profiles...) never do.
-const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'match-arrow-buttons', 'merge-arrow-buttons',
+const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'hide-borders', 'match-arrow-buttons', 'merge-arrow-buttons',
     'calendar-background', 'lock-screen-native'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark',
@@ -933,7 +933,10 @@ export default class ShellColorManagerExtension extends Extension {
     }
 
     // The menu border rule for the given border color setting (none for the system's).
+    // Hidden borders stay 1px wide but transparent, so menus keep their size.
     _borderCss(key) {
+        if (this._settings.get_boolean('hide-borders'))
+            return rule(BORDER_SEL, 'border-color', 'transparent');
         const [color] = key ? this._values([key]) : [''];
         return color ? rule(BORDER_SEL, 'border-color', color) : '';
     }
