@@ -85,7 +85,8 @@ const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'col
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and General tab options);
 // other keys (profiles...) never do.
-const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'hide-borders', 'match-arrow-buttons', 'calendar-background'];
+const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'hide-borders', 'match-arrow-buttons', 'merge-arrow-buttons',
+    'calendar-background'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark',
     'color-qs-active-fg-dark', ...EFFECT_KEYS];
@@ -161,6 +162,8 @@ const QS_FLAT = '.background-apps-quick-toggle';
 // off and on; "Match arrows to toggles" gives them the toggle's own color. Light mode
 // expressions use the template's tokens, filled in like the rest of the template.
 const ARROW_SEL = '.quick-toggle-has-menu .quick-toggle-menu-button';
+// The 1px gap between a toggle and its arrow; "Merge arrows into toggles" closes it.
+const ARROW_GAP_SEL = '.quick-toggle-has-menu .quick-toggle-separator';
 // GNOME's toggle color when off, and its own arrow color off and on.
 const toggleOff = dark => dark ? 'st-mix(#ffffff, #36363a, 9%)' : 'st-mix(#222226, whitesmoke, 12%)';
 const arrowOff = dark => dark ? 'st-mix(#ffffff, #4a4a4f, 9%)' : 'st-mix(#222226, #e8e8e8, 12%)';
@@ -857,6 +860,7 @@ export default class LightModeManagerExtension extends Extension {
     _quickSettingsCss(dark, color, native) {
         const match = this._settings.get_boolean('match-arrow-buttons');
         const opacity = this._settings.get_int('card-opacity');
+        const merged = this._settings.get_boolean('merge-arrow-buttons') ? rule(ARROW_GAP_SEL, 'width', '0') : '';
         let css;
         if (color || opacity < 100) {
             const amount = ARROW_SHADE[dark ? 'dark' : 'light'];
@@ -871,10 +875,10 @@ export default class LightModeManagerExtension extends Extension {
         } else if (match) {
             css = buttonCss(ARROW_SEL, native.toggle, dark);
         } else {
-            return '';
+            return merged;
         }
         // Set again after the off colors, which would otherwise also cover the checked arrow.
-        return css + buttonCss(`${ARROW_SEL}:checked`, match ? '-st-accent-color' : native.arrowChecked, dark);
+        return merged + css + buttonCss(`${ARROW_SEL}:checked`, match ? '-st-accent-color' : native.arrowChecked, dark);
     }
 
     // The template is only read when light mode first needs it.

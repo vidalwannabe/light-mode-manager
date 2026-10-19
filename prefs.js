@@ -35,7 +35,7 @@ const flatButton = props => {
 export default class LightModeManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
-        window.set_default_size(600, 855);
+        window.set_default_size(600, 910);
         window.set_search_enabled(false);
 
         // Settings handlers and pending idles are dropped when the window closes,
@@ -634,6 +634,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 'Keeps Quick Settings bright while a toggle menu is open');
             switchRow(effects, 'match-arrow-buttons', 'Match arrows to toggles',
                 "The arrow (›) next to each Quick Settings toggle uses the toggle's color");
+            switchRow(effects, 'merge-arrow-buttons', 'Merge arrows into toggles',
+                'Removes the gap line between each Quick Settings toggle and its arrow (›)');
             switchRow(effects, 'calendar-background', 'Calendar as card',
                 'Gives the calendar the card background and removes the circles behind days');
             switchRow(effects, 'fix-qs-menu-height', 'Fix menu overlap',
