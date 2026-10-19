@@ -587,12 +587,13 @@ export default class LightModeManagerExtension extends Extension {
     // most recent switch time that has passed is applied once (its moment is kept in dconf),
     // so a mode picked by hand in between, even across logins, stays until the next one.
 
-    // The most recent switch moment (unix time) before `now` and its color scheme, or null
-    // if both times are equal.
+    _autoTimes() {
+        return [1, 2].map(i => this._settings.get_int(`auto-switch-${i}-time`));
+    }
+
+    // The most recent switch moment (unix time) before `now` and its color scheme.
     _latestSwitch(now) {
-        const [t1, t2] = [1, 2].map(i => this._settings.get_int(`auto-switch-${i}-time`));
-        if (t1 === t2)
-            return null;
+        const [t1, t2] = this._autoTimes();
         const dark = this._settings.get_string('auto-switch-1-mode') === 'dark';
         const midnight = GLib.DateTime.new_local(now.get_year(), now.get_month(), now.get_day_of_month(), 0, 0, 0);
         return [[t1, dark], [t2, !dark]]
@@ -607,7 +608,7 @@ export default class LightModeManagerExtension extends Extension {
 
     _checkAutoSwitch() {
         const latest = this._latestSwitch(GLib.DateTime.new_now_local());
-        if (!latest || latest.time <= this._settings.get_int64('auto-switch-applied'))
+        if (latest.time <= this._settings.get_int64('auto-switch-applied'))
             return;
         this._settings.set_int64('auto-switch-applied', latest.time);
         if (this._getColorScheme() !== latest.scheme)
@@ -616,10 +617,11 @@ export default class LightModeManagerExtension extends Extension {
 
     // Changing the schedule (on, times or mode) applies its current mode right away. At login
     // only a switch time newer than the last applied one does, so a mode picked by hand stays
-    // until the next switch.
+    // until the next switch. Equal times count as off, even with "Enable" on.
     _syncAutoSwitch(changed = false) {
         this._clearSource('_autoId');
-        if (!this._settings.get_boolean('auto-switch'))
+        const [t1, t2] = this._autoTimes();
+        if (!this._settings.get_boolean('auto-switch') || t1 === t2)
             return;
         if (changed)
             this._settings.set_int64('auto-switch-applied', 0);

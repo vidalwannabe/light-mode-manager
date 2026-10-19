@@ -346,6 +346,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         };
 
         // ---------- Automatic switch ----------
+        // Minutes since midnight as "07:00".
+        const clock = value => `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
         // A time button ("07:00") bound to an integer setting in minutes since midnight;
         // it opens hour and minute spin buttons in a popover.
         const timeInput = key => {
@@ -369,11 +371,10 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             const button = new Gtk.MenuButton({popover: new Gtk.Popover({child: picker}), valign: Gtk.Align.CENTER});
             button.add_css_class('numeric');
 
-            const text = value => `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
             let loading = false;
             const load = () => {
                 const value = s.get_int(key);
-                button.set_label(text(value));
+                button.set_label(clock(value));
                 loading = true;
                 hours.set_value(Math.floor(value / 60));
                 minutes.set_value(value % 60);
@@ -392,52 +393,51 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         };
 
         const MODES = [['light', 'Light mode'], ['dark', 'Dark mode']];
+        // One row: the mode, and the two times it is on between; the opposite mode the rest of
+        // the day. Equal times turn the switch off: both times are marked and the subtitle says so.
         const autoSwitchGroup = () => {
             const group = new Adw.PreferencesGroup({title: 'Automatic switch'});
             const enable = switchRow(group, 'auto-switch', 'Enable',
-                'Switches between light and dark mode at two set times of day');
+                'Uses one mode between two times of day and the other the rest of the day');
 
-            // First switch: time and mode to turn on.
-            const first = new Adw.ActionRow({title: 'First switch', subtitle: 'Time and mode to turn on'});
-            first.add_suffix(timeInput('auto-switch-1-time'));
+            const row = new Adw.ActionRow({title: 'Schedule'});
             const mode = new Gtk.DropDown({
                 valign: Gtk.Align.CENTER,
                 model: Gtk.StringList.new(MODES.map(([, label]) => label)),
             });
-            const loadMode = () => {
-                const i = Math.max(0, MODES.findIndex(([id]) => id === s.get_string('auto-switch-1-mode')));
-                if (mode.get_selected() !== i)
-                    mode.set_selected(i);
-            };
-            loadMode();
             mode.connect('notify::selected', () => {
                 const id = MODES[mode.get_selected()]?.[0];
                 if (id && id !== s.get_string('auto-switch-1-mode'))
                     s.set_string('auto-switch-1-mode', id);
             });
-            first.add_suffix(mode);
+            const [start, end] = ['auto-switch-1-time', 'auto-switch-2-time'].map(timeInput);
+            row.add_suffix(mode);
+            row.add_suffix(start);
+            row.add_suffix(new Gtk.Label({label: '–'}));
+            row.add_suffix(end);
 
-            // Second switch: its own time; always the opposite mode.
-            const second = new Adw.ActionRow({title: 'Second switch', subtitle: 'Time to turn on the opposite mode'});
-            second.add_suffix(timeInput('auto-switch-2-time'));
-            const opposite = new Gtk.Label({valign: Gtk.Align.CENTER, xalign: 0.5});
-            const loadOpposite = () => opposite.set_label(
-                s.get_string('auto-switch-1-mode') === 'dark' ? 'Light mode' : 'Dark mode');
-            loadOpposite();
-            second.add_suffix(opposite);
-            // Same width as the drop-down, so both times line up.
-            const sizes = new Gtk.SizeGroup({mode: Gtk.SizeGroupMode.HORIZONTAL});
-            sizes.add_widget(mode);
-            sizes.add_widget(opposite);
-            watch('auto-switch-1-mode', () => {
-                loadMode();
-                loadOpposite();
-            });
+            const load = () => {
+                const dark = s.get_string('auto-switch-1-mode') === 'dark';
+                if (mode.get_selected() !== Number(dark))
+                    mode.set_selected(Number(dark));
+                const [t1, t2] = [s.get_int('auto-switch-1-time'), s.get_int('auto-switch-2-time')];
+                for (const button of [start, end]) {
+                    if (t1 === t2)
+                        button.add_css_class('error');
+                    else
+                        button.remove_css_class('error');
+                }
+                row.set_subtitle(t1 === t2
+                    ? 'Choose two different times; switching is off until then'
+                    : `${MODES[Number(dark)][1]} from ${clock(t1)} to ${clock(t2)}; ` +
+                      `${MODES[Number(!dark)][1].toLowerCase()} the rest of the day`);
+            };
+            load();
+            for (const key of ['auto-switch-1-mode', 'auto-switch-1-time', 'auto-switch-2-time'])
+                watch(key, load);
 
-            for (const row of [first, second]) {
-                enable.bind_property('active', row, 'sensitive', GObject.BindingFlags.SYNC_CREATE);
-                group.add(row);
-            }
+            enable.bind_property('active', row, 'sensitive', GObject.BindingFlags.SYNC_CREATE);
+            group.add(row);
             return group;
         };
 

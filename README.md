@@ -58,7 +58,7 @@ Each tab has a profile selector to apply a set of colors in one click. It shows 
 
 **Automatic switch**
 
-- **Automatic switch**: switches between light and dark mode at two times of day. The first switch has its own time and the mode it turns on; the second has its own time and always turns on the opposite mode. Each mode keeps its own profile and colors. Turning it on or changing the schedule applies the current mode right away; a mode picked by hand in between is kept, even after logging in again, until the next switch time.
+- **Automatic switch**: one row sets a mode (light or dark) and two times of day: the mode is on between them and the opposite one the rest of the day, also across midnight (Dark mode from 19:00 to 07:00). Equal times turn the switch off, even with **Enable** on; both times are marked and the subtitle says so. Each mode keeps its own profile and colors. Turning it on or changing the schedule applies the current mode right away; a mode picked by hand in between is kept, even after logging in again, until the next switch time.
 
 **Backup**
 
