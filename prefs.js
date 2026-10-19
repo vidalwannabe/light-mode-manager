@@ -10,7 +10,7 @@ import {createProfiles} from './profiles.js';
 
 // The Light mode and Dark mode tabs show exactly these rows.
 // [key name, title, subtitle, label and swatch when empty]. Transparency is set only in the
-// General tab.
+// Appearance tab.
 const ACCENT = 'Accent color set in GNOME Settings › Appearance';
 const COLOR_GROUPS = [
     ['Top bar and overview', [
@@ -252,7 +252,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 .forEach(a => actions.add_action(a));
 
             const addButton = new Gtk.MenuButton({
-                icon_name: 'document-save-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Save current colors',
+                icon_name: 'media-floppy-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Save current colors',
             });
             addButton.add_css_class('flat');
             addButton.insert_action_group('profile', actions);
@@ -285,7 +285,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         const generalProfilesGroup = (model, light, dark) => {
             const side = (mode, name) => model.exists(mode, name) ? name : `${name} (deleted)`;
 
-            const addButton = flatButton({icon_name: 'document-save-symbolic', tooltip_text: 'New general profile'});
+            const addButton = flatButton({icon_name: 'media-floppy-symbolic', tooltip_text: 'New general profile'});
             addButton.connect('clicked', () => profileDialog(model.taken, (name, l, d) => {
                 // Only saved: applying it here would overwrite unsaved colors.
                 model.save([...model.own(), {name, light: l, dark: d}]);
@@ -644,8 +644,9 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             return group;
         };
 
-        const addGeneralTab = ({general, light, dark}) => {
-            const page = new Adw.PreferencesPage({title: 'General', icon_name: 'preferences-other-symbolic'});
+        // Appearance: general profiles and visual tweaks.
+        const addAppearanceTab = ({general, light, dark}) => {
+            const page = new Adw.PreferencesPage({title: 'Appearance', icon_name: 'preferences-desktop-appearance-symbolic'});
             page.add(generalProfilesGroup(general, light, dark));
 
             const effects = new Adw.PreferencesGroup({title: 'Visual tweaks'});
@@ -670,7 +671,12 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             switchRow(effects, 'override-dtp-colors', 'Override Dash to Panel colors',
                 "Dash to Panel and its window previews use this extension's color and opacity");
             page.add(effects);
+            window.add(page);
+        };
 
+        // General: easy access, automatic switch and backup.
+        const addGeneralTab = () => {
+            const page = new Adw.PreferencesPage({title: 'General', icon_name: 'preferences-other-symbolic'});
             const panel = new Adw.PreferencesGroup({title: 'Easy access'});
             switchRow(panel, 'background-menu-entry', 'Desktop menu entry',
                 'Adds “Light Mode Manager…” to the desktop right-click menu, below Change Background');
@@ -686,8 +692,9 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
         };
 
         const profiles = createProfiles(s);
-        addGeneralTab(profiles);
+        addAppearanceTab(profiles);
         addTab('Light mode', 'weather-clear-symbolic', '', profiles.light);
         addTab('Dark mode', 'weather-clear-night-symbolic', '-dark', profiles.dark);
+        addGeneralTab();
     }
 }

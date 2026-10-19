@@ -51,11 +51,11 @@ Each tab has a profile selector to apply a set of colors in one click. It shows 
   - Light mode: **Default** and **GNOME**.
   - Dark mode: **Default**, **GNOME** and **Oled** (Default with pure black top bar, overview and menus).
   - **GNOME** keeps the vanilla GNOME look, the same in light and dark mode.
-- **Your own profiles**: the **+** button saves the current colors as a new profile, or replaces the colors of one of yours with **Update existing profile**. Your profiles can be deleted from the selector.
+- **Your own profiles**: the save button saves the current colors as a new profile, or replaces the colors of one of yours with **Update existing profile**. Your profiles can be deleted from the selector.
 
-### General tab
+### Appearance tab
 
-- **General profile**: pairs a light mode profile with a dark mode profile and applies both at once. Built-in **Default** and **GNOME** general profiles are included. Adding a profile (with **+** or by importing) only saves it; it is applied from the selector.
+- **General profile**: pairs a light mode profile with a dark mode profile and applies both at once. Built-in **Default** and **GNOME** general profiles are included. Adding a profile (with the save button or by importing) only saves it; it is applied from the selector.
 
 **Visual tweaks**
 
@@ -69,6 +69,8 @@ Each tab has a profile selector to apply a set of colors in one click. It shows 
 - **Calendar as card**: the month calendar gets the color of the cards below it (Today, World Clocks, Weather), without a pill behind each day. With the GNOME profile it follows GNOME's own card color.
 - **Fix menu overlap** (on by default): GNOME sizes the menus Quick Settings toggles open without their width, so a menu with wrapped text (Bluetooth when off) covers the buttons below it ([GNOME issue 7622](https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/7622)). This measures them at their real width, in any language.
 - **Override Dash to Panel colors**: Dash to Panel's panels and window previews (shown when hovering an open app) always use this extension's panel color and opacity (or GNOME's own with the GNOME profile) instead of Dash to Panel's color and transparency settings, which are left unchanged. Window previews keep Dash to Panel's own opacity if it has a custom preview opacity set.
+
+### General tab
 
 **Easy access**
 

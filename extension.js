@@ -85,7 +85,7 @@ const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'col
     'color-qs-active-fg', 'color-qs-active', 'color-highlight', 'color-today', 'color-dash', 'color-panel',
     'color-overview'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
-// Settings that rebuild the theme of each mode (colors and General tab options);
+// Settings that rebuild the theme of each mode (colors and Appearance tab options);
 // other keys (profiles...) never do.
 const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'match-arrow-buttons', 'merge-arrow-buttons',
     'calendar-background'];
@@ -337,8 +337,8 @@ function colorToRgb(value) {
     return m ? m.slice(1).join(', ') : null;
 }
 
-// The general background with the opacity from the General tab. Any alpha already in the
-// color (older settings or profiles) is ignored: the General tab is the only source.
+// The general background with the opacity from the Appearance tab. Any alpha already in the
+// color (older settings or profiles) is ignored: the Appearance tab is the only source.
 // A solid color without alpha is kept as written.
 function withOpacity(value, opacity) {
     const rgb = value ? colorToRgb(value) : null;
@@ -390,7 +390,7 @@ const AUTO_KEYS = ['auto-switch', 'auto-switch-1-time', 'auto-switch-1-mode', 'a
 const AUTO_CHECK_SECONDS = 30;
 
 // Quick Settings button: shows the applied general profile and switches it from its menu,
-// which also opens these preferences (on their first tab, General).
+// which also opens these preferences (on their first tab, Appearance).
 const ProfileToggle = GObject.registerClass(
 class ProfileToggle extends QuickMenuToggle {
     _init(extension) {
@@ -497,7 +497,7 @@ export default class LightModeManagerExtension extends Extension {
 
     // When the style is toggled, GNOME fades out a snapshot of the old screen. Rebuilding the
     // theme blocks the shell long enough for that fade to be skipped, so it is restarted
-    // once the new theme is in place, with the duration chosen in the General tab.
+    // once the new theme is in place, with the duration chosen in the Appearance tab.
     _restartTransition() {
         const transition = Main.layoutManager.screenTransition;
         const snapshot = transition.visible ? transition.content : null;
@@ -957,7 +957,7 @@ export default class LightModeManagerExtension extends Extension {
     _lightCss() {
         const values = this._values(LIGHT_KEYS);
         // Every color on system default (GNOME profile): the shell keeps its own dark style
-        // (see _syncShellScheme), so only the General tab options apply, on GNOME's colors.
+        // (see _syncShellScheme), so only the Appearance tab options apply, on GNOME's colors.
         if (values.every(v => !v))
             return this._darkCardsCss('', '') + this._borderCss(null) + this._nativeOpacityCss() +
                 this._panelCss('', NATIVE_PANEL);
