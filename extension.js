@@ -475,6 +475,8 @@ class ProfileToggle extends QuickMenuToggle {
         this.menu.setHeader(PROFILE_ICON, 'Color Set', dark ? 'Dark mode' : 'Light mode');
         const applied = this._fill(this._modeItems, dark ? this._models.dark : this._models.light);
         this.subtitle = applied?.name ?? 'Unsaved';
+        // Lit while the colors match a saved color set; off only when they are unsaved.
+        this.checked = !!applied;
     }
 
     destroy() {
