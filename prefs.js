@@ -16,7 +16,7 @@ const COLOR_ROWS = [
     ['panel-fg', 'Top bar content', 'Clock, indicators, overview button and Dash to Panel app grid icon'],
     ['fg', 'Main text and icons', 'Titles and icons of notifications, widgets, menus, dialogs and Quick Settings'],
     ['fg-muted', 'Secondary text', 'Text under titles: notification body, times, locations and subtitles'],
-    ['card', 'Cards, dash and search background', 'Notifications, calendar widgets, dock, search and app folders'],
+    ['card', 'Cards background', 'Notifications, banners and calendar widgets: Today, World Clocks and Weather'],
     ['qs-active-fg', 'Active buttons text and icons', 'Text, icons and arrows of Quick Settings toggles that are on', 'Accent text color', '#ffffff'],
     ['qs-button', 'Idle Quick Settings buttons', 'Toggles that are off, top round buttons, slider buttons and toggle menus'],
     ['border', 'Borders', 'Outline of Quick Settings, the calendar and other menus'],
@@ -34,7 +34,7 @@ const flatButton = props => {
 export default class LightModeManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
-        window.set_default_size(600, 925);
+        window.set_default_size(600, 865);
         window.set_search_enabled(false);
 
         // Settings handlers and pending idles are dropped when the window closes,
@@ -169,7 +169,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             const refresh = () => {
                 const profiles = model.all();
                 const applied = model.applied(profiles);
-                selector.set_label(applied?.name ?? 'No profile');
+                selector.set_label(applied?.name ?? 'Unsaved');
                 list.remove_all();
                 for (const profile of profiles)
                     list.append(profileRow(profile, applied));
@@ -215,7 +215,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             const overwriteAction = new Gio.SimpleAction({name: 'overwrite', parameter_type: new GLib.VariantType('s')});
             overwriteAction.connect('activate', (_a, param) => {
                 const name = param.unpack();
-                confirm(`Apply to "${name}"?`, 'Its saved colors will be replaced with the current ones.', 'Replace', () => {
+                confirm(`Update "${name}"?`, 'Its saved colors will be replaced with the current ones.', 'Update', () => {
                     model.save(model.own().map(p => p.name === name ? {name, colors: model.current()} : p));
                     model.setActive(name);
                 });
@@ -233,7 +233,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 const menu = new Gio.Menu();
                 menu.append('Create new profile', 'profile.new');
                 if (own.length === 0) {
-                    menu.append('Apply to existing profile', 'profile.none');
+                    menu.append('Update existing profile', 'profile.none');
                 } else {
                     const sub = new Gio.Menu();
                     for (const p of own) {
@@ -241,7 +241,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                         item.set_action_and_target_value('profile.overwrite', new GLib.Variant('s', p.name));
                         sub.append_item(item);
                     }
-                    menu.append_submenu('Apply to existing profile', sub);
+                    menu.append_submenu('Update existing profile', sub);
                 }
                 addButton.set_menu_model(menu);
             };
@@ -382,68 +382,54 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             return button;
         };
 
-        // A drop-down of the general profiles bound to a string setting. A saved profile
-        // that was deleted stays listed, marked as deleted, until another one is chosen.
-        const profileDropDown = (key, general) => {
-            const dropDown = new Gtk.DropDown({valign: Gtk.Align.CENTER});
-            let names = [];
-            let labels = '';
-            let loading = false;
-            const load = () => {
-                const saved = s.get_string(key);
-                const next = general.all().map(p => p.name);
-                const nextLabels = [...next];
-                if (!next.includes(saved)) {
-                    next.push(saved);
-                    nextLabels.push(`${saved} (deleted)`);
-                }
-                names = next;
-                loading = true;
-                // The list is only replaced when the names change: replacing it while GTK
-                // handles a click on one of its items crashes the preferences window.
-                if (nextLabels.join('\n') !== labels) {
-                    labels = nextLabels.join('\n');
-                    dropDown.set_model(Gtk.StringList.new(nextLabels));
-                }
-                if (dropDown.get_selected() !== names.indexOf(saved))
-                    dropDown.set_selected(names.indexOf(saved));
-                loading = false;
-            };
-            load();
-            dropDown.connect('notify::selected', () => {
-                const name = names[dropDown.get_selected()];
-                if (!loading && name !== undefined && name !== s.get_string(key))
-                    s.set_string(key, name);
-            });
-
-            // Reload once the current click is fully handled, never during it.
-            let loadId = 0;
-            const queueLoad = () => {
-                loadId ||= GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
-                    loadId = 0;
-                    load();
-                    return GLib.SOURCE_REMOVE;
-                });
-            };
-            cleanups.push(() => {
-                if (loadId)
-                    GLib.Source.remove(loadId);
-                loadId = 0;
-            });
-            watch(key, queueLoad);
-            watch('general-profiles', queueLoad);
-            return dropDown;
-        };
-
-        const autoSwitchGroup = general => {
+        const MODES = [['light', 'Light mode'], ['dark', 'Dark mode']];
+        const autoSwitchGroup = () => {
             const group = new Adw.PreferencesGroup({title: 'Automatic switch'});
-            const enable = new Adw.SwitchRow({title: 'Enable', subtitle: 'Applies a general profile at two set times of day'});
+            const enable = new Adw.SwitchRow({
+                title: 'Enable',
+                subtitle: 'Switches between light and dark mode at two set times of day',
+            });
             s.bind('auto-switch', enable, 'active', Gio.SettingsBindFlags.DEFAULT);
             group.add(enable);
-            for (const [i, title] of [[1, 'First switch'], [2, 'Second switch']]) {
-                const row = new Adw.ActionRow({title, subtitle: 'Time and general profile to apply'});
-                row.add_suffix(timeInput(`auto-switch-${i}-time`));
-                row.add_suffix(profileDropDown(`auto-switch-${i}-profile`, general));
+
+            // First switch: time and mode to turn on.
+            const first = new Adw.ActionRow({title: 'First switch', subtitle: 'Time and mode to turn on'});
+            first.add_suffix(timeInput('auto-switch-1-time'));
+            const mode = new Gtk.DropDown({
+                valign: Gtk.Align.CENTER,
+                model: Gtk.StringList.new(MODES.map(([, label]) => label)),
+            });
+            const loadMode = () => {
+                const i = Math.max(0, MODES.findIndex(([id]) => id === s.get_string('auto-switch-1-mode')));
+                if (mode.get_selected() !== i)
+                    mode.set_selected(i);
+            };
+            loadMode();
+            mode.connect('notify::selected', () => {
+                const id = MODES[mode.get_selected()]?.[0];
+                if (id && id !== s.get_string('auto-switch-1-mode'))
+                    s.set_string('auto-switch-1-mode', id);
+            });
+            first.add_suffix(mode);
+
+            // Second switch: its own time; always the opposite mode.
+            const second = new Adw.ActionRow({title: 'Second switch', subtitle: 'Time to turn on the opposite mode'});
+            second.add_suffix(timeInput('auto-switch-2-time'));
+            const opposite = new Gtk.Label({valign: Gtk.Align.CENTER, xalign: 0.5});
+            const loadOpposite = () => opposite.set_label(
+                s.get_string('auto-switch-1-mode') === 'dark' ? 'Light mode' : 'Dark mode');
+            loadOpposite();
+            second.add_suffix(opposite);
+            // Same width as the drop-down, so both times line up.
+            const sizes = new Gtk.SizeGroup({mode: Gtk.SizeGroupMode.HORIZONTAL});
+            sizes.add_widget(mode);
+            sizes.add_widget(opposite);
+            watch('auto-switch-1-mode', () => {
+                loadMode();
+                loadOpposite();
+            });
+
+            for (const row of [first, second]) {
                 enable.bind_property('active', row, 'sensitive', GObject.BindingFlags.SYNC_CREATE);
                 group.add(row);
             }
@@ -452,6 +438,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
 
         // ---------- Backup ----------
         const SETTINGS_FILE = 'light-mode-manager-settings.json';
+        // Internal state stays out of backups: an old switch time would switch the mode on import.
+        const backupKeys = () => s.settings_schema.list_keys().filter(k => k !== 'auto-switch-applied');
         const toast = title => window.add_toast(new Adw.Toast({title}));
         const jsonFilter = () => {
             const filter = new Gtk.FileFilter({name: 'JSON files'});
@@ -470,7 +458,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
                 try {
                     const file = dialog.save_finish(res);
                     const settings = Object.fromEntries(
-                        s.settings_schema.list_keys().map(k => [k, s.get_value(k).print(true)]));
+                        backupKeys().map(k => [k, s.get_value(k).print(true)]));
                     const json = JSON.stringify({extension: this.uuid, version: 1, settings}, null, 2);
                     file.replace_contents(new TextEncoder().encode(json), null, false,
                         Gio.FileCreateFlags.REPLACE_DESTINATION, null);
@@ -484,19 +472,31 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
 
         // Reads and validates a settings file: every key of the schema as a GVariant,
         // or null when the file lacks it. Throws on anything invalid, before any change.
+        const PROFILE_KEYS = ['profiles', 'profiles-dark', 'general-profiles'];
         const readSettingsFile = file => {
             const [, bytes] = file.load_contents(null);
             const data = JSON.parse(new TextDecoder().decode(bytes));
             if (data?.extension !== this.uuid || typeof data.settings !== 'object' || !data.settings)
                 throw new Error('not a Light Mode Manager settings file');
             const schema = s.settings_schema;
-            return new Map(schema.list_keys().map(k => {
+            return new Map(backupKeys().map(k => {
                 const text = data.settings[k];
                 if (typeof text !== 'string')
                     return [k, null];
                 const value = GLib.Variant.parse(schema.get_key(k).get_value_type(), text, null, null);
                 if (!schema.get_key(k).range_check(value))
                     throw new Error(`invalid value for ${k}`);
+                // Profile lists must be valid JSON arrays, or "Replace all" would wipe them.
+                if (PROFILE_KEYS.includes(k)) {
+                    let list;
+                    try {
+                        list = JSON.parse(value.unpack());
+                    } catch {
+                        list = null;
+                    }
+                    if (!Array.isArray(list))
+                        throw new Error(`invalid profiles in ${k}`);
+                }
                 return [k, value];
             }));
         };
@@ -618,7 +618,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             sliderRow(effects, 'transition-duration', 'Transition',
                 'Fade duration when switching between light and dark mode', 2000, 100, ' ms');
             sliderRow(effects, 'general-opacity', 'Shell opacity',
-                'Top bar, menus, OSD and switcher; dialogs and overview stay solid', 100, 1, '%', 5);
+                'Menus, OSD and switcher; dialogs and overview stay solid', 100, 1, '%', 5);
             sliderRow(effects, 'card-opacity', 'Card opacity',
                 'Cards, slider buttons, idle Quick Settings buttons and their menus', 100, 1, '%', 5);
             const panelOpacityRow = new Adw.SwitchRow({
@@ -640,8 +640,8 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             s.bind('no-qs-dimming', dimRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(dimRow);
             const arrowRow = new Adw.SwitchRow({
-                title: 'Uniform Quick Settings button colors',
-                subtitle: 'Toggle arrows (›) use their toggle color, on and off',
+                title: 'Match arrows to toggles',
+                subtitle: "The arrow (›) next to each Quick Settings toggle uses the toggle's color, on and off",
             });
             s.bind('match-arrow-buttons', arrowRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(arrowRow);
@@ -657,12 +657,6 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             });
             s.bind('fix-qs-menu-height', menuHeightRow, 'active', Gio.SettingsBindFlags.DEFAULT);
             effects.add(menuHeightRow);
-            const gridRow = new Adw.SwitchRow({
-                title: 'Disable grid custom colors',
-                subtitle: 'Dash, search, folder icons and open folders keep the system background',
-            });
-            s.bind('disable-grid-colors', gridRow, 'active', Gio.SettingsBindFlags.DEFAULT);
-            effects.add(gridRow);
             const dtpRow = new Adw.SwitchRow({
                 title: 'Override Dash to Panel colors',
                 subtitle: "Dash to Panel and its window previews use this extension's color and opacity",
@@ -671,7 +665,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             effects.add(dtpRow);
             page.add(effects);
 
-            const panel = new Adw.PreferencesGroup({title: 'Panel'});
+            const panel = new Adw.PreferencesGroup({title: 'Easy access'});
             const menuRow = new Adw.SwitchRow({
                 title: 'Panel menu entry',
                 subtitle: "Adds “Light Mode Manager” to Dash to Panel's right-click menu",
@@ -686,7 +680,7 @@ export default class LightModeManagerPrefs extends ExtensionPreferences {
             panel.add(quickRow);
             page.add(panel);
 
-            page.add(autoSwitchGroup(general));
+            page.add(autoSwitchGroup());
 
             page.add(backupGroup());
 

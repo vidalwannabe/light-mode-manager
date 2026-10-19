@@ -82,7 +82,7 @@ const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'col
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and General tab options);
 // other keys (profiles...) never do.
-const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'disable-grid-colors', 'hide-borders', 'match-arrow-buttons', 'calendar-background'];
+const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'hide-borders', 'match-arrow-buttons', 'calendar-background'];
 const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark',
     'color-qs-active-fg-dark', ...EFFECT_KEYS];
@@ -104,25 +104,12 @@ const BORDER_SEL = '.popup-menu-content, .candidate-popup-content';
 const DARK_OPAQUE_SEL = '#overviewGroup, .modal-dialog';
 // Light template rules of the overview and dialogs that use the general background.
 const LIGHT_OPAQUE_RE = /overview|grid-search-result|modal-dialog|audio-device-selection-dialog/;
-// The overview's grid: dash, search results, app folder icons and the dialog a folder opens.
-// They take the Cards color unless "Disable grid custom colors", which keeps the system's.
-const GRID_CARDS = ['#dash .dash-background', '.search-section-content', '.app-folder-dialog'];
+// The overview's grid (dash, search results, app folder icons and the dialog a folder
+// opens) keeps the system's colors: "Cards background" only paints cards. In light mode the
+// template paints it with the card tokens, so those rules get the template's own card
+// colors back.
 const GRID_RE = /#dash|search|app-folder/;
-// Template card colors, as "r, g, b" too, kept as they are for the grid.
 const CARD_TOKENS = TOKENS.filter(([key]) => key === 'color-card');
-
-// App folder icons in the app grid: buttons in the Cards color, in every state. GNOME paints
-// them from the text and general colors.
-const FOLDER_ICON = '.app-folder';
-function folderCss(card, dark) {
-    const adjust = shade(dark);
-    const highlighted = state => ['highlighted', 'selected', 'checked']
-        .map(s => `${FOLDER_ICON}:${s}${state}`).join(', ');
-    return buttonCss(FOLDER_ICON, card, dark) +
-        rule(highlighted(''), 'background-color', `${adjust}(${card}, 8%)`) +
-        rule(highlighted(':hover'), 'background-color', `${adjust}(${adjust}(${card}, 8%), 4%)`) +
-        rule(highlighted(':active'), 'background-color', `${adjust}(${adjust}(${card}, 8%), 9%)`);
-}
 
 // GNOME draws a shadow under the whole menu, so a translucent menu showed it through
 // and looked darker than the panel. Below 100% opacity these shadows are removed.
@@ -164,7 +151,7 @@ const QS_CHECKED = '.quick-toggle:checked';
 const QS_FLAT = '.background-apps-quick-toggle';
 
 // Quick Settings arrow buttons ("›"). GNOME 48 draws them a shade apart from their toggle,
-// off and on; "Uniform Quick Settings button colors" gives them the toggle's own color. Light mode
+// off and on; "Match arrows to toggles" gives them the toggle's own color. Light mode
 // expressions use the template's tokens, filled in like the rest of the template.
 const ARROW_SEL = '.quick-toggle-has-menu .quick-toggle-menu-button';
 // GNOME's toggle color when off, and its own arrow color off and on.
@@ -352,7 +339,7 @@ function heightAtWidth(actor, width) {
 
 const PROFILE_ICON = 'preferences-desktop-appearance-symbolic';
 
-const AUTO_KEYS = ['auto-switch', 'auto-switch-1-time', 'auto-switch-1-profile', 'auto-switch-2-time', 'auto-switch-2-profile'];
+const AUTO_KEYS = ['auto-switch', 'auto-switch-1-time', 'auto-switch-1-mode', 'auto-switch-2-time'];
 // How often the automatic switch checks the clock. A check is a few comparisons; checking
 // often (instead of one long timer) also catches up right after a suspend.
 const AUTO_CHECK_SECONDS = 30;
@@ -392,7 +379,7 @@ class ProfileToggle extends QuickMenuToggle {
     _sync() {
         const profiles = this._profiles.all();
         const applied = this._profiles.applied(profiles);
-        this.subtitle = applied?.name ?? 'Custom';
+        this.subtitle = applied?.name ?? 'Unsaved';
         this._items.removeAll();
         for (const profile of profiles) {
             const item = new PopupMenu.PopupMenuItem(profile.name);
@@ -590,41 +577,49 @@ export default class LightModeManagerExtension extends Extension {
     }
 
     // ---------- Automatic switch ----------
-    // The switch (1 or 2) whose time passed most recently at `minutes` past midnight,
-    // or 0 if both times are equal.
-    _currentSwitch(minutes) {
+    // Two times of day: the first sets the chosen mode, the second the opposite one. The
+    // most recent switch time that has passed is applied once (its moment is kept in dconf),
+    // so a mode picked by hand in between, even across logins, stays until the next one.
+
+    // The most recent switch moment (unix time) before `now` and its color scheme, or null
+    // if both times are equal.
+    _latestSwitch(now) {
         const [t1, t2] = [1, 2].map(i => this._settings.get_int(`auto-switch-${i}-time`));
         if (t1 === t2)
-            return 0;
-        // Between the earlier and the later time, the earlier switch is the current one.
-        const [first, second] = t1 < t2 ? [1, 2] : [2, 1];
-        return minutes >= Math.min(t1, t2) && minutes < Math.max(t1, t2) ? first : second;
+            return null;
+        const dark = this._settings.get_string('auto-switch-1-mode') === 'dark';
+        const midnight = GLib.DateTime.new_local(now.get_year(), now.get_month(), now.get_day_of_month(), 0, 0, 0);
+        return [[t1, dark], [t2, !dark]]
+            .map(([minutes, isDark]) => {
+                let moment = midnight.add_minutes(minutes);
+                if (moment.compare(now) > 0)
+                    moment = moment.add_days(-1);
+                return {time: moment.to_unix(), scheme: isDark ? 'prefer-dark' : 'prefer-light'};
+            })
+            .reduce((a, b) => a.time >= b.time ? a : b);
     }
 
-    // Applies the current switch's general profile once each time a switch time passes,
-    // so a profile chosen by hand in between is kept until the next switch.
     _checkAutoSwitch() {
-        const now = GLib.DateTime.new_now_local();
-        const current = this._currentSwitch(now.get_hour() * 60 + now.get_minute());
-        if (!current || current === this._lastSwitch)
+        const latest = this._latestSwitch(GLib.DateTime.new_now_local());
+        if (!latest || latest.time <= this._settings.get_int64('auto-switch-applied'))
             return;
-        this._lastSwitch = current;
-        const name = this._settings.get_string(`auto-switch-${current}-profile`);
-        const general = this._profiles.general;
-        const profile = general.all().find(p => p.name === name);
-        if (profile)
-            general.apply(profile);
+        this._settings.set_int64('auto-switch-applied', latest.time);
+        if (this._getColorScheme() !== latest.scheme)
+            this._interface.set_string('color-scheme', latest.scheme);
     }
 
-    // Turning it on, or changing a time or profile, applies the current switch right away.
-    _syncAutoSwitch() {
+    // Changing the schedule (on, times or mode) applies its current mode right away. At login
+    // only a switch time newer than the last applied one does, so a mode picked by hand stays
+    // until the next switch.
+    _syncAutoSwitch(changed = false) {
         if (this._autoId) {
             GLib.Source.remove(this._autoId);
             this._autoId = 0;
         }
-        this._lastSwitch = 0;
         if (!this._settings.get_boolean('auto-switch'))
             return;
+        if (changed)
+            this._settings.set_int64('auto-switch-applied', 0);
         this._checkAutoSwitch();
         this._autoId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, AUTO_CHECK_SECONDS, () => {
             this._checkAutoSwitch();
@@ -825,9 +820,11 @@ export default class LightModeManagerExtension extends Extension {
         const [active] = this._values(['color-qs-active-fg-dark']);
         if (fg)
             css += quickSettingsTextCss(fg);
-        if (fg || active)
+        const muted = values[DARK_KEYS.indexOf('color-fg-muted-dark')];
+        css += textRolesCss(fg, muted);
+        // After the subtitles, so a toggle that is on keeps its own subtitle color.
+        if (fg || muted || active)
             css += activeTextCss(active || '-st-accent-fg-color');
-        css += textRolesCss(fg, values[DARK_KEYS.indexOf('color-fg-muted-dark')]);
         css += this._darkCardsCss(values[DARK_KEYS.indexOf('color-card-dark')],
             this._values(['color-qs-button-dark'])[0]);
         return css + this._borderCss('color-border-dark');
@@ -844,8 +841,6 @@ export default class LightModeManagerExtension extends Extension {
         const opacity = this._cardOpacity();
         const base = card || NATIVE_CARD;
         let css = card || opacity < 100 ? buttonCss(DARK_CARD_BUTTONS, translucent(base, opacity), true) : '';
-        if (card && !this._settings.get_boolean('disable-grid-colors'))
-            css += rule(GRID_CARDS.join(', '), 'background-color', card) + folderCss(card, true);
         // After the cards, so the Quick Settings menus take the inactive buttons color.
         css += this._quickSettingsCss(true, qsButtons, {
             toggle: toggleOff(true), arrow: arrowOff(true), arrowChecked: arrowChecked(true), menu: base,
@@ -949,8 +944,8 @@ export default class LightModeManagerExtension extends Extension {
             css += panelTextCss(byKey['color-panel-fg']);
         // Titles and subtitles (the template's own colors when empty), and active buttons.
         css += textRolesCss(fill('#222226', solid), fill('#767679', solid));
-        if (byKey['color-qs-active-fg'])
-            css += activeTextCss(byKey['color-qs-active-fg']);
+        // After the subtitles, so a toggle that is on keeps its own subtitle color.
+        css += activeTextCss(byKey['color-qs-active-fg'] || '-st-accent-fg-color');
         // Cards (the template's own color when empty), inactive Quick Settings buttons and
         // calendar background. GNOME's light expressions get the template's tokens filled in;
         // the color settings are used as they are.
@@ -958,17 +953,13 @@ export default class LightModeManagerExtension extends Extension {
         const cardOpacity = this._cardOpacity();
         if (cardOpacity < 100)
             css += buttonCss(CARD_BUTTONS, translucent(card, cardOpacity), false);
-        if (this._settings.get_boolean('disable-grid-colors')) {
-            // The grid gets the template's own card colors back; other colors still filled in.
-            const cardColors = new Set(CARD_TOKENS.flatMap(([, color, rgb]) => [color, rgb]));
-            css += grid.replace(TOKEN_RE, (m, rgb, alpha) => {
-                if (rgb)
-                    return `rgba(${cardColors.has(rgb) ? rgb : byRgb[rgb]}, ${alpha})`;
-                return cardColors.has(m.toLowerCase()) ? m : solid[m.toLowerCase()];
-            });
-        } else {
-            css += folderCss(card, false);
-        }
+        // The grid gets the template's own card colors back; other colors still filled in.
+        const cardColors = new Set(CARD_TOKENS.flatMap(([, color, rgb]) => [color, rgb]));
+        css += grid.replace(TOKEN_RE, (m, rgb, alpha) => {
+            if (rgb)
+                return `rgba(${cardColors.has(rgb) ? rgb : byRgb[rgb]}, ${alpha})`;
+            return cardColors.has(m.toLowerCase()) ? m : solid[m.toLowerCase()];
+        });
         const token = expression => fill(expression, faded);
         css += this._quickSettingsCss(false, byKey['color-qs-button'], {
             toggle: token(toggleOff(false)), arrow: token(arrowOff(false)),
@@ -1093,7 +1084,7 @@ export default class LightModeManagerExtension extends Extension {
             else if (key === 'fix-qs-menu-height')
                 this._syncQsMenuHeight();
             else if (AUTO_KEYS.includes(key))
-                this._syncAutoSwitch();
+                this._syncAutoSwitch(true);
             else if ((this._isDark() ? DARK_THEME_KEYS : LIGHT_THEME_KEYS).includes(key))
                 this._scheduleApply();
         });
@@ -1121,8 +1112,6 @@ export default class LightModeManagerExtension extends Extension {
         this._syncQsDimming();
         this._syncQsMenuHeight();
 
-        // Before the first theme, so a profile applied by the automatic switch is built once.
-        this._profiles = createProfiles(this._settings);
         this._syncAutoSwitch();
         this._applyTheme();
         this._syncDtpPanels();
@@ -1149,7 +1138,6 @@ export default class LightModeManagerExtension extends Extension {
             GLib.Source.remove(this._autoId);
             this._autoId = 0;
         }
-        this._profiles = null;
         if (this._forcedDark) {
             Main.sessionMode.colorScheme = this._modeScheme;
             St.Settings.get().notify('color-scheme');

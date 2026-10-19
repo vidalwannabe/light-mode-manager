@@ -6,7 +6,7 @@
     <key name="color-fg" type="s"><default>'#000000'</default><summary>Main text and icons: titles and icons</summary></key>
     <key name="color-panel-fg" type="s"><default>'#000000'</default><summary>Top bar content: text and icons</summary></key>
     <key name="color-fg-muted" type="s"><default>'#77767b'</default><summary>Secondary text</summary></key>
-    <key name="color-card" type="s"><default>'#ebebed'</default><summary>Cards, dash and search background</summary></key>
+    <key name="color-card" type="s"><default>'#ebebed'</default><summary>Cards background</summary></key>
     <key name="color-qs-active-fg" type="s"><default>''</default><summary>Active buttons text and icons (empty: accent text color)</summary></key>
     <key name="color-qs-button" type="s"><default>'#ebebed'</default><summary>Idle Quick Settings buttons</summary></key>
     <key name="color-border" type="s"><default>'#e3e3e3'</default><summary>Menu borders</summary></key>
@@ -15,7 +15,7 @@
     <key name="color-fg-dark" type="s"><default>'#ffffff'</default><summary>Main text and icons: titles and icons</summary></key>
     <key name="color-panel-fg-dark" type="s"><default>'#ffffff'</default><summary>Top bar content: text and icons</summary></key>
     <key name="color-fg-muted-dark" type="s"><default>'#c0bfbc'</default><summary>Secondary text</summary></key>
-    <key name="color-card-dark" type="s"><default>'#343437'</default><summary>Cards, dash and search background</summary></key>
+    <key name="color-card-dark" type="s"><default>'#343437'</default><summary>Cards background</summary></key>
     <key name="color-qs-active-fg-dark" type="s"><default>''</default><summary>Active buttons text and icons (empty: accent text color)</summary></key>
     <key name="color-qs-button-dark" type="s"><default>'#343437'</default><summary>Idle Quick Settings buttons</summary></key>
     <key name="color-border-dark" type="s"><default>'#424247'</default><summary>Menu borders</summary></key>
@@ -30,7 +30,6 @@
     <!-- General tab -->
     <key name="transition-duration" type="i"><range min="0" max="2000"/><default>500</default><summary>Fade duration in ms when switching between light and dark mode</summary></key>
     <key name="fix-qs-menu-height" type="b"><default>true</default><summary>Expanded Quick Settings menus are measured at their real width, so they never cover the buttons below</summary></key>
-    <key name="disable-grid-colors" type="b"><default>false</default><summary>The dash, search and app folders keep the system colors instead of the Cards color</summary></key>
     <key name="override-dtp-colors" type="b"><default>false</default><summary>Dash to Panel uses this extension's panel color and opacity instead of its own</summary></key>
     <key name="panel-opacity" type="b"><default>false</default><summary>The general background opacity also applies to the panel (solid otherwise)</summary></key>
     <key name="card-opacity" type="i"><range min="0" max="100"/><default>100</default><summary>Cards, notifications and inactive Quick Settings buttons opacity in percent, both modes</summary></key>
@@ -40,11 +39,11 @@
     <key name="calendar-background" type="b"><default>false</default><summary>The month calendar gets the cards' color, without a pill behind each day</summary></key>
     <key name="general-opacity" type="i"><range min="0" max="100"/><default>100</default><summary>General background opacity in percent, both modes</summary></key>
     <!-- Automatic switch: apply a general profile at two times of day (minutes since midnight) -->
-    <key name="auto-switch" type="b"><default>false</default><summary>Apply general profiles automatically at set times</summary></key>
+    <key name="auto-switch" type="b"><default>false</default><summary>Switch between light and dark mode at two set times</summary></key>
     <key name="auto-switch-1-time" type="i"><range min="0" max="1439"/><default>420</default><summary>Time of the first switch</summary></key>
-    <key name="auto-switch-1-profile" type="s"><default>'Default'</default><summary>General profile applied at the first switch</summary></key>
+    <key name="auto-switch-1-mode" type="s"><choices><choice value='light'/><choice value='dark'/></choices><default>'light'</default><summary>Mode turned on at the first switch; the second turns on the other</summary></key>
     <key name="auto-switch-2-time" type="i"><range min="0" max="1439"/><default>1140</default><summary>Time of the second switch</summary></key>
-    <key name="auto-switch-2-profile" type="s"><default>'Default'</default><summary>General profile applied at the second switch</summary></key>
+    <key name="auto-switch-applied" type="x"><default>0</default><summary>Unix time of the last automatic switch applied</summary></key>
     <key name="quick-settings-profiles" type="b"><default>false</default><summary>Show a general profile switcher in Quick Settings</summary></key>
     <key name="panel-menu-entry" type="b"><default>false</default><summary>Add "Light Mode Manager" to the Dash to Panel right-click menu</summary></key>
   </schema>
