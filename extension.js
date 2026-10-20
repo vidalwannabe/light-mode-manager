@@ -336,18 +336,37 @@ function panelButtonsCss(color) {
 }
 
 // "Active top bar buttons" (Borders): the top bar buttons pressed or with their menu open get
-// an outline. Their 3px transparent border (GNOME's fake padding) becomes a 1px outline plus
-// 2px of margin, so the fill and the button's size stay the same; the clock outlines its inner
-// .clock. The lock and login screens keep GNOME's look.
-function panelOutlineCss(outline) {
-    const states = (bases, child = '') => bases.flatMap(base => [':active', ':checked'].map(s => `${base}${s}${child}`)).join(', ');
-    const on = sel => rule(sel, 'border-width', '1px') + rule(sel, 'margin', '2px') + rule(sel, 'border-color', outline);
-    const off = sel => rule(sel, 'border-width', '3px') + rule(sel, 'margin', '0') + rule(sel, 'border-color', 'transparent');
+// an outline. GNOME fills them with an inset shadow inside a 3px transparent border (its fake
+// padding), and St draws a visible border and an inset shadow with mismatched corners. So the
+// outline is drawn like the Quick Settings ones, as a 1px outer shadow: the border becomes 3px
+// of margin (the size stays the same) and the fill a background color, the top bar highlight
+// or GNOME's own (its text color at 28%, 32% when hovered). The clock outlines its inner .clock.
+// The lock and login screens keep GNOME's look.
+function panelOutlineCss(outline, highlight, text) {
+    const states = (bases, list, child = '') => bases.flatMap(base => list.map(s => `${base}${s}${child}`)).join(', ');
     const clock = bases => bases.map(base => `${base}.clock-display`);
-    return on(states(PANEL_BUTTONS)) + on(states(clock(PANEL_BUTTONS), ' .clock')) +
-        rule(states(clock(PANEL_BUTTONS)), 'margin', '0') +
-        off(states(PANEL_LOCK_BUTTONS)) + off(states(clock(PANEL_LOCK_BUTTONS), ' .clock')) +
-        rule(states(clock(PANEL_LOCK_BUTTONS)), 'margin', '0');
+    const both = (bases, list) => [states(bases, list), states(clock(bases), list, ' .clock')].join(', ');
+    const fill = (alpha, color) => highlight || `st-transparentize(${color}, ${1 - alpha})`;
+    const ACTIVE = [':active', ':checked'];
+    const HOVER = [':active:hover', ':checked:hover'];
+    const [panel, overview] = [['#panel .panel-button'], ['#panel:overview .panel-button']];
+    let css = rule(both(PANEL_BUTTONS, ACTIVE), 'border-width', '0') + rule(both(PANEL_BUTTONS, ACTIVE), 'margin', '3px') +
+        rule(both(PANEL_BUTTONS, [...ACTIVE, ...HOVER]), 'box-shadow', `0 0 0 1px ${outline}`) +
+        rule(both(panel, ACTIVE), 'background-color', fill(0.28, text)) +
+        rule(both(panel, HOVER), 'background-color', fill(0.32, text)) +
+        rule(both(overview, ACTIVE), 'background-color', fill(0.28, '#fafafb')) +
+        rule(both(overview, HOVER), 'background-color', fill(0.32, '#fafafb'));
+    // The clock button itself has no border, margin or fill of its own.
+    const clockParent = states(clock(PANEL_BUTTONS), ACTIVE);
+    css += rule(clockParent, 'border-width', '0') + rule(clockParent, 'margin', '0') +
+        rule(clockParent, 'box-shadow', 'none') + rule(clockParent, 'background-color', 'transparent');
+    // Lock and login screens: GNOME's border, white fills and no outline.
+    const lock = both(PANEL_LOCK_BUTTONS, ACTIVE);
+    css += rule(lock, 'border-width', '3px') + rule(lock, 'margin', '0') + rule(lock, 'background-color', 'transparent') +
+        rule(lock, 'box-shadow', 'inset 0 0 0 100px rgba(255, 255, 255, 0.28)') +
+        rule(both(PANEL_LOCK_BUTTONS, HOVER), 'box-shadow', 'inset 0 0 0 100px rgba(255, 255, 255, 0.32)');
+    const lockParent = states(clock(PANEL_LOCK_BUTTONS), [...ACTIVE, ...HOVER]);
+    return css + rule(lockParent, 'border-width', '0') + rule(lockParent, 'margin', '0') + rule(lockParent, 'box-shadow', 'none');
 }
 
 // "Overview and top bar highlights" on the overview search entry and the password entry of
@@ -1031,7 +1050,7 @@ export default class ShellColorManagerExtension extends Extension {
     // Disturb switch, and "Active top bar buttons" the pressed or open top bar buttons, with
     // the Menu borders color (GNOME's faint card border when empty).
     // Outlines are drawn as an outer shadow, so nothing changes size.
-    _borderCss(color, dark) {
+    _borderCss(color, dark, highlight) {
         if (this._settings.get_boolean('hide-borders')) {
             return rule(`${BORDER_SEL}, ${QS_MENU}`, 'border-color', 'transparent') +
                 rule(CARD_OUTLINE_SEL, 'border-color', 'transparent !important') + rule(CARD_OUTLINE_SEL, 'box-shadow', 'none');
@@ -1051,7 +1070,7 @@ export default class ShellColorManagerExtension extends Extension {
             qs += rule('.quick-toggle:checked, .quick-toggle-has-menu:checked', 'box-shadow', `0 0 0 1px ${outline}`) +
                 rule('.quick-toggle-has-menu .quick-toggle', 'box-shadow', 'none');
         }
-        return css + qs + notifications + (this._settings.get_boolean('panel-active-borders') ? panelOutlineCss(outline) : '');
+        return css + qs + notifications + (this._settings.get_boolean('panel-active-borders') ? panelOutlineCss(outline, highlight, NATIVE[dark ? 'dark' : 'light'].text) : '');
     }
 
     // The stylesheet of a mode, over GNOME's own style: the rules of every color row and
@@ -1098,7 +1117,7 @@ export default class ShellColorManagerExtension extends Extension {
         });
         if (this._settings.get_boolean('calendar-background'))
             css += calendarCss(card, style, c['qs-active'] || '-st-accent-color');
-        return css + this._highlightCss(c, style) + this._mediaCss(c, style, native) + this._borderCss(c.border, style);
+        return css + this._highlightCss(c, style) + this._mediaCss(c, style, native) + this._borderCss(c.border, style, c.dash);
     }
 
     // Idle Quick Settings buttons, the menus they open and the arrow buttons. An empty color
