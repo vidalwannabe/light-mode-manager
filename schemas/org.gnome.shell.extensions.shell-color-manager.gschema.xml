@@ -18,8 +18,8 @@
     <key name="color-highlight" type="s"><default>''</default><summary>Volume and brightness sliders (empty: GNOME accent color)</summary></key>
     <key name="color-today" type="s"><default>''</default><summary>Today in the calendar background (empty: GNOME accent color)</summary></key>
     <key name="color-today-fg" type="s"><default>'#ffffff'</default><summary>Today in the calendar text (empty: system default)</summary></key>
-    <key name="color-media-fg" type="s"><default>''</default><summary>Media player text and icons (empty: same as the cards)</summary></key>
-    <key name="color-media" type="s"><default>''</default><summary>Media player background (empty: same as the cards)</summary></key>
+    <key name="color-media-fg" type="s"><default>'#ffffff'</default><summary>Media player text and icons (empty: same as the cards)</summary></key>
+    <key name="color-media" type="s"><default>'accent'</default><summary>Media player background (empty: same as the cards; accent: the accent color set in GNOME Settings)</summary></key>
     <key name="color-qs-button" type="s"><default>'#e6e6e7'</default><summary>Idle button background</summary></key>
     <key name="color-qs-menu" type="s"><default>'#e6e6e7'</default><summary>Idle expanded menu (empty: system default)</summary></key>
     <key name="color-qs-active-menu" type="s"><default>'accent'</default><summary>Active expanded menu (empty: same as the idle expanded menu; accent: the accent color set in GNOME Settings)</summary></key>
@@ -41,8 +41,8 @@
     <key name="color-highlight-dark" type="s"><default>''</default><summary>Volume and brightness sliders (empty: GNOME accent color)</summary></key>
     <key name="color-today-dark" type="s"><default>''</default><summary>Today in the calendar background (empty: GNOME accent color)</summary></key>
     <key name="color-today-fg-dark" type="s"><default>'#ffffff'</default><summary>Today in the calendar text (empty: system default)</summary></key>
-    <key name="color-media-fg-dark" type="s"><default>''</default><summary>Media player text and icons (empty: same as the cards)</summary></key>
-    <key name="color-media-dark" type="s"><default>''</default><summary>Media player background (empty: same as the cards)</summary></key>
+    <key name="color-media-fg-dark" type="s"><default>'#ffffff'</default><summary>Media player text and icons (empty: same as the cards)</summary></key>
+    <key name="color-media-dark" type="s"><default>'accent'</default><summary>Media player background (empty: same as the cards; accent: the accent color set in GNOME Settings)</summary></key>
     <key name="color-qs-button-dark" type="s"><default>'#343437'</default><summary>Idle button background</summary></key>
     <key name="color-qs-menu-dark" type="s"><default>'#343437'</default><summary>Idle expanded menu (empty: system default)</summary></key>
     <key name="color-qs-active-menu-dark" type="s"><default>'accent'</default><summary>Active expanded menu (empty: same as the idle expanded menu; accent: the accent color set in GNOME Settings)</summary></key>

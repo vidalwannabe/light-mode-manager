@@ -49,8 +49,8 @@ Each tab has twenty-two colors in four groups:
 | Card background | Notifications, banners, the Clear button and calendar widgets: Today, World Clocks and Weather. Search results and app folders keep the system background |
 | Today in the calendar background | The circle behind the current day. Empty (default): the accent color |
 | Today in the calendar text | The number of the current day. Default: white. Empty: system default |
-| Media player text and icons | The card of the music or video playing: title, artist, app name and the playback buttons. Empty (default): same as the cards |
-| Media player background | The card of the music or video playing. Its playback buttons light up from this color on hover and click, like the other buttons. Empty (default): same as the cards |
+| Media player text and icons | The card of the music or video playing: title, artist, app name and the playback buttons. Default: white. Empty: same as the cards |
+| Media player background | The card of the music or video playing. Its playback buttons light up from this color on hover and click, like the other buttons. Default: the accent color set in GNOME Settings › Appearance. Empty: same as the cards |
 
 Color sets saved before a color existed take it from the color it came from (top bar and overview from the menu background, today from the sliders, idle button text from the card text, the idle expanded menu from the idle button background), so they keep their look.
 

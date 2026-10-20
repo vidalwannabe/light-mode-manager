@@ -990,8 +990,10 @@ export default class ShellColorManagerExtension extends Extension {
     // from the player's background (the cards' when empty) by the same amounts as buttons.
     // `card`: the "Card background" in use, empty for GNOME's own.
     _mediaCss(dark, card) {
-        const [fg, bg] = this._values(dark ? ['color-media-fg-dark', 'color-media-dark']
+        const [fg, value] = this._values(dark ? ['color-media-fg-dark', 'color-media-dark']
             : ['color-media-fg', 'color-media']);
+        // "accent" (the default background) is the accent color set in GNOME Settings.
+        const bg = value === 'accent' ? '-st-accent-color' : value;
         const opacity = this._settings.get_int('card-opacity');
         let css = '';
         if (bg)
