@@ -107,6 +107,8 @@ const COLOR_RE = /^(#[0-9a-f]{3}|#[0-9a-f]{6}|rgba?\([\d\s.,]+\)|[a-z]+)$/i;
 
 // The menus' border: Quick Settings, the calendar and notifications, panel and context menus.
 const BORDER_SEL = '.popup-menu-content, .candidate-popup-content';
+// The cards GNOME outlines in light mode, and the calendar with "Calendar as card".
+const CARD_OUTLINE_SEL = '.message, .events-button, .world-clocks-button, .weather-button, .datemenu-today-button, .calendar';
 
 // GNOME draws a shadow under the whole menu, so a translucent menu showed it through
 // and looked darker than the panel. Below 100% opacity these shadows are removed.
@@ -202,7 +204,11 @@ const CALENDAR_TODAY = '.calendar .calendar-day.calendar-today';
 function calendarCss(card, dark) {
     const adjust = shade(dark);
     const flat = (...states) => inStates(CALENDAR_FLAT, states);
+    // The cards' own outline in GNOME's style (light: a faint border and shadow; dark: none).
+    // GNOME removes the calendar's with !important, hence !important here too.
     return `.calendar {\n  background-color: ${card};\n  padding: 6px;\n}\n` +
+        rule('.calendar', 'border-color', `${dark ? 'transparent' : 'rgba(0, 0, 0, 0.09)'} !important`) +
+        rule('.calendar', 'box-shadow', dark ? 'none' : '0 1px 2px 0 rgba(0, 0, 0, 0.03)') +
         // The month name and weekday headings are not reactive, so St marks them
         // :insensitive, which GNOME paints with the menu color: transparent too.
         rule(flat('', ':insensitive'), 'background-color', 'transparent') +
@@ -1045,9 +1051,13 @@ export default class ShellColorManagerExtension extends Extension {
 
     // The menu border rule for the given "Menu borders" color (none for the system's).
     // Hidden borders stay 1px wide but transparent, so menus keep their size.
+    // "Disable menu borders" also hides the outline (border and faint shadow) of the cards.
     _borderCss(color) {
-        if (this._settings.get_boolean('hide-borders'))
-            return rule(BORDER_SEL, 'border-color', 'transparent');
+        if (this._settings.get_boolean('hide-borders')) {
+            return rule(BORDER_SEL, 'border-color', 'transparent') +
+                rule(CARD_OUTLINE_SEL, 'border-color', 'transparent !important') +
+                rule(CARD_OUTLINE_SEL, 'box-shadow', 'none');
+        }
         return color ? rule(BORDER_SEL, 'border-color', color) : '';
     }
 

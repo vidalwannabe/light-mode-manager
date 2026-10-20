@@ -905,7 +905,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             switchRow(effects, 'panel-opacity', 'Enable panel opacity',
                 'Applies shell opacity to the top bar; solid when off');
             switchRow(effects, 'hide-borders', 'Disable menu borders',
-                'Hides the outline of Quick Settings, the calendar and other menus');
+                'Hides the outline of menus (Quick Settings, calendar…) and of the cards');
             switchRow(effects, 'no-qs-dimming', 'Disable Quick Settings dimming',
                 'Keeps Quick Settings bright while a toggle menu is open');
             switchRow(effects, 'match-arrow-buttons', 'Match arrows to toggles',
