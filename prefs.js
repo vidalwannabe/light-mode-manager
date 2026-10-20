@@ -26,40 +26,26 @@ const {SUGGESTED, DESTRUCTIVE} = Adw.ResponseAppearance;
 // its code. Transparency is set only in the Appearance tab.
 const ACCENT = 'Accent color set in\nGNOME Settings › Appearance';
 const COLOR_GROUPS = [
-    ['Top bar and overview', [
-        ['panel-fg', 'Top bar text and icons', 'Clock, indicators, overview button and Dash to Panel app grid icon'],
-        ['panel', 'Top bar background', 'Panel color'],
-        ['entry-fg', 'Search and password text', 'Text typed in the overview search and lock screen password fields'],
-        ['overview-fg', 'Overview text', 'Search results, search status and window captions in the overview'],
-        ['grid-fg', 'App grid text and icons', 'App and folder names, folder titles, edit button and page arrows'],
-        ['overview', 'Overview and dialogs background', 'Overview, Power Off and password dialogs; always solid'],
+    ['Shell', [
+        ['panel-fg', 'Shell text and icons', 'Top bar, menus, OSD, switchers, app grid, overview, search and password'],
+        ['general', 'Shell background', 'Top bar, menus, OSD, window switcher, overview and dialogs'],
         ['dash', 'Overview and top bar highlights',
             'Dash, folders, app hover, Alt+Tab selection, search, password field, top bar buttons'],
     ]],
-    ['Menus', [
-        ['menu-fg', 'Menu text', 'Menu items, OSD and window switcher'],
-        ['general', 'Menu background', 'Quick Settings, calendar, right-click menus, OSD and window switcher'],
-        ['border', 'Menu borders', 'Outline of Quick Settings, the calendar and other menus'],
-    ]],
     ['Quick Settings', [
-        ['qs-fg', 'Idle button text and icons', 'Toggles that are off (titles and subtitles), round buttons, slider handles'],
-        ['qs-button', 'Idle button background', 'Toggles that are off, round buttons, slider buttons and tracks, Background Apps'],
-        ['qs-menu-fg', 'Idle expanded menu text and icons', 'Every text and icon of the menu a toggle that is off opens'],
-        ['qs-menu', 'Idle expanded menu background', 'Menu a toggle that is off opens and the circle of its icon'],
-        ['qs-active-fg', 'Active button text and icons', 'Toggles that are on, their arrows and the text and icons of their menus',
+        ['qs-fg', 'Idle button text and icons', 'Toggles that are off, their menus, round buttons and slider handles'],
+        ['qs-button', 'Idle button background', 'Toggles that are off, their menus, round and slider buttons, slider tracks'],
+        ['qs-active-fg', 'Active button text and icons', 'Toggles that are on and their menus, today in the calendar, media player',
             'Accent text color', '#ffffff'],
-        ['qs-active', 'Active button background', 'Quick Settings toggles that are on and their arrows', ACCENT,
+        ['qs-active', 'Active button background', 'Toggles that are on, their arrows and menus, today in the calendar', ACCENT,
             accentColor],
-        ['qs-active-menu', 'Active expanded menu background', 'Menu a toggle that is on opens and the circle of its icon'],
-        ['highlight', 'Volume and brightness sliders', 'Filled part of the volume, brightness and other sliders', ACCENT, accentColor],
+        ['highlight', 'Volume and brightness sliders', 'Filled part of the sliders and of the volume and brightness popup',
+            ACCENT, accentColor],
     ]],
     ['Notification panel', [
         ['fg', 'Card titles and icons', 'Notifications, calendar, Today, World Clocks and Weather'],
         ['fg-muted', 'Card subtitles', 'Text under titles: notification body, times, locations and weekdays'],
         ['card', 'Card background', 'Notifications, banners, Clear button, widgets and Calendar as card'],
-        ['today', 'Today in the calendar background', 'Circle behind the current day', ACCENT, accentColor],
-        ['today-fg', 'Today in the calendar text', 'Number of the current day'],
-        ['media-fg', 'Media player text and icons', 'Title, artist, app name and playback buttons of the music playing'],
         ['media', 'Media player background', 'Card of the music playing; its buttons light up from it on hover'],
     ]],
 ];

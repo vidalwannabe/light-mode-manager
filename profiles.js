@@ -2,18 +2,13 @@
 // Only uses Gio.Settings, so it runs in both the shell and the preferences process.
 
 // The color rows of the Light mode and Dark mode tabs.
-export const ROW_NAMES = ['panel', 'panel-fg', 'overview', 'grid-fg', 'dash', 'general', 'border', 'fg', 'fg-muted', 'qs-button', 'card',
-    'qs-active-fg', 'qs-active', 'highlight', 'today', 'today-fg', 'qs-fg', 'qs-menu', 'qs-active-menu', 'media-fg', 'media',
-    'qs-menu-fg', 'entry-fg', 'menu-fg', 'overview-fg'];
+export const ROW_NAMES = ['panel-fg', 'general', 'dash', 'qs-fg', 'qs-button', 'qs-active-fg', 'qs-active', 'highlight',
+    'fg', 'fg-muted', 'card', 'media'];
 
 // Rows added later: a profile saved before them takes the value of the row they came
-// from, so it keeps its look: the top bar text used to follow "Text and icons", the top bar
-// and overview backgrounds the general background, and today in the calendar the sliders.
-// The dash takes the cards background, as in the Default profile.
-const LEGACY_ROWS = {'panel-fg': 'fg', 'dash': 'card', 'panel': 'general', 'overview': 'general', 'today': 'highlight',
-    'qs-fg': 'fg', 'qs-menu': 'qs-button',
-    'qs-menu-fg': 'qs-fg', 'entry-fg': 'fg', 'menu-fg': 'fg',
-    'overview-fg': 'grid-fg'};
+// from, so it keeps its look: the shell and idle button text used to follow the cards' text,
+// and the dash the cards' background.
+const LEGACY_ROWS = {'panel-fg': 'fg', 'dash': 'card', 'qs-fg': 'fg'};
 const rowColor = (colors, n) => colors[n] ?? colors[LEGACY_ROWS[n]];
 
 // The schema default of every row of a mode ('' for light, '-dark' for dark).
@@ -138,8 +133,8 @@ function generalProfiles(settings, light, dark) {
 
 // All profile models. Both tabs offer the same built-ins, the tab's own default first:
 // "Light Default" and "Dark Default" (each mode's schema defaults), "GNOME" (every row on
-// system default) and "Oled" (Dark Default with pure black top bar, overview, menus, menu
-// borders, idle buttons, idle expanded menus and cards). So a dark color set can be used,
+// system default) and "Oled" (Dark Default with a pure black shell background, idle
+// buttons and cards). So a dark color set can be used,
 // or started from, in light mode and the other way around.
 export function createProfiles(settings) {
     const lightDefault = {name: 'Light Default', colors: defaults(settings, '')};
@@ -147,8 +142,7 @@ export function createProfiles(settings) {
     const darkDefault = {name: 'Dark Default', colors: darkColors};
     const gnome = {name: 'GNOME', colors: Object.fromEntries(ROW_NAMES.map(n => [n, '']))};
     const oled = {name: 'Oled', colors: {
-        ...darkColors, panel: '#000000', overview: '#000000', general: '#000000', border: '#000000',
-        'qs-button': '#000000', 'qs-menu': '#000000', card: '#000000',
+        ...darkColors, general: '#000000', 'qs-button': '#000000', card: '#000000',
     }};
     const light = modeProfiles(settings, '', [lightDefault, darkDefault, gnome, oled]);
     const dark = modeProfiles(settings, '-dark', [darkDefault, lightDefault, gnome, oled]);

@@ -189,7 +189,7 @@ const CALENDAR_FLAT = [
     '.calendar-month-header .calendar-month-label', '.calendar-month-header .pager-button',
 ].map(sel => `.calendar ${sel}`);
 const CALENDAR_TODAY = '.calendar .calendar-day.calendar-today';
-function calendarCss(card, dark) {
+function calendarCss(card, dark, today) {
     const adjust = shade(dark);
     const flat = (...states) => inStates(CALENDAR_FLAT, states);
     // The cards' own outline in GNOME's style (light: a faint border and shadow; dark: none).
@@ -204,7 +204,7 @@ function calendarCss(card, dark) {
         rule(flat(':active', ':selected'), 'background-color', `${adjust}(${card}, 10%)`) +
         rule(flat(':active:hover', ':selected:hover'), 'background-color', `${adjust}(${card}, 14%)`) +
         rule(flat(':focus'), 'background-color', `st-mix(${focusTint(dark)}, ${card}, 5%)`) +
-        buttonCss(CALENDAR_TODAY, '-st-accent-color', dark);
+        buttonCss(CALENDAR_TODAY, today, dark);
 }
 
 // GNOME's own delay before fading out the snapshot of the old screen.
@@ -405,8 +405,8 @@ const PROFILE_ICON = 'preferences-desktop-appearance-symbolic';
 // Color changes (a profile applied, a color or option edited) fade like a mode switch when
 // they change something on screen: the top bar is always visible, the overview and the menus
 // (Quick Settings, calendar...) only while open. Keys without "-dark".
-const TOP_BAR_KEYS = ['color-panel', 'color-panel-fg'];
-const OVERVIEW_KEYS = ['color-overview', 'color-grid-fg', 'color-dash'];
+const TOP_BAR_KEYS = ['color-general', 'color-panel-fg'];
+const OVERVIEW_KEYS = ['color-dash'];
 const AUTO_KEYS = ['auto-switch', 'auto-switch-1-time', 'auto-switch-1-mode', 'auto-switch-2-time'];
 // How often the automatic switch checks the clock. A check is a few comparisons; checking
 // often (instead of one long timer) also catches up right after a suspend.
@@ -948,21 +948,21 @@ export default class ShellColorManagerExtension extends Extension {
     }
 
     // ---------- Stylesheet ----------
-    // "Volume and brightness sliders" (the filled part of every slider) and "Today in the
-    // calendar" background (in all its states) and text. `c`: the mode's colors (_colors).
+    // "Volume and brightness sliders": the filled part of every slider and of the volume and
+    // brightness popup (OSD). "Active button background" and "Active button text and icons"
+    // also paint today in the calendar (in all its states), after textRolesCss.
     _highlightCss(c, dark) {
-        // The day number comes after textRolesCss, which sets it to the accent text color.
-        return (c.highlight ? rule('.slider', '-barlevel-active-background-color', c.highlight) : '') +
-            (c.today ? buttonCss(CALENDAR_TODAY, c.today, dark) : '') +
-            (c['today-fg'] ? rule(CALENDAR_TODAY, 'color', c['today-fg']) : '');
+        return (c.highlight ? rule('.slider, .osd-window .level', '-barlevel-active-background-color', c.highlight) : '') +
+            (c['qs-active'] ? buttonCss(CALENDAR_TODAY, c['qs-active'], dark) : '') +
+            (c['qs-active-fg'] ? rule(CALENDAR_TODAY, 'color', c['qs-active-fg']) : '');
     }
 
-    // "Media player text and icons" and "Media player background": the card of the music or
-    // video playing (a notification with the media-message class) and its playback buttons,
-    // which light up from the background on hover and click by the same amounts as buttons.
-    // Empty, they keep GNOME's own colors, also when the cards' colors are set.
+    // "Media player background": the card of the music or video playing (a notification with
+    // the media-message class) and its playback buttons, which light up from it on hover and
+    // click by the same amounts as buttons. Its text and icons take "Active button text and
+    // icons". Empty, they keep GNOME's own colors, also when the cards' colors are set.
     _mediaCss(c, dark, native) {
-        const {'media-fg': fg, media: bg} = c;
+        const {'qs-active-fg': fg, media: bg} = c;
         let css = '';
         if (bg) {
             // The pointer over a button is also over the card, which is lit 4% (buttonCss): the
@@ -981,8 +981,8 @@ export default class ShellColorManagerExtension extends Extension {
         return css;
     }
 
-    // "Top bar background"; nothing is written on system default, so the top bar stays as GNOME
-    // or other extensions draw it.
+    // The top bar's part of "Shell background"; nothing is written on system default, so the
+    // top bar stays as GNOME or other extensions draw it.
     _panelCss(panel) {
         if (!panel)
             return '';
@@ -995,16 +995,13 @@ export default class ShellColorManagerExtension extends Extension {
             rule(PANEL_LOCK_BAR_SEL, 'background-color', 'transparent');
     }
 
-    // The menu border rule for the given "Menu borders" color (none for the system's).
-    // Hidden borders stay 1px wide but transparent, so menus keep their size.
-    // "Disable menu borders" also hides the outline (border and faint shadow) of the cards.
-    _borderCss(color) {
-        if (this._settings.get_boolean('hide-borders')) {
-            return rule(BORDER_SEL, 'border-color', 'transparent') +
-                rule(CARD_OUTLINE_SEL, 'border-color', 'transparent !important') +
-                rule(CARD_OUTLINE_SEL, 'box-shadow', 'none');
-        }
-        return color ? rule(BORDER_SEL, 'border-color', color) : '';
+    // "Disable menu borders": the menus' border (1px wide but transparent, so menus keep their
+    // size) and the outline (border and faint shadow) of the cards. GNOME's own otherwise.
+    _borderCss() {
+        if (!this._settings.get_boolean('hide-borders'))
+            return '';
+        return rule(BORDER_SEL, 'border-color', 'transparent') +
+            rule(CARD_OUTLINE_SEL, 'border-color', 'transparent !important') + rule(CARD_OUTLINE_SEL, 'box-shadow', 'none');
     }
 
     // The stylesheet of a mode: in light mode the light template (GNOME's own light style),
@@ -1017,29 +1014,22 @@ export default class ShellColorManagerExtension extends Extension {
         const native = NATIVE[style ? 'dark' : 'light'];
         // Expanded Quick Settings menus 1px narrower on each side.
         let css = rule(QS_MENU, 'margin-left', '19px') + rule(QS_MENU, 'margin-right', '19px');
+        // "Shell background": menus, OSD, switchers, the top bar, the overview and dialogs.
         if (c.general)
-            css += rule(GENERAL_SEL, 'background-color', c.general);
-        if (c['menu-fg'])
-            css += rule(MENU_TEXT, 'color', c['menu-fg']);
-        // Top bar, overview (always opaque), app grid, dash, search and password fields.
-        css += this._panelCss(c.panel);
-        if (c['panel-fg'])
-            css += panelTextCss(c['panel-fg']);
-        if (c.overview)
-            css += rule(OPAQUE_SEL, 'background-color', c.overview);
-        if (c['grid-fg'])
-            css += rule(GRID_TEXT, 'color', c['grid-fg']);
-        if (c['overview-fg']) {
-            css += rule(OVERVIEW_TEXT, 'color', c['overview-fg']) +
-                rule(OVERVIEW_DIM_TEXT, 'color', `st-transparentize(${c['overview-fg']}, 0.3)`);
+            css += rule(`${GENERAL_SEL}, ${OPAQUE_SEL}`, 'background-color', c.general) + this._panelCss(c.general);
+        // "Shell text and icons": top bar, menus, OSD, switchers, app grid, overview, and the
+        // search and password fields (their hint dimmed).
+        const text = c['panel-fg'];
+        if (text) {
+            css += panelTextCss(text) + rule(MENU_TEXT, 'color', text) + rule(GRID_TEXT, 'color', text) +
+                rule(OVERVIEW_TEXT, 'color', text) + rule(OVERVIEW_DIM_TEXT, 'color', `st-transparentize(${text}, 0.3)`) +
+                entryTextCss(text);
         }
         if (c.dash) {
             const dash = c.dash;
             css += rule('#dash .dash-background', 'background-color', dash) +
                 entriesCss(dash, style) + panelButtonsCss(dash) + overviewBoxesCss(dash, style);
         }
-        if (c['entry-fg'])
-            css += entryTextCss(c['entry-fg']);
         // Card text, Quick Settings text and, after the subtitles so a toggle that is on keeps
         // its own, "Active button text and icons".
         css += textRolesCss(c.fg, c['fg-muted']) + quickSettingsTextCss(c['qs-fg']);
@@ -1053,14 +1043,17 @@ export default class ShellColorManagerExtension extends Extension {
             toggle: toggleOff(style), arrow: arrowOff(style), arrowChecked: arrowChecked(style), menu: toggleOff(style),
         });
         if (this._settings.get_boolean('calendar-background'))
-            css += calendarCss(card, style);
-        return css + this._highlightCss(c, style) + this._mediaCss(c, style, native) + this._borderCss(c.border);
+            css += calendarCss(card, style, c['qs-active'] || '-st-accent-color');
+        return css + this._highlightCss(c, style) + this._mediaCss(c, style, native) + this._borderCss();
     }
 
     // Idle Quick Settings buttons, the menus they open and the arrow buttons. An empty color
     // uses `native`: GNOME's own toggle, arrow (off, checked) and open menu colors.
     _quickSettingsCss(dark, c, native) {
-        const {'qs-button': color, 'qs-active': active, 'qs-menu': menu, 'qs-active-menu': activeMenu} = c;
+        // "Idle button background" and "Active button background" also paint the menus the
+        // toggles open, and "Idle button text and icons" their text.
+        const {'qs-button': color, 'qs-active': active} = c;
+        const [menu, activeMenu, menuText] = [color, active, c['qs-fg']];
         // "Active button background": toggles that are on and their arrows. GNOME's own: the
         // accent color.
         const accent = active || '-st-accent-color';
@@ -1085,16 +1078,13 @@ export default class ShellColorManagerExtension extends Extension {
             css = (match ? buttonCss(ARROW_SEL, native.toggle, dark) : '') +
                 (active ? buttonCss(QS_CHECKED, accent, dark) : '');
         }
-        // "Idle expanded menu background" (also its outline and the circle behind its heading
-        // icon; the active menu's likewise) and "Idle
-        // expanded menu text and icons".
-        const menuText = c['qs-menu-fg'];
+        // Idle menus: background, outline, the circle behind the heading icon, and text; the
+        // active menus' likewise.
         let menus = (menu ? menuCss(menu, dark) + rule(QS_MENU_ICON, 'background-color', menu) +
                 rule(QS_MENU, 'border-color', menu) : '') +
             (menuText ? menuTextCss(menuText) : '');
         if (activeMenu) {
-            // "Active expanded menu background", also the circle behind its heading icon; its
-            // heading and items take "Active button text and icons".
+            // Their heading and items take "Active button text and icons".
             menus += menuCss(activeMenu, dark, QS_ACTIVE_MENU) +
                 rule(QS_MENU_ICON_ON, 'background-color', activeMenu) +
                 rule(QS_ACTIVE_MENU, 'border-color', activeMenu) +

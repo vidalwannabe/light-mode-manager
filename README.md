@@ -8,54 +8,36 @@ It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 app
 
 ### Light mode and Dark mode tabs
 
-Each tab has twenty-five colors in four groups:
+Each tab has twelve colors in three groups. An empty color is the system default: GNOME's own color in that mode.
 
-**Top bar and overview**
-
-| Color | What it paints |
-| --- | --- |
-| Top bar text and icons | Top bar text and icons: clock, indicators, the overview button and Dash to Panel's app grid button |
-| Top bar background | The panel |
-| Search and password text | The text typed in the overview search field and the lock and login screen password field; their hint text, dimmed. Empty: system default |
-| Overview text | Search results (titles, and descriptions dimmed), the search status and window captions in the overview. Empty: system default |
-| App grid text and icons | App and folder names, folder titles, the folder edit button and page arrows in the app grid. Default: black in light mode, white in dark mode |
-| Overview and dialogs background | The overview and dialogs (Power Off, passwords, "not responding"…), always solid |
-| Overview and top bar highlights | The overview dock (dash), app folders and the dialog a folder opens (its name field included), the highlight of a hovered or selected app, search bar, search result sections, the highlight of a selected search result, the selected app of the Alt+Tab switcher, the password field of the lock and login screens (its text in the titles color) and top bar buttons that are hovered or have their menu open (not on the lock screen). Default: the cards background |
-
-**Menus**
+**Shell**
 
 | Color | What it paints |
 | --- | --- |
-| Menu text | Menu items (right-click and panel menus), OSD and window switcher. Empty: system default |
-| Menu background | Quick Settings, the calendar, right-click menus, OSD and window switcher |
-| Menu borders | Outline of Quick Settings, the calendar and other menus |
+| Shell text and icons | Top bar text and icons (clock, indicators, overview button, Dash to Panel's app grid button), menu items, OSD and window switcher text, app and folder names, the folder edit button, page arrows, overview search results and window captions, and the text typed in the search and password fields (their hint dimmed). The lock and login screens keep their white top bar text |
+| Shell background | The top bar, menus (Quick Settings, calendar, right-click menus), OSD, window switcher, the overview and dialogs (Power Off, passwords…). The lock and login screens keep their transparent top bar |
+| Overview and top bar highlights | The dash, app folders and the dialog a folder opens (its name field included), the highlight of a hovered or selected app, the search bar and search result sections, the selected app of the Alt+Tab switcher, the password field of the lock and login screens, and hovered or open top bar buttons |
 
 **Quick Settings**
 
 | Color | What it paints |
 | --- | --- |
-| Idle button text and icons | Quick Settings toggles that are off (titles and subtitles) and their arrows, the round buttons at the top, the slider buttons, the sliders' handles and the heading of the menus toggles open |
-| Idle button background | Quick Settings toggles that are off, their arrows, the round buttons at the top, the slider buttons (volume, "›", brightness), the sliders' track (the part not filled), the Background Apps toggle and the close buttons of its apps |
-| Idle expanded menu text and icons | Every text and icon of the menu a toggle opens (Wi-Fi, Bluetooth, Power Off…) while the toggle is off: heading, items and device subtitles. Empty: system default |
-| Idle expanded menu background | The menu a toggle opens while the toggle is off, its outline and the circle behind its heading icon. Empty: system default |
-| Active button text and icons | Quick Settings toggles that are on (Wi-Fi, Dark Style…), their arrows and subtitles, and the heading and items of their menus when Active expanded menu background has a color. Empty: the accent's text color, subtitles included |
-| Active button background | Quick Settings toggles that are on and their arrows. Empty (default): the accent color set in GNOME Settings › Appearance |
-| Active expanded menu background | The menu a toggle opens while the toggle is on, and the circle behind its heading icon; its heading, items and icons then use Active button text and icons, and items light up from this color on hover. Default: the accent color set in GNOME Settings › Appearance. Empty: system default |
-| Volume and brightness sliders | The filled part of the volume, brightness and other sliders. Empty (default): the accent color set in GNOME Settings › Appearance |
+| Idle button text and icons | Toggles that are off (titles, subtitles and arrows), the menus they open (heading, items and icons), the round buttons at the top, the slider buttons and the sliders' handles |
+| Idle button background | Toggles that are off and their arrows, the menus they open (with their outline and the circle behind the heading icon), the round buttons at the top, the slider buttons, the sliders' track, the Background Apps toggle and the close buttons of its apps |
+| Active button text and icons | Toggles that are on (text, subtitles and arrows) and the menus they open, today in the calendar, and the media player's text and icons. Empty: the accent's text color |
+| Active button background | Toggles that are on, their arrows and the menus they open (with their outline and the circle behind the heading icon), and the circle behind today in the calendar. Default: the accent color set in GNOME Settings › Appearance |
+| Volume and brightness sliders | The filled part of the volume, brightness and other sliders, and of the volume and brightness popup (OSD). Empty (default): the accent color |
 
 **Notification panel**
 
 | Color | What it paints |
 | --- | --- |
-| Card titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar and the cards' buttons (not the app grid, see App grid text and icons) |
-| Card subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday |
-| Card background | Notifications, banners, the Clear button and calendar widgets: Today, World Clocks and Weather. Search results and app folders keep the system background |
-| Today in the calendar background | The circle behind the current day. Empty (default): the accent color |
-| Today in the calendar text | The number of the current day. Default: white. Empty: system default |
-| Media player text and icons | The card of the music or video playing: title, artist, app name and the playback buttons. Default: white. Empty: system default |
-| Media player background | The card of the music or video playing. Its playback buttons light up from this color on hover and click, like the other buttons. Default: the accent color set in GNOME Settings › Appearance. Empty: system default |
+| Card titles and icons | Titles and icons of notifications (app name and title), Today, World Clocks, Weather, the calendar and the cards' buttons |
+| Card subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday, week numbers |
+| Card background | Notifications, banners, the Clear button and the cards below the calendar (Today, World Clocks, Weather) |
+| Media player background | The card of the music or video playing; its playback buttons light up from it on hover and click. Default: the accent color set in GNOME Settings › Appearance |
 
-Color sets saved before a color existed take it from the color it came from (top bar and overview from the menu background, today from the sliders, idle button text and search and password text from the card text, the idle expanded menu from the idle button background and its text from the idle button text), so they keep their look.
+Color sets saved before a color existed take it from the color it came from (shell and idle button text from the card text, the dash from the card background), so they keep their look.
 
 Hover, focus and active states follow these colors automatically. Every color has a button to set it to system default. Ctrl+Z undoes the last color change in the open tab and Ctrl+Shift+Z redoes it; the Light mode and Dark mode tabs each keep their own history, and applying a color set is undone in one step. Hovering over a color shows its code, and right-clicking it copies the code.
 
@@ -64,7 +46,7 @@ Hover, focus and active states follow these colors automatically. Every color ha
 Each tab has a color set selector to apply a set of colors in one click. Built-in color sets come first, then your own in alphabetical order. It shows the color set the current colors match, in real time (editing a color back to its saved value shows the color set again), or **Unsaved** when they match none.
 
 - **Built-in color sets**, which cannot be deleted or overwritten:
-  - Both tabs offer the same four, the tab's own default first: **Light Default** and **Dark Default** (the default colors of each mode), **GNOME** and **Oled** (Dark Default with pure black top bar, overview, menus, menu borders, idle buttons, idle expanded menus and cards). A dark color set can be applied in light mode too (or the other way around), for example to keep two slightly different dark looks one mode switch apart.
+  - Both tabs offer the same four, the tab's own default first: **Light Default** and **Dark Default** (the default colors of each mode), **GNOME** and **Oled** (Dark Default with a pure black shell background, idle buttons and cards). A dark color set can be applied in light mode too (or the other way around), for example to keep two slightly different dark looks one mode switch apart.
   - **GNOME** keeps the vanilla GNOME look, the same in light and dark mode.
 - **Your own color sets**: the save button saves the current colors as a new color set, or replaces the colors of one of yours with **Update existing color set**. Your color sets can be deleted from the selector. In the selector, each of your own color sets has three buttons: **Send to Dark mode** (or Light mode), which copies it with the same colors to the other tab's list (numbered if the name is in use there); **Rename**, which also updates the general color sets that use it; and **Delete**.
 

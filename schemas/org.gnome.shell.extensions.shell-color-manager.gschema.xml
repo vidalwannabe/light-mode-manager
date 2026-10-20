@@ -2,57 +2,31 @@
 <schemalist>
   <schema id="org.gnome.shell.extensions.shell-color-manager" path="/org/gnome/shell/extensions/shell-color-manager/">
     <!-- Light mode (empty = system default) -->
-    <key name="color-panel" type="s"><default>'#fafafb'</default><summary>Top bar background</summary></key>
-    <key name="color-entry-fg" type="s"><default>'#000000'</default><summary>Search and password text (empty: system default)</summary></key>
-    <key name="color-overview-fg" type="s"><default>'#000000'</default><summary>Overview text (empty: system default)</summary></key>
-    <key name="color-menu-fg" type="s"><default>'#000000'</default><summary>Menu text (empty: system default)</summary></key>
-    <key name="color-overview" type="s"><default>'#fafafb'</default><summary>Overview and dialogs background</summary></key>
-    <key name="color-general" type="s"><default>'#fafafb'</default><summary>Menu background</summary></key>
+    <key name="color-general" type="s"><default>'#fafafb'</default><summary>Shell background</summary></key>
     <key name="color-fg" type="s"><default>'#000000'</default><summary>Card titles and icons</summary></key>
     <key name="color-qs-fg" type="s"><default>'#000000'</default><summary>Idle button text and icons</summary></key>
-    <key name="color-panel-fg" type="s"><default>'#000000'</default><summary>Top bar text and icons</summary></key>
+    <key name="color-panel-fg" type="s"><default>'#000000'</default><summary>Shell text and icons</summary></key>
     <key name="color-fg-muted" type="s"><default>'#77767b'</default><summary>Card subtitles</summary></key>
     <key name="color-card" type="s"><default>'#e6e6e7'</default><summary>Card background</summary></key>
-    <key name="color-grid-fg" type="s"><default>'#000000'</default><summary>App grid text and icons</summary></key>
     <key name="color-dash" type="s"><default>'#e6e6e7'</default><summary>Overview and top bar highlights</summary></key>
     <key name="color-qs-active-fg" type="s"><default>''</default><summary>Active button text and icons (empty: accent text color)</summary></key>
-    <key name="color-qs-active" type="s"><default>''</default><summary>Active button background (empty: GNOME accent color)</summary></key>
+    <key name="color-qs-active" type="s"><default>'accent'</default><summary>Active button background: toggles that are on and the menus they open (accent: the accent color set in GNOME Settings)</summary></key>
     <key name="color-highlight" type="s"><default>''</default><summary>Volume and brightness sliders (empty: GNOME accent color)</summary></key>
-    <key name="color-today" type="s"><default>''</default><summary>Today in the calendar background (empty: GNOME accent color)</summary></key>
-    <key name="color-today-fg" type="s"><default>'#ffffff'</default><summary>Today in the calendar text (empty: system default)</summary></key>
-    <key name="color-media-fg" type="s"><default>'#ffffff'</default><summary>Media player text and icons (empty: system default)</summary></key>
     <key name="color-media" type="s"><default>'accent'</default><summary>Media player background (empty: system default; accent: the accent color set in GNOME Settings)</summary></key>
     <key name="color-qs-button" type="s"><default>'#e6e6e7'</default><summary>Idle button background</summary></key>
-    <key name="color-qs-menu-fg" type="s"><default>'#000000'</default><summary>Idle expanded menu text and icons (empty: system default)</summary></key>
-    <key name="color-qs-menu" type="s"><default>'#e6e6e7'</default><summary>Idle expanded menu background (empty: system default)</summary></key>
-    <key name="color-qs-active-menu" type="s"><default>'accent'</default><summary>Active expanded menu background (empty: system default; accent: the accent color set in GNOME Settings)</summary></key>
-    <key name="color-border" type="s"><default>''</default><summary>Menu borders</summary></key>
     <!-- Dark mode (empty = system default) -->
-    <key name="color-panel-dark" type="s"><default>'#222226'</default><summary>Top bar background</summary></key>
-    <key name="color-entry-fg-dark" type="s"><default>'#ffffff'</default><summary>Search and password text (empty: system default)</summary></key>
-    <key name="color-overview-fg-dark" type="s"><default>'#ffffff'</default><summary>Overview text (empty: system default)</summary></key>
-    <key name="color-menu-fg-dark" type="s"><default>'#ffffff'</default><summary>Menu text (empty: system default)</summary></key>
-    <key name="color-overview-dark" type="s"><default>'#222226'</default><summary>Overview and dialogs background</summary></key>
-    <key name="color-general-dark" type="s"><default>'#222226'</default><summary>Menu background</summary></key>
+    <key name="color-general-dark" type="s"><default>'#222226'</default><summary>Shell background</summary></key>
     <key name="color-fg-dark" type="s"><default>'#ffffff'</default><summary>Card titles and icons</summary></key>
     <key name="color-qs-fg-dark" type="s"><default>'#ffffff'</default><summary>Idle button text and icons</summary></key>
-    <key name="color-panel-fg-dark" type="s"><default>'#ffffff'</default><summary>Top bar text and icons</summary></key>
+    <key name="color-panel-fg-dark" type="s"><default>'#ffffff'</default><summary>Shell text and icons</summary></key>
     <key name="color-fg-muted-dark" type="s"><default>'#c0bfbc'</default><summary>Card subtitles</summary></key>
     <key name="color-card-dark" type="s"><default>'#343437'</default><summary>Card background</summary></key>
-    <key name="color-grid-fg-dark" type="s"><default>'#ffffff'</default><summary>App grid text and icons</summary></key>
     <key name="color-dash-dark" type="s"><default>'#343437'</default><summary>Overview and top bar highlights</summary></key>
     <key name="color-qs-active-fg-dark" type="s"><default>''</default><summary>Active button text and icons (empty: accent text color)</summary></key>
-    <key name="color-qs-active-dark" type="s"><default>''</default><summary>Active button background (empty: GNOME accent color)</summary></key>
+    <key name="color-qs-active-dark" type="s"><default>'accent'</default><summary>Active button background: toggles that are on and the menus they open (accent: the accent color set in GNOME Settings)</summary></key>
     <key name="color-highlight-dark" type="s"><default>''</default><summary>Volume and brightness sliders (empty: GNOME accent color)</summary></key>
-    <key name="color-today-dark" type="s"><default>''</default><summary>Today in the calendar background (empty: GNOME accent color)</summary></key>
-    <key name="color-today-fg-dark" type="s"><default>'#ffffff'</default><summary>Today in the calendar text (empty: system default)</summary></key>
-    <key name="color-media-fg-dark" type="s"><default>'#ffffff'</default><summary>Media player text and icons (empty: system default)</summary></key>
     <key name="color-media-dark" type="s"><default>'accent'</default><summary>Media player background (empty: system default; accent: the accent color set in GNOME Settings)</summary></key>
     <key name="color-qs-button-dark" type="s"><default>'#343437'</default><summary>Idle button background</summary></key>
-    <key name="color-qs-menu-fg-dark" type="s"><default>'#ffffff'</default><summary>Idle expanded menu text and icons (empty: system default)</summary></key>
-    <key name="color-qs-menu-dark" type="s"><default>'#343437'</default><summary>Idle expanded menu background (empty: system default)</summary></key>
-    <key name="color-qs-active-menu-dark" type="s"><default>'accent'</default><summary>Active expanded menu background (empty: system default; accent: the accent color set in GNOME Settings)</summary></key>
-    <key name="color-border-dark" type="s"><default>''</default><summary>Menu borders</summary></key>
     <!-- Saved color profiles: JSON list of {"name": ..., "colors": {row: color}} -->
     <key name="profiles" type="s"><default>'[]'</default><summary>Light mode color sets</summary></key>
     <key name="profiles-dark" type="s"><default>'[]'</default><summary>Dark mode color sets</summary></key>
