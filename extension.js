@@ -342,6 +342,7 @@ function entriesCss(color, dark) {
 // "Overview and top bar highlights" on app folders and the dialog a folder opens, search
 // result sections, and the highlight of a hovered or selected app or search result.
 const SELECTED = [':selected', ':highlighted', ':checked'];
+const FOLDER_APPS = ['.app-folder-dialog .overview-tile', '.app-folder-dialog .grid-search-result'];
 function overviewBoxesCss(color, dark) {
     const lit = `${shade(dark)}(${color}, 8%)`;
     return buttonCss(['.app-folder', '.list-search-result'], color, dark) +
@@ -349,7 +350,10 @@ function overviewBoxesCss(color, dark) {
         rule('.search-section-content', 'background-color', color) +
         rule('.app-folder-dialog', 'background-color', color) +
         rule(inStates(['.grid-search-result', '.overview-tile'], [':hover', ':focus', ...SELECTED]), 'background-color', color) +
-        rule(inStates(['.grid-search-result', '.overview-tile'], [':active']), 'background-color', lit);
+        rule(inStates(['.grid-search-result', '.overview-tile'], [':active']), 'background-color', lit) +
+        // Over a folder, or an app inside a folder's dialog (painted the same color), 30% stronger.
+        rule(inStates(['.app-folder', ...FOLDER_APPS], [':hover', ':focus', ...SELECTED]), 'background-color',
+            `${shade(dark)}(${color}, 30%)`);
 }
 const entryTextCss = color => rule(inStates(ENTRY_SEL, ['', ':hover', ':focus']), 'color', color) +
     rule(inStates(ENTRY_SEL, [' StLabel.hint-text']), 'color', `st-transparentize(${color}, 0.5)`);
