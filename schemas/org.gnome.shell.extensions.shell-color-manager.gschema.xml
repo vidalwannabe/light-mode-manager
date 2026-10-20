@@ -63,7 +63,7 @@
     <key name="match-arrow-buttons" type="b"><default>false</default><summary>Quick Settings arrow buttons use the same color as their toggle</summary></key>
     <key name="merge-arrow-buttons" type="b"><default>false</default><summary>No gap between Quick Settings toggles and their arrow buttons</summary></key>
     <key name="no-qs-dimming" type="b"><default>false</default><summary>Quick Settings is not darkened while one of its menus is open</summary></key>
-    <key name="calendar-background" type="b"><default>false</default><summary>The month calendar gets the cards' color, without a pill behind each day</summary></key>
+    <key name="calendar-background" type="b"><default>true</default><summary>The month calendar gets the cards' color, without a pill behind each day</summary></key>
     <key name="general-opacity" type="i"><range min="0" max="100"/><default>100</default><summary>General background opacity in percent, both modes</summary></key>
     <!-- Automatic switch: apply a general profile at two times of day (minutes since midnight) -->
     <key name="auto-switch" type="b"><default>false</default><summary>Switch between light and dark mode at two set times</summary></key>
