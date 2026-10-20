@@ -1114,7 +1114,7 @@ export default class ShellColorManagerExtension extends Extension {
             // its apps take it too.
             css = buttonCss(QS_BUTTONS, translucent(color || native.toggle, opacity), dark) +
                 buttonCss(QS_CHECKED, accent, dark) +
-                (color ? buttonCss(BACKGROUND_APP_CLOSE, translucent(color, opacity), dark)
+                (color ? buttonCss([QS_FLAT, BACKGROUND_APP_CLOSE], translucent(color, opacity), dark)
                     : rule(QS_FLAT, 'background-color', 'transparent')) +
                 buttonCss(ARROW_SEL, translucent(arrow, opacity), dark);
         } else {
