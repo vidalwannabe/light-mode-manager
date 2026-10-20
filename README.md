@@ -18,9 +18,9 @@ Each tab has twenty-five colors in four groups:
 | Top bar background | The panel; solid unless **Enable panel opacity** is on |
 | Search and password text | The text typed in the overview search field and the lock and login screen password field; their hint text, dimmed. Empty: system default |
 | Overview text | Search results (titles, and descriptions dimmed), the search status and window captions in the overview. Empty: system default |
-| App grid text | App and folder names, folder titles and page arrows in the app grid. Default: black in light mode, white in dark mode |
+| App grid text and icons | App and folder names, folder titles, the folder edit button and page arrows in the app grid. Default: black in light mode, white in dark mode |
 | Overview and dialogs background | The overview and dialogs (Power Off, passwords, "not responding"…), always solid |
-| Overview and top bar highlights | The overview dock (dash), app folders and the dialog a folder opens, the highlight of a hovered or selected app, search bar, search result sections, the highlight of a selected search result, the selected app of the Alt+Tab switcher, the password field of the lock and login screens (its text in the titles color) and top bar buttons that are hovered or have their menu open (not on the lock screen). Default: the cards background |
+| Overview and top bar highlights | The overview dock (dash), app folders and the dialog a folder opens (its name field included), the highlight of a hovered or selected app, search bar, search result sections, the highlight of a selected search result, the selected app of the Alt+Tab switcher, the password field of the lock and login screens (its text in the titles color) and top bar buttons that are hovered or have their menu open (not on the lock screen). Default: the cards background |
 
 **Menus**
 
@@ -47,7 +47,7 @@ Each tab has twenty-five colors in four groups:
 
 | Color | What it paints |
 | --- | --- |
-| Card titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar and the cards' buttons (not the app grid, see App grid text) |
+| Card titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar and the cards' buttons (not the app grid, see App grid text and icons) |
 | Card subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday |
 | Card background | Notifications, banners, the Clear button and calendar widgets: Today, World Clocks and Weather. Search results and app folders keep the system background |
 | Today in the calendar background | The circle behind the current day. Empty (default): the accent color |

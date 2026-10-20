@@ -55,7 +55,9 @@ const GRID_TEXT = inStates([...GRID_ITEMS, ...GRID_ITEMS.map(item => `.app-folde
     ['', ':hover', ':focus', ':active', ':checked', ':selected', ':highlighted']) + ', ' +
     ['.app-folder-dialog', '.app-folder-dialog .folder-name-container .folder-name-label',
         '.app-folder-dialog .folder-name-container .folder-name-entry', '.page-navigation-arrow',
-        '.page-navigation-arrow > StIcon', '.page-navigation-arrow:hover', '.page-navigation-arrow:active'].join(', ');
+        '.page-navigation-arrow > StIcon', '.page-navigation-arrow:hover', '.page-navigation-arrow:active',
+        // The edit button (pencil) of a folder's dialog.
+        ...['', ':hover', ':focus', ':active'].map(state => `.app-folder-dialog .folder-name-container .icon-button${state}`)].join(', ');
 
 // "Card background": notifications and banners, the cards below the calendar and the
 // notification list's Clear button. They get every state, as GNOME draws them (buttonCss).
@@ -345,6 +347,7 @@ function entriesCss(color, dark) {
 const SELECTED = [':selected', ':highlighted', ':checked'];
 const FOLDER_APPS = ['.app-folder-dialog .overview-tile', '.app-folder-dialog .grid-search-result'];
 const FOLDER_EDIT = '.app-folder-dialog .folder-name-container .icon-button';
+const FOLDER_ENTRY = '.app-folder-dialog .folder-name-container .folder-name-entry';
 function overviewBoxesCss(color, dark) {
     const adjust = shade(dark);
     const lit = (base, amount) => `${adjust}(${base}, ${amount}%)`;
@@ -361,6 +364,10 @@ function overviewBoxesCss(color, dark) {
         rule(inStates(['.list-search-result', ...FOLDER_APPS], hoverStates), 'background-color', lit(selected, 7)) +
         rule('.search-section-content', 'background-color', color) +
         rule('.app-folder-dialog', 'background-color', color) +
+        // The name field of a folder's dialog, with GNOME's hover shade and focus tint.
+        rule(inStates(FOLDER_ENTRY, ['', ':insensitive']), 'background-color', color) +
+        rule(inStates(FOLDER_ENTRY, [':hover']), 'background-color', lit(color, 4)) +
+        rule(inStates(FOLDER_ENTRY, [':focus']), 'background-color', `st-mix(-st-accent-color, ${color}, 5%)`) +
         // The selected app of the Alt+Tab switcher.
         rule('.switcher-list .item-box:selected', 'background-color', color) +
         rule(inStates(apps, [':focus', ...SELECTED]), 'background-color', color) +
