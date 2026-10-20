@@ -1079,11 +1079,10 @@ export default class ShellColorManagerExtension extends Extension {
             // Stacked notifications behind the first get GNOME's darker shades: GNOME draws the
             // first one 5% lighter than its card color and the others 1% and 4% darker (dark
             // style), so 6% and 9% under the first; 4% and 7% in light style.
-            // The notifications' buttons 4% darker than the card in dark style and 4% lighter in
-            // light style, so they show without hovering the notification (which lights the card
-            // the other way).
+            // The notifications' buttons 4% lighter than the card in dark style and 4% darker in
+            // light style, so they show without hovering the notification.
             css += buttonCss(CARD_BUTTONS, card, style) +
-                buttonCss(NOTIFICATION_BUTTONS, `${shade(!style)}(${card}, 4%)`, style) +
+                buttonCss(NOTIFICATION_BUTTONS, `${shade(style)}(${card}, 4%)`, style) +
                 rule('.message:second-in-stack', 'background-color', `st-darken(${card}, ${style ? 6 : 4}%)`) +
                 rule('.message:lower-in-stack', 'background-color', `st-darken(${card}, ${style ? 9 : 7}%)`) +
                 rule(DND_SWITCH, 'background-color', card) +
