@@ -27,23 +27,23 @@ const {SUGGESTED, DESTRUCTIVE} = Adw.ResponseAppearance;
 const ACCENT = 'Accent color set in\nGNOME Settings › Appearance';
 const COLOR_GROUPS = [
     ['Shell', [
-        ['panel-fg', 'Shell text and icons', 'Top bar, menus, OSD, switchers, app grid, overview, search and password'],
-        ['general', 'Shell background', 'Top bar, menus, OSD, window switcher, overview and dialogs'],
-        ['border', 'Menu borders', 'Outline of menus and cards; Quick Settings buttons when enabled'],
+        ['panel-fg', 'Shell text and icons', 'App grid, menus, OSD, overview, password field, search, switchers and top bar'],
+        ['general', 'Shell background', 'Dialogs, menus, OSD, overview, top bar and window switcher'],
+        ['border', 'Menu borders', 'Cards, menus and Quick Settings buttons (when enabled)'],
         ['dash', 'Overview and top bar highlights',
-            'Dash, folders, app hover, Alt+Tab selection, search, password field, top bar buttons'],
+            'Alt+Tab selection, app hover, dash, folders, password field, search and top bar buttons'],
     ]],
     ['Quick Settings and Notification Panel', [
-        ['qs-active-fg', 'Active button text and icons', 'Toggles that are on and their menus, today in the calendar, media player',
+        ['qs-active-fg', 'Active button text and icons', 'Active menus, media player, today in the calendar and toggles that are on',
             'Accent text color', '#ffffff'],
-        ['qs-active', 'Active button background', 'Toggles that are on and their menus, today in the calendar, media player',
+        ['qs-active', 'Active button background', 'Active menus, media player, today in the calendar and toggles that are on',
             ACCENT, accentColor],
-        ['qs-fg', 'Idle button text and icons', 'Toggles that are off, their menus, round buttons and slider handles'],
-        ['qs-button', 'Idle button background', 'Toggles that are off, their menus, round and slider buttons, slider tracks'],
-        ['highlight', 'Volume and brightness sliders', 'Filled part of the sliders and of the volume and brightness popup'],
-        ['fg', 'Card titles and icons', 'Notifications, calendar, Today, World Clocks and Weather'],
-        ['fg-muted', 'Card subtitles', 'Text under titles: notification body, times, locations and weekdays'],
-        ['card', 'Card background', 'Notifications, banners, Clear button, widgets and Calendar as card'],
+        ['qs-fg', 'Idle button text and icons', 'Idle menus, round buttons, slider handles and toggles that are off'],
+        ['qs-button', 'Idle button background', 'Idle menus, round buttons, slider buttons, slider tracks and toggles that are off'],
+        ['highlight', 'Volume and brightness sliders', 'OSD and Quick Settings sliders'],
+        ['fg', 'Card titles and icons', 'Calendar, notifications, Today, Weather and World Clocks'],
+        ['fg-muted', 'Card subtitles', 'Locations, notification body, times and weekdays'],
+        ['card', 'Card background', 'Banners, Calendar as card, Clear button, notifications, Today, Weather and World Clocks'],
     ]],
 ];
 
