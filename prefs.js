@@ -83,7 +83,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
         });
 
         // A color row of a mode tab (`suffix`: '' or '-dark').
-        const colorRow = (group, name, suffix, title, subtitle, emptyLabel = 'System default', emptyColor = PLACEHOLDER) => {
+        const colorRow = (group, name, suffix, restore, title, subtitle, emptyLabel = 'System default', emptyColor = PLACEHOLDER) => {
             const key = `color-${name}${suffix}`;
             const row = new Adw.ActionRow({title, subtitle});
             const button = new Gtk.ColorDialogButton({
@@ -136,8 +136,8 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             });
             button.add_controller(copy);
 
-            const reset = flatButton({icon_name: 'edit-undo-symbolic', tooltip_text: 'Restore system default'});
-            reset.connect('clicked', () => s.set_string(key, ''));
+            const reset = flatButton({icon_name: 'edit-undo-symbolic', tooltip_text: 'Restore from color set'});
+            reset.connect('clicked', restore);
             row.add_suffix(button);
             row.add_suffix(reset);
             group.add(row);
@@ -437,7 +437,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                 const group = new Adw.PreferencesGroup({title: groupTitle});
                 for (const [name, ...row] of rows) {
                     keys.push(`color-${name}${suffix}`);
-                    colorRow(group, name, suffix, ...row);
+                    colorRow(group, name, suffix, () => model.restore(name), ...row);
                 }
                 page.add(group);
             }

@@ -34,7 +34,7 @@ Each tab has twelve colors in two groups. An empty color is the system default: 
 
 Color sets saved before a color existed take it from the color it came from (shell and idle button text from the card text, the dash from the card background), so they keep their look.
 
-Hover, focus and active states follow these colors automatically. Every color has a button to set it to system default. Ctrl+Z undoes the last color change in the open tab and Ctrl+Shift+Z redoes it; the Light mode and Dark mode tabs each keep their own history, and applying a color set is undone in one step. Hovering over a color shows its code, and right-clicking it copies the code.
+Hover, focus and active states follow these colors automatically. Every color has a button to restore its value in the color set last applied in that tab. Ctrl+Z undoes the last color change in the open tab and Ctrl+Shift+Z redoes it; the Light mode and Dark mode tabs each keep their own history, and applying a color set is undone in one step. Hovering over a color shows its code, and right-clicking it copies the code.
 
 ### Color sets
 

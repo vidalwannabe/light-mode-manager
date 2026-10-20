@@ -89,6 +89,16 @@ function modeProfiles(settings, suffix, builtins) {
         },
         // The profile the current colors match, found in real time: the last applied one
         // first, otherwise any profile with exactly these colors; null when none does.
+        // Restores one row to the last applied color set's value (the default when that color
+        // set no longer exists).
+        restore(n) {
+            const profile = store.byName(store.activeName()) ?? builtins[0];
+            const value = rowColor(profile.colors, n);
+            if (typeof value !== 'string' || value === defaultColors[n])
+                settings.reset(colorKey(n));
+            else
+                settings.set_string(colorKey(n), value);
+        },
         applied(profiles = store.all()) {
             const active = store.byName(store.activeName());
             if (active && matches(active.colors))
