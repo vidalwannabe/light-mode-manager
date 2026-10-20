@@ -8,14 +8,15 @@ It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 app
 
 ### Light mode and Dark mode tabs
 
-Each tab has twenty-three colors in four groups:
+Each tab has twenty-four colors in four groups:
 
 **Top bar and overview**
 
 | Color | What it paints |
 | --- | --- |
-| Top bar background | The panel; solid unless **Enable panel opacity** is on |
 | Top bar text and icons | Top bar text and icons: clock, indicators, the overview button and Dash to Panel's app grid button |
+| Top bar background | The panel; solid unless **Enable panel opacity** is on |
+| Search and password text | The text typed in the overview search field and the lock and login screen password field; their hint text, dimmed. Empty: system default |
 | Overview and dialogs background | The overview and dialogs (Power Off, passwords, "not responding"…), always solid |
 | App grid text | App and folder names, folder titles and page arrows in the app grid. Default: black in light mode, white in dark mode |
 | Overview and top bar highlights | The overview dock (dash) and search bar, the password field of the lock and login screens (its text in the titles color) and top bar buttons that are hovered or have their menu open (not on the lock screen). Default: the cards background |
@@ -53,7 +54,7 @@ Each tab has twenty-three colors in four groups:
 | Media player text and icons | The card of the music or video playing: title, artist, app name and the playback buttons. Default: white. Empty: system default |
 | Media player background | The card of the music or video playing. Its playback buttons light up from this color on hover and click, like the other buttons. Default: the accent color set in GNOME Settings › Appearance. Empty: system default |
 
-Color sets saved before a color existed take it from the color it came from (top bar and overview from the menu background, today from the sliders, idle button text from the card text, the idle expanded menu from the idle button background and its text from the idle button text), so they keep their look.
+Color sets saved before a color existed take it from the color it came from (top bar and overview from the menu background, today from the sliders, idle button text and search and password text from the card text, the idle expanded menu from the idle button background and its text from the idle button text), so they keep their look.
 
 Hover, focus and active states follow these colors automatically. Every color has a button to set it to system default. Ctrl+Z undoes the last color change in the open tab and Ctrl+Shift+Z redoes it; the Light mode and Dark mode tabs each keep their own history, and applying a color set is undone in one step. Hovering over a color shows its code, and right-clicking it copies the code.
 

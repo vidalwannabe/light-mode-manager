@@ -330,17 +330,16 @@ function panelButtonsCss(color) {
 
 // "Overview and top bar highlights" on the overview search entry and the password entry of
 // the lock and login screens, with GNOME's hover shade and focus tint (its focus ring is
-// kept). The password entry's text takes the titles color and its hint the subtitles one.
-const PROMPT_SEL = ['.unlock-dialog .login-dialog-prompt-entry', '.login-dialog .login-dialog-prompt-entry'];
-const ENTRY_SEL = ['.search-entry', ...PROMPT_SEL];
-function entriesCss(color, dark, text, hint) {
+// kept); "Search and password text" on their text, and dimmed on their hint.
+const ENTRY_SEL = ['.search-entry', '.unlock-dialog .login-dialog-prompt-entry', '.login-dialog .login-dialog-prompt-entry'];
+function entriesCss(color, dark) {
     const sel = (list, ...states) => list.flatMap(base => states.map(state => base + state)).join(', ');
     return rule(sel(ENTRY_SEL, '', ':insensitive'), 'background-color', color) +
         rule(sel(ENTRY_SEL, ':hover'), 'background-color', `${shade(dark)}(${color}, 4%)`) +
-        rule(sel(ENTRY_SEL, ':focus'), 'background-color', `st-mix(-st-accent-color, ${color}, 5%)`) +
-        (text ? rule(sel(PROMPT_SEL, '', ':hover', ':focus'), 'color', text) : '') +
-        (hint ? rule(sel(PROMPT_SEL, ' StLabel.hint-text'), 'color', hint) : '');
+        rule(sel(ENTRY_SEL, ':focus'), 'background-color', `st-mix(-st-accent-color, ${color}, 5%)`);
 }
+const entryTextCss = color => rule(inStates(ENTRY_SEL, ['', ':hover', ':focus']), 'color', color) +
+    rule(inStates(ENTRY_SEL, [' StLabel.hint-text']), 'color', `st-transparentize(${color}, 0.5)`);
 
 // "Top bar text and icons". The lock and login screens keep GNOME's white text and icons,
 // which sit on the wallpaper there.
@@ -1001,8 +1000,10 @@ export default class ShellColorManagerExtension extends Extension {
         if (c.dash) {
             const dash = withOpacity(c.dash, 100);
             css += rule('#dash .dash-background', 'background-color', dash) +
-                entriesCss(dash, style, c.fg, c['fg-muted']) + panelButtonsCss(dash);
+                entriesCss(dash, style) + panelButtonsCss(dash);
         }
+        if (c['entry-fg'])
+            css += entryTextCss(c['entry-fg']);
         // Card text, Quick Settings text and, after the subtitles so a toggle that is on keeps
         // its own, "Active button text and icons".
         css += textRolesCss(c.fg, c['fg-muted']) + quickSettingsTextCss(c['qs-fg'], c['qs-fg-muted']);

@@ -27,8 +27,9 @@ const {SUGGESTED, DESTRUCTIVE} = Adw.ResponseAppearance;
 const ACCENT = 'Accent color set in\nGNOME Settings › Appearance';
 const COLOR_GROUPS = [
     ['Top bar and overview', [
-        ['panel', 'Top bar background', 'Panel color; solid unless "Enable panel opacity" is on'],
         ['panel-fg', 'Top bar text and icons', 'Clock, indicators, overview button and Dash to Panel app grid icon'],
+        ['panel', 'Top bar background', 'Panel color; solid unless "Enable panel opacity" is on'],
+        ['entry-fg', 'Search and password text', 'Text typed in the overview search and lock screen password fields'],
         ['overview', 'Overview and dialogs background', 'Overview, Power Off and password dialogs; always solid'],
         ['grid-fg', 'App grid text', 'App and folder names, folder titles and page arrows in the app grid'],
         ['dash', 'Overview and top bar highlights', 'Dash, search and password fields, and hovered or open top bar buttons'],
