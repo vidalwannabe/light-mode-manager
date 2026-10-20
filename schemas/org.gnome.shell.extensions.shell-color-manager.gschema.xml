@@ -8,7 +8,7 @@
     <key name="color-panel-fg" type="s"><default>'#000000'</default><summary>Shell text and icons</summary></key>
     <key name="color-fg-muted" type="s"><default>'#77767b'</default><summary>Card subtitles</summary></key>
     <key name="color-card" type="s"><default>'#e6e6e7'</default><summary>Card background</summary></key>
-    <key name="color-border" type="s"><default>''</default><summary>Menu borders: menus and cards, and Quick Settings buttons when enabled (empty: system default)</summary></key>
+    <key name="color-border" type="s"><default>'#e6e6e7'</default><summary>Menu borders: menus and cards, and Quick Settings buttons when enabled (empty: system default)</summary></key>
     <key name="color-dash" type="s"><default>'#e6e6e7'</default><summary>Overview and top bar highlights</summary></key>
     <key name="color-qs-active-fg" type="s"><default>''</default><summary>Active button text and icons (empty: accent text color)</summary></key>
     <key name="color-qs-active" type="s"><default>'accent'</default><summary>Active button background: toggles that are on and the menus they open (accent: the accent color set in GNOME Settings)</summary></key>
@@ -21,7 +21,7 @@
     <key name="color-panel-fg-dark" type="s"><default>'#ffffff'</default><summary>Shell text and icons</summary></key>
     <key name="color-fg-muted-dark" type="s"><default>'#c0bfbc'</default><summary>Card subtitles</summary></key>
     <key name="color-card-dark" type="s"><default>'#343437'</default><summary>Card background</summary></key>
-    <key name="color-border-dark" type="s"><default>''</default><summary>Menu borders: menus and cards, and Quick Settings buttons when enabled (empty: system default)</summary></key>
+    <key name="color-border-dark" type="s"><default>'#343437'</default><summary>Menu borders: menus and cards, and Quick Settings buttons when enabled (empty: system default)</summary></key>
     <key name="color-dash-dark" type="s"><default>'#343437'</default><summary>Overview and top bar highlights</summary></key>
     <key name="color-qs-active-fg-dark" type="s"><default>''</default><summary>Active button text and icons (empty: accent text color)</summary></key>
     <key name="color-qs-active-dark" type="s"><default>'accent'</default><summary>Active button background: toggles that are on and the menus they open (accent: the accent color set in GNOME Settings)</summary></key>
