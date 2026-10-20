@@ -3,7 +3,7 @@
 
 // The color rows of the Light mode and Dark mode tabs.
 export const ROW_NAMES = ['panel', 'panel-fg', 'overview', 'grid-fg', 'dash', 'general', 'border', 'fg', 'fg-muted', 'qs-button', 'card',
-    'qs-active-fg', 'qs-active', 'highlight', 'today', 'today-fg', 'qs-fg', 'qs-fg-muted', 'qs-menu', 'qs-active-menu', 'media-fg', 'media',
+    'qs-active-fg', 'qs-active', 'highlight', 'today', 'today-fg', 'qs-fg', 'qs-menu', 'qs-active-menu', 'media-fg', 'media',
     'qs-menu-fg', 'entry-fg', 'menu-fg', 'overview-fg'];
 
 // Rows added later: a profile saved before them takes the value of the row they came
@@ -11,7 +11,7 @@ export const ROW_NAMES = ['panel', 'panel-fg', 'overview', 'grid-fg', 'dash', 'g
 // and overview backgrounds the general background, and today in the calendar the sliders.
 // The dash takes the cards background, as in the Default profile.
 const LEGACY_ROWS = {'panel-fg': 'fg', 'dash': 'card', 'panel': 'general', 'overview': 'general', 'today': 'highlight',
-    'qs-fg': 'fg', 'qs-fg-muted': 'fg-muted', 'qs-menu': 'qs-button',
+    'qs-fg': 'fg', 'qs-menu': 'qs-button',
     'qs-menu-fg': 'qs-fg', 'entry-fg': 'fg', 'menu-fg': 'fg',
     'overview-fg': 'grid-fg'};
 const rowColor = (colors, n) => colors[n] ?? colors[LEGACY_ROWS[n]];

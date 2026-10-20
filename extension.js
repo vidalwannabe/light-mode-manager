@@ -164,6 +164,7 @@ function menuTextCss(color, selector = QS_MENU) {
     const items = `${selector} .popup-menu-item`;
     return rule([selector, `${selector}:insensitive`, `${selector} .header .title`, `${selector} .header .subtitle`,
         `${selector} .header .icon`, `${selector} .device-subtitle`, `${selector} .popup-inactive-menu-item`,
+        `${selector} .popup-separator-menu-item`, `${selector} .popup-separator-menu-item StLabel`,
         inStates(items, ['', ':hover', ':active', ':selected', ':checked'])].join(', '), 'color', color) +
         rule(`${items}:insensitive`, 'color', `st-transparentize(${color}, 0.5)`);
 }
@@ -225,28 +226,18 @@ const rule = (selector, prop, value) => `${selector} {\n  ${prop}: ${value};\n}\
 const noShadowCss = rule(SHADOW_SEL, 'box-shadow', 'none');
 const insensitive = selectors => inStates(selectors, [':insensitive']);
 
-// "Idle button titles and icons": Quick Settings toggles and their arrows, the round buttons
-// at the top, the slider buttons and the sliders' handles. "Idle button subtitles": the line
-// under a toggle.
+// "Idle button text and icons": Quick Settings toggles (titles and subtitles) and their
+// arrows, the round buttons at the top, the slider buttons and the sliders' handles.
 // Toggles that are on get "Active button text and icons" afterwards (activeTextCss).
 const QS_TEXT = ['.quick-settings .button', '.quick-settings .icon-button'];
 // The sliders' handle is drawn in their text color, also when hovered; the arrows (›) are
 // set in every state, which the light template colors one by one.
 const QS_SLIDER = '.quick-slider .slider';
-const QS_TITLE = [...QS_TEXT, QS_SLIDER, `${QS_SLIDER}:hover`,
+const QS_IDLE_TEXT = [...QS_TEXT, QS_SLIDER, `${QS_SLIDER}:hover`,
     '.quick-toggle-has-menu .quick-toggle-menu-button:hover', '.quick-toggle-has-menu .quick-toggle-menu-button:focus',
-    '.quick-toggle-has-menu .quick-toggle-menu-button:active'];
-const QS_SUBTITLE = ['.quick-settings .quick-toggle .quick-toggle-subtitle'];
-function quickSettingsTextCss(main, secondary) {
-    let css = '';
-    if (main) {
-        css += rule(QS_TITLE.join(', '), 'color', main) +
-            rule(insensitive(QS_TEXT), 'color', `st-transparentize(${main}, 0.5)`);
-    }
-    if (secondary)
-        css += rule(QS_SUBTITLE.join(', '), 'color', secondary);
-    return css;
-}
+    '.quick-toggle-has-menu .quick-toggle-menu-button:active', '.quick-settings .quick-toggle .quick-toggle-subtitle'];
+const quickSettingsTextCss = color => color ? rule(QS_IDLE_TEXT.join(', '), 'color', color) +
+    rule(insensitive(QS_TEXT), 'color', `st-transparentize(${color}, 0.5)`) : '';
 
 // "Active button text and icons": Quick Settings toggles that are on (and their arrows and
 // subtitles), and the icon of the menu they open. GNOME's own: the accent's text color.
@@ -1076,8 +1067,8 @@ export default class ShellColorManagerExtension extends Extension {
             css += entryTextCss(c['entry-fg']);
         // Card text, Quick Settings text and, after the subtitles so a toggle that is on keeps
         // its own, "Active button text and icons".
-        css += textRolesCss(c.fg, c['fg-muted']) + quickSettingsTextCss(c['qs-fg'], c['qs-fg-muted']);
-        if (c['qs-fg'] || c['qs-fg-muted'] || c['qs-active-fg'])
+        css += textRolesCss(c.fg, c['fg-muted']) + quickSettingsTextCss(c['qs-fg']);
+        if (c['qs-fg'] || c['qs-active-fg'])
             css += activeTextCss(c['qs-active-fg'] || '-st-accent-fg-color');
         // Cards with "Card opacity" (GNOME's own color on system default), Quick Settings and
         // "Calendar as card".

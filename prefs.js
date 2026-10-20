@@ -42,8 +42,7 @@ const COLOR_GROUPS = [
         ['border', 'Menu borders', 'Outline of Quick Settings, the calendar and other menus'],
     ]],
     ['Quick Settings', [
-        ['qs-fg', 'Idle button titles and icons', 'Toggles that are off, round buttons, slider buttons and handles, menu headings'],
-        ['qs-fg-muted', 'Idle button subtitles', 'Text under toggle and menu headings, such as the connected network'],
+        ['qs-fg', 'Idle button text and icons', 'Toggles that are off (titles and subtitles), round buttons, slider handles'],
         ['qs-button', 'Idle button background', 'Toggles that are off, round buttons, slider buttons and tracks, Background Apps'],
         ['qs-menu-fg', 'Idle expanded menu text and icons', 'Every text and icon of the menu a toggle that is off opens'],
         ['qs-menu', 'Idle expanded menu background', 'Menu a toggle that is off opens and the circle of its icon'],

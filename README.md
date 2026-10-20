@@ -8,7 +8,7 @@ It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 app
 
 ### Light mode and Dark mode tabs
 
-Each tab has twenty-six colors in four groups:
+Each tab has twenty-five colors in four groups:
 
 **Top bar and overview**
 
@@ -34,8 +34,7 @@ Each tab has twenty-six colors in four groups:
 
 | Color | What it paints |
 | --- | --- |
-| Idle button titles and icons | Quick Settings toggles that are off and their arrows, the round buttons at the top, the slider buttons, the sliders' handles and the heading of the menus toggles open |
-| Idle button subtitles | The line under a toggle or a toggle menu heading (the connected network, the audio device…) and device subtitles |
+| Idle button text and icons | Quick Settings toggles that are off (titles and subtitles) and their arrows, the round buttons at the top, the slider buttons, the sliders' handles and the heading of the menus toggles open |
 | Idle button background | Quick Settings toggles that are off, their arrows, the round buttons at the top, the slider buttons (volume, "›", brightness), the sliders' track (the part not filled), the Background Apps toggle and the close buttons of its apps |
 | Idle expanded menu text and icons | Every text and icon of the menu a toggle opens (Wi-Fi, Bluetooth, Power Off…) while the toggle is off: heading, items and device subtitles. Empty: system default |
 | Idle expanded menu background | The menu a toggle opens while the toggle is off, and the circle behind its heading icon. Empty: system default |

@@ -9,10 +9,9 @@
     <key name="color-overview" type="s"><default>'#fafafb'</default><summary>Overview and dialogs background</summary></key>
     <key name="color-general" type="s"><default>'#fafafb'</default><summary>Menu background</summary></key>
     <key name="color-fg" type="s"><default>'#000000'</default><summary>Card titles and icons</summary></key>
-    <key name="color-qs-fg" type="s"><default>'#000000'</default><summary>Idle button titles and icons</summary></key>
+    <key name="color-qs-fg" type="s"><default>'#000000'</default><summary>Idle button text and icons</summary></key>
     <key name="color-panel-fg" type="s"><default>'#000000'</default><summary>Top bar text and icons</summary></key>
     <key name="color-fg-muted" type="s"><default>'#77767b'</default><summary>Card subtitles</summary></key>
-    <key name="color-qs-fg-muted" type="s"><default>'#77767b'</default><summary>Idle button subtitles</summary></key>
     <key name="color-card" type="s"><default>'#e6e6e7'</default><summary>Card background</summary></key>
     <key name="color-grid-fg" type="s"><default>'#000000'</default><summary>App grid text</summary></key>
     <key name="color-dash" type="s"><default>'#e6e6e7'</default><summary>Overview and top bar highlights</summary></key>
@@ -36,10 +35,9 @@
     <key name="color-overview-dark" type="s"><default>'#222226'</default><summary>Overview and dialogs background</summary></key>
     <key name="color-general-dark" type="s"><default>'#222226'</default><summary>Menu background</summary></key>
     <key name="color-fg-dark" type="s"><default>'#ffffff'</default><summary>Card titles and icons</summary></key>
-    <key name="color-qs-fg-dark" type="s"><default>'#ffffff'</default><summary>Idle button titles and icons</summary></key>
+    <key name="color-qs-fg-dark" type="s"><default>'#ffffff'</default><summary>Idle button text and icons</summary></key>
     <key name="color-panel-fg-dark" type="s"><default>'#ffffff'</default><summary>Top bar text and icons</summary></key>
     <key name="color-fg-muted-dark" type="s"><default>'#c0bfbc'</default><summary>Card subtitles</summary></key>
-    <key name="color-qs-fg-muted-dark" type="s"><default>'#c0bfbc'</default><summary>Idle button subtitles</summary></key>
     <key name="color-card-dark" type="s"><default>'#343437'</default><summary>Card background</summary></key>
     <key name="color-grid-fg-dark" type="s"><default>'#ffffff'</default><summary>App grid text</summary></key>
     <key name="color-dash-dark" type="s"><default>'#343437'</default><summary>Overview and top bar highlights</summary></key>
