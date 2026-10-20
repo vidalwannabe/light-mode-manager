@@ -78,6 +78,7 @@
     <key name="auto-switch-1-time" type="i"><range min="0" max="1439"/><default>420</default><summary>Time of the first switch</summary></key>
     <key name="auto-switch-1-mode" type="s"><choices><choice value='light'/><choice value='dark'/></choices><default>'light'</default><summary>Mode turned on at the first switch; the second turns on the other</summary></key>
     <key name="auto-switch-2-time" type="i"><range min="0" max="1439"/><default>1140</default><summary>Time of the second switch</summary></key>
+    <key name="auto-switch-off-notice" type="b"><default>false</default><summary>The automatic switch was turned off because the mode was changed by hand; the preferences say so once</summary></key>
     <key name="auto-switch-applied" type="x"><default>0</default><summary>Unix time of the last automatic switch applied</summary></key>
     <key name="quick-settings-profiles" type="b"><default>false</default><summary>Show a general color set switcher in Quick Settings</summary></key>
     <key name="background-menu-entry" type="b"><default>false</default><summary>Add "Shell Color Manager…" to the desktop right-click menu</summary></key>

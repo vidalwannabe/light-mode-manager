@@ -723,7 +723,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
         const SETTINGS_FILE = 'shell-color-manager-settings.json';
         // Internal state stays out of backups: an old switch time would switch the mode on import.
         const backupKeys = () => s.settings_schema.list_keys()
-            .filter(k => !['auto-switch-applied', 'dtp-notice-shown'].includes(k));
+            .filter(k => !['auto-switch-applied', 'dtp-notice-shown', 'auto-switch-off-notice'].includes(k));
         const toast = title => window.add_toast(new Adw.Toast({title}));
         const jsonFilter = () => {
             const filter = new Gtk.FileFilter({name: 'JSON files'});
@@ -953,5 +953,20 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
         addTab('Dark mode', 'weather-clear-night-symbolic', '-dark', profiles.dark, {model: profiles.light, label: 'Light mode'});
         addGeneralTab();
         watchDtp();
+        // The shell turned the automatic switch off because the mode was changed by hand.
+        if (s.get_boolean('auto-switch-off-notice')) {
+            s.set_boolean('auto-switch-off-notice', false);
+            GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                if (!closed) {
+                    alert({
+                        heading: 'Automatic switch turned off',
+                        body: 'The mode was changed manually while the automatic switch was on, so it was ' +
+                            'turned off to keep your choice. You can turn it on again in the General tab.',
+                    }, [['ok', 'Keep it off'], ['on', 'Turn on again', SUGGESTED]],
+                    () => s.set_boolean('auto-switch', true)).present(window);
+                }
+                return GLib.SOURCE_REMOVE;
+            });
+        }
     }
 }

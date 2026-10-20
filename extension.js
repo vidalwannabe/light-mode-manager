@@ -546,6 +546,14 @@ export default class ShellColorManagerExtension extends Extension {
             this._interface.set_string('color-scheme', 'prefer-light');
             return;
         }
+        // A mode picked by hand (not by the automatic switch) while the automatic switch is on
+        // turns it off, so the choice stays; the preferences say so the next time they open.
+        if (scheme === this._autoScheme) {
+            this._autoScheme = null;
+        } else if (this._autoSwitchOn()) {
+            this._settings.set_boolean('auto-switch', false);
+            this._settings.set_boolean('auto-switch-off-notice', true);
+        }
         this._setLegacyColorScheme(scheme);
         this._applyTheme();
         this._restartTransition();
@@ -736,8 +744,14 @@ export default class ShellColorManagerExtension extends Extension {
 
     // ---------- Automatic switch ----------
     // Two times of day: the first sets the chosen mode, the second the opposite one. The
-    // most recent switch time that has passed is applied once (its moment is kept in dconf),
-    // so a mode picked by hand in between, even across logins, stays until the next one.
+    // most recent switch time that has passed is applied once (its moment is kept in dconf).
+    // A mode picked by hand while it is on turns the automatic switch off (_schemeChanged).
+
+    // Whether the automatic switch is on: enabled, with two different times.
+    _autoSwitchOn() {
+        const [t1, t2] = this._autoTimes();
+        return this._settings.get_boolean('auto-switch') && t1 !== t2;
+    }
 
     _autoTimes() {
         return [1, 2].map(i => this._settings.get_int(`auto-switch-${i}-time`));
@@ -763,17 +777,19 @@ export default class ShellColorManagerExtension extends Extension {
         if (latest.time <= this._settings.get_int64('auto-switch-applied'))
             return;
         this._settings.set_int64('auto-switch-applied', latest.time);
-        if (this._getColorScheme() !== latest.scheme)
+        if (this._getColorScheme() !== latest.scheme) {
+            // Remembered, so _schemeChanged() knows this change is not a manual one.
+            this._autoScheme = latest.scheme;
             this._interface.set_string('color-scheme', latest.scheme);
+        }
     }
 
     // Changing the schedule (on, times or mode) applies its current mode right away. At login
-    // only a switch time newer than the last applied one does, so a mode picked by hand stays
-    // until the next switch. Equal times count as off, even with "Enable" on.
+    // only a switch time newer than the last applied one does. Equal times count as off,
+    // even with "Enable" on.
     _syncAutoSwitch(changed = false) {
         this._clearSource('_autoId');
-        const [t1, t2] = this._autoTimes();
-        if (!this._settings.get_boolean('auto-switch') || t1 === t2)
+        if (!this._autoSwitchOn())
             return;
         if (changed)
             this._settings.set_int64('auto-switch-applied', 0);
@@ -1303,6 +1319,6 @@ export default class ShellColorManagerExtension extends Extension {
         this._setLegacyColorScheme(this._getColorScheme());
 
         this._settings = this._interface = this._cacheDir = null;
-        this._lastCss = this._modeScheme = this._overrides = this._changedKeys = this._templateCss = null;
+        this._lastCss = this._modeScheme = this._autoScheme = this._overrides = this._changedKeys = this._templateCss = null;
     }
 }

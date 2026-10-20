@@ -94,7 +94,7 @@ Each tab has a color set selector to apply a set of colors in one click. Built-i
 
 **Automatic switch**
 
-- **Automatic switch**: one row sets a mode (light or dark) and two times of day: the mode is on between them and the opposite one the rest of the day, also across midnight (Dark mode from 19:00 to 07:00, light mode the rest of the day). Equal times turn the switch off, even with **Enable** on; both times are marked and the subtitle says so. Each mode keeps its own color set and colors. Turning it on or changing the schedule applies the current mode right away; a mode picked by hand in between is kept, even after logging in again, until the next switch time.
+- **Automatic switch**: one row sets a mode (light or dark) and two times of day: the mode is on between them and the opposite one the rest of the day, also across midnight (Dark mode from 19:00 to 07:00, light mode the rest of the day). Equal times turn the switch off, even with **Enable** on; both times are marked and the subtitle says so. Each mode keeps its own color set and colors. Turning it on or changing the schedule applies the current mode right away. Changing the mode by hand while it is on turns the automatic switch off, so your choice stays; the next time the preferences open, a dialog says so and offers to turn it on again.
 
 **Lock screen**
 
