@@ -34,7 +34,7 @@ const COLOR_GROUPS = [
         ['grid-fg', 'App grid text', 'App and folder names, folder titles and page arrows in the app grid'],
         ['overview', 'Overview and dialogs background', 'Overview, Power Off and password dialogs; always solid'],
         ['dash', 'Overview and top bar highlights',
-            'Dash, folders, search fields and results, password field and active top bar buttons'],
+            'Dash, folders, app hover, search fields and results, password field, top bar buttons'],
     ]],
     ['Menus', [
         ['menu-fg', 'Menu text', 'Menu items, OSD and window switcher'],
