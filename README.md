@@ -20,7 +20,7 @@ Each tab has twenty-five colors in four groups:
 | Overview text | Search results (titles, and descriptions dimmed), the search status and window captions in the overview. Empty: system default |
 | App grid text | App and folder names, folder titles and page arrows in the app grid. Default: black in light mode, white in dark mode |
 | Overview and dialogs background | The overview and dialogs (Power Off, passwords, "not responding"…), always solid |
-| Overview and top bar highlights | The overview dock (dash), app folders and the dialog a folder opens, the highlight of a hovered or selected app, search bar, search result sections and the highlight of a selected search result, the password field of the lock and login screens (its text in the titles color) and top bar buttons that are hovered or have their menu open (not on the lock screen). Default: the cards background |
+| Overview and top bar highlights | The overview dock (dash), app folders and the dialog a folder opens, the highlight of a hovered or selected app, search bar, search result sections, the highlight of a selected search result, the selected app of the Alt+Tab switcher, the password field of the lock and login screens (its text in the titles color) and top bar buttons that are hovered or have their menu open (not on the lock screen). Default: the cards background |
 
 **Menus**
 

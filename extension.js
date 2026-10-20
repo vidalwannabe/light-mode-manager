@@ -340,7 +340,8 @@ function entriesCss(color, dark) {
         rule(sel(ENTRY_SEL, ':focus'), 'background-color', `st-mix(-st-accent-color, ${color}, 5%)`);
 }
 // "Overview and top bar highlights" on app folders and the dialog a folder opens, search
-// result sections, and the highlight of a hovered or selected app or search result.
+// result sections, the highlight of a hovered or selected app or search result, and the
+// selected app of the Alt+Tab switcher.
 const SELECTED = [':selected', ':highlighted', ':checked'];
 const FOLDER_APPS = ['.app-folder-dialog .overview-tile', '.app-folder-dialog .grid-search-result'];
 function overviewBoxesCss(color, dark) {
@@ -349,6 +350,8 @@ function overviewBoxesCss(color, dark) {
         rule(inStates(['.app-folder', '.list-search-result'], SELECTED), 'background-color', lit) +
         rule('.search-section-content', 'background-color', color) +
         rule('.app-folder-dialog', 'background-color', color) +
+        // The selected app of the Alt+Tab switcher.
+        rule('.switcher-list .item-box:selected', 'background-color', color) +
         rule(inStates(['.grid-search-result', '.overview-tile'], [':hover', ':focus', ...SELECTED]), 'background-color', color) +
         rule(inStates(['.grid-search-result', '.overview-tile'], [':active']), 'background-color', lit) +
         // Over a folder, or an app inside a folder's dialog (painted the same color), 30% stronger.
