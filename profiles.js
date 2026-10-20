@@ -37,28 +37,28 @@ function profileStore(settings, listKey, activeKey, builtins, isValid) {
             return [];
         }
     };
+    const save = list => settings.set_string(listKey, JSON.stringify(list));
+    const taken = name => reserved.has(name) || own().some(p => p.name === name);
     return {
-        builtins, own, isValid,
+        builtins, own, isValid, save, taken,
         // A profile by name, the legacy "Default" included.
         byName(name) {
             return this.all().find(p => p.name === name) ?? (name === LEGACY_DEFAULT ? builtins[0] : undefined);
         },
         // Built-ins first, then the user's own profiles in alphabetical order.
         all: () => [...builtins, ...own().sort((a, b) => a.name.localeCompare(b.name, undefined, {sensitivity: 'base'}))],
-        save: list => settings.set_string(listKey, JSON.stringify(list)),
-        taken: name => reserved.has(name) || own().some(p => p.name === name),
         activeName: () => settings.get_string(activeKey),
         setActive: name => settings.set_string(activeKey, name),
         // Renames one of the user's profiles, keeping it the applied one if it was.
         rename(from, to) {
-            settings.set_string(listKey, JSON.stringify(own().map(p => p.name === from ? {...p, name: to} : p)));
+            save(own().map(p => p.name === from ? {...p, name: to} : p));
             if (settings.get_string(activeKey) === from)
                 settings.set_string(activeKey, to);
         },
         // A name not in use: `name`, or "name (2)", "name (3)"...
         freeName(name) {
             let free = name;
-            for (let i = 2; reserved.has(free) || own().some(p => p.name === free); i++)
+            for (let i = 2; taken(free); i++)
                 free = `${name} (${i})`;
             return free;
         },
@@ -106,16 +106,15 @@ function generalProfiles(settings, light, dark) {
         {name: 'Default', light: 'Light Default', dark: 'Dark Default'},
         {name: 'GNOME', light: 'GNOME', dark: 'GNOME'},
     ], p => typeof p.light === 'string' && typeof p.dark === 'string');
-    const find = (mode, name) => mode.byName(name);
     return {
         ...store,
         keys: [...store.keys, ...light.keys, ...dark.keys],
         // Whether the mode profile a general profile points to still exists.
-        exists: (mode, name) => !!find(mode, name),
+        exists: (mode, name) => !!mode.byName(name),
         // A side whose profile was deleted is left as it is.
         apply(profile) {
             store.setActive(profile.name);
-            const [l, d] = [find(light, profile.light), find(dark, profile.dark)];
+            const [l, d] = [light.byName(profile.light), dark.byName(profile.dark)];
             if (l)
                 light.apply(l);
             if (d)
@@ -127,7 +126,7 @@ function generalProfiles(settings, light, dark) {
             const [l, d] = [light.applied()?.name, dark.applied()?.name];
             if (!l || !d)
                 return null;
-            const pairs = p => find(light, p.light)?.name === l && find(dark, p.dark)?.name === d;
+            const pairs = p => light.byName(p.light)?.name === l && dark.byName(p.dark)?.name === d;
             const active = store.byName(store.activeName());
             return active && pairs(active) ? active : profiles.find(pairs) ?? null;
         },

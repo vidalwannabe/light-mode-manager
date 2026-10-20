@@ -8,6 +8,22 @@ import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/ex
 
 import {createProfiles} from './profiles.js';
 
+const toHex = c => `#${[c.red, c.green, c.blue]
+    .map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('')}`;
+
+// The accent color chosen in GNOME Settings (libadwaita 1.6+), GNOME's blue otherwise.
+const accentColor = () => {
+    const rgba = Adw.StyleManager.get_default().get_accent_color_rgba?.();
+    return rgba ? toHex(rgba) : '#3584e4';
+};
+
+// The swatch of a row that follows another one when empty: that row's color (in the same
+// mode), or the gray placeholder. `row` tells the tab to refresh it when that row changes.
+const sameAs = row => Object.assign(
+    (settings, suffix) => settings.get_string(`color-${row}${suffix}`).trim() || PLACEHOLDER, {row});
+const PLACEHOLDER = '#808080';
+const {SUGGESTED, DESTRUCTIVE} = Adw.ResponseAppearance;
+
 // The Light mode and Dark mode tabs show exactly these rows.
 // [key name, title, subtitle, swatch tooltip and color when empty]; a set color's tooltip is
 // its code. Transparency is set only in the Appearance tab.
@@ -30,32 +46,23 @@ const COLOR_GROUPS = [
         ['qs-button', 'Idle button background', 'Toggles that are off, top round buttons and slider buttons'],
         ['qs-menu', 'Idle expanded menu', 'Menu opened by a toggle that is off, such as Wi-Fi or Bluetooth'],
         ['qs-active-fg', 'Active button text and icons', 'Text, icons and arrows of Quick Settings toggles that are on', 'Accent text color', '#ffffff'],
-        ['qs-active', 'Active button background', 'Quick Settings toggles that are on and their arrows', ACCENT, () => accentColor()],
+        ['qs-active', 'Active button background', 'Quick Settings toggles that are on and their arrows', ACCENT, accentColor],
         ['qs-active-menu', 'Active expanded menu', 'Menu opened by a toggle that is on', 'Same as idle expanded menu',
-            (settings, key) => settings.get_string(key.replace('active-menu', 'menu')).trim() || '#808080'],
-        ['highlight', 'Volume and brightness sliders', 'Filled part of the volume, brightness and other sliders', ACCENT, () => accentColor()],
+            sameAs('qs-menu')],
+        ['highlight', 'Volume and brightness sliders', 'Filled part of the volume, brightness and other sliders', ACCENT, accentColor],
     ]],
     ['Notification panel', [
         ['fg', 'Card titles and icons', 'Notifications, calendar and widgets; also menus and dialogs'],
         ['fg-muted', 'Card subtitles', 'Text under titles: notification body, times, locations and weekdays'],
         ['card', 'Card background', 'Notifications, banners, Clear button and Today, World Clocks and Weather'],
-        ['today', 'Today in the calendar background', 'Circle behind the current day', ACCENT, () => accentColor()],
+        ['today', 'Today in the calendar background', 'Circle behind the current day', ACCENT, accentColor],
         ['today-fg', 'Today in the calendar text', 'Number of the current day'],
         ['media-fg', 'Media player text and icons', 'Title, artist, app name and playback buttons of the music playing',
-            'Same as card text', (settings, key) => settings.get_string(key.replace('media-fg', 'fg')).trim() || '#808080'],
+            'Same as card text', sameAs('fg')],
         ['media', 'Media player background', 'Card of the music playing; its buttons light up from it on hover',
-            'Same as card background', (settings, key) => settings.get_string(key.replace('media', 'card')).trim() || '#808080'],
+            'Same as card background', sameAs('card')],
     ]],
 ];
-
-// The accent color chosen in GNOME Settings (libadwaita 1.6+), GNOME's blue otherwise.
-const accentColor = () => {
-    const rgba = Adw.StyleManager.get_default().get_accent_color_rgba?.();
-    return rgba ? toHex(rgba) : '#3584e4';
-};
-
-const toHex = c => `#${[c.red, c.green, c.blue]
-    .map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('')}`;
 
 const flatButton = props => {
     const button = new Gtk.Button({valign: Gtk.Align.CENTER, ...props});
@@ -93,13 +100,17 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             return false;
         });
 
-        const colorRow = (group, key, title, subtitle, emptyLabel = 'System default', emptyColor = '#808080') => {
+        // A color row of a mode tab (`suffix`: '' or '-dark').
+        const colorRow = (group, name, suffix, title, subtitle, emptyLabel = 'System default', emptyColor = PLACEHOLDER) => {
+            const key = `color-${name}${suffix}`;
             const row = new Adw.ActionRow({title, subtitle});
             const button = new Gtk.ColorDialogButton({
                 dialog: new Gtk.ColorDialog({with_alpha: false}),
                 valign: Gtk.Align.CENTER,
             });
-            // Centered, for the two- and three-line tooltips of colors on system default.
+            // The code shown and copied: null for the gray placeholder of a color on system
+            // default. The tooltip is centered, for the lines of colors on system default.
+            let code = null;
             let tooltip = '';
             button.set_has_tooltip(true);
             button.connect('query-tooltip', (_b, _x, _y, _keyboard, tip) => {
@@ -108,19 +119,18 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             });
             let loading = false;
             const load = () => {
-                // Empty or unreadable: the shell uses the system default, named in the swatch's
-                // tooltip under the code of the color it stands for (the accent...); the gray
-                // placeholder has no code.
-                // "accent": the accent color set in GNOME Settings (Active expanded menu's default).
+                // Empty or unreadable: the shell uses the system default, named in the tooltip
+                // under the code of the color it stands for (the accent...). "accent": the
+                // accent color set in GNOME Settings (a default of some rows).
+                const value = s.get_string(key).trim();
                 const color = new Gdk.RGBA();
-                const accent = s.get_string(key).trim() === 'accent';
-                const valid = !accent && color.parse(s.get_string(key).trim());
-                if (accent)
-                    color.parse(accentColor());
-                else if (!valid)
-                    color.parse(typeof emptyColor === 'function' ? emptyColor(s, key) : emptyColor);
+                const accent = value === 'accent';
+                const valid = !accent && color.parse(value);
+                if (!valid)
+                    color.parse(accent ? accentColor() : typeof emptyColor === 'function' ? emptyColor(s, suffix) : emptyColor);
                 const hex = toHex(color).toUpperCase();
-                tooltip = valid ? hex : [hex === '#808080' ? null : hex, accent ? ACCENT : emptyLabel].filter(Boolean).join('\n');
+                code = valid || hex !== PLACEHOLDER ? hex : null;
+                tooltip = valid ? hex : [code, accent ? ACCENT : emptyLabel].filter(Boolean).join('\n');
                 loading = true;
                 button.set_rgba(color);
                 loading = false;
@@ -131,18 +141,18 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                     s.set_string(key, toHex(button.get_rgba()));
             });
             watch(key, load);
+            if (emptyColor.row)
+                watch(`color-${emptyColor.row}${suffix}`, load);
 
-            // Right-click copies the color code shown; nothing happens when the swatch is only
-            // the gray placeholder of a color left on system default.
+            // Right-click copies the color code shown, if any.
             const copy = new Gtk.GestureClick({button: Gdk.BUTTON_SECONDARY});
             copy.set_propagation_phase(Gtk.PropagationPhase.CAPTURE);
             copy.connect('pressed', () => {
-                const hex = toHex(button.get_rgba()).toUpperCase();
-                if (!new Gdk.RGBA().parse(s.get_string(key).trim()) && hex === '#808080')
+                if (!code)
                     return;
                 button.get_clipboard().set_content(Gdk.ContentProvider.new_for_bytes('text/plain;charset=utf-8',
-                    new GLib.Bytes(new TextEncoder().encode(hex))));
-                window.add_toast(new Adw.Toast({title: `Color code copied (${hex})`, timeout: 2}));
+                    new GLib.Bytes(new TextEncoder().encode(code))));
+                window.add_toast(new Adw.Toast({title: `Color code copied (${code})`, timeout: 2}));
             });
             button.add_controller(copy);
 
@@ -151,7 +161,26 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             row.add_suffix(button);
             row.add_suffix(reset);
             group.add(row);
-            return load;
+        };
+
+        // An alert dialog with `responses` ([id, label, appearance]): the first one closes it,
+        // the last one is the default when suggested, and onResponse(id) gets the others.
+        const alert = (props, responses, onResponse) => {
+            const dialog = new Adw.AlertDialog(props);
+            for (const [id, label, appearance] of responses) {
+                dialog.add_response(id, label);
+                if (appearance)
+                    dialog.set_response_appearance(id, appearance);
+            }
+            const [[close], [last, , appearance]] = [responses[0], responses.at(-1)];
+            dialog.set_close_response(close);
+            if (appearance === SUGGESTED)
+                dialog.set_default_response(last);
+            dialog.connect('response', (_d, id) => {
+                if (id !== close)
+                    onResponse(id);
+            });
+            return dialog;
         };
 
         // Asks for a new profile name, plus one choice per entry of `combos`
@@ -170,21 +199,12 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                 return () => names[row.get_selected()];
             });
 
-            const dialog = new Adw.AlertDialog({heading, extra_child: fields});
-            dialog.add_response('cancel', 'Cancel');
-            dialog.add_response('ok', action);
-            dialog.set_response_appearance('ok', Adw.ResponseAppearance.SUGGESTED);
-            dialog.set_default_response('ok');
-            dialog.set_close_response('cancel');
             const name = () => entry.get_text().trim();
             const valid = () => name() !== '' && (name() === initial || !taken(name()));
+            const done = () => onConfirm(name(), ...choices.map(get => get()));
+            const dialog = alert({heading, extra_child: fields}, [['cancel', 'Cancel'], ['ok', action, SUGGESTED]], done);
             entry.connect('changed', () => dialog.set_response_enabled('ok', valid()));
             dialog.set_response_enabled('ok', valid());
-            const done = () => onConfirm(name(), ...choices.map(get => get()));
-            dialog.connect('response', (_d, response) => {
-                if (response === 'ok')
-                    done();
-            });
             entry.connect('entry-activated', () => {
                 if (valid()) {
                     done();
@@ -195,18 +215,8 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             entry.grab_focus();
         };
 
-        const confirm = (heading, body, label, onConfirm) => {
-            const dialog = new Adw.AlertDialog({heading, body});
-            dialog.add_response('cancel', 'Cancel');
-            dialog.add_response('ok', label);
-            dialog.set_response_appearance('ok', Adw.ResponseAppearance.DESTRUCTIVE);
-            dialog.set_close_response('cancel');
-            dialog.connect('response', (_d, response) => {
-                if (response === 'ok')
-                    onConfirm();
-            });
-            dialog.present(window);
-        };
+        const confirm = (heading, body, label, onConfirm) =>
+            alert({heading, body}, [['cancel', 'Cancel'], ['ok', label, DESTRUCTIVE]], onConfirm).present(window);
 
         // A "Color sets" group: one row with a selector (apply; send, rename and delete the user's
         // own) and the given add button. `sendTo`: {model, label} of the other mode, for the
@@ -374,29 +384,21 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                     return;
                 }
                 const [mode, label] = next;
-                const dialog = new Adw.AlertDialog({
+                alert({
                     heading: `Save ${label} colors?`,
                     body: `Your color set on the ${label} tab isn't saved. Save it to use it in this new ` +
                         'general color set, or skip to choose another one.',
-                });
-                dialog.add_response('cancel', 'Cancel');
-                dialog.add_response('skip', 'Skip');
-                dialog.add_response('save', 'Save…');
-                dialog.set_response_appearance('save', Adw.ResponseAppearance.SUGGESTED);
-                dialog.set_default_response('save');
-                dialog.set_close_response('cancel');
-                dialog.connect('response', (_d, response) => {
+                }, [['cancel', 'Cancel'], ['skip', 'Skip'], ['save', 'Save…', SUGGESTED]], response => {
                     if (response === 'skip') {
                         saveUnsaved(pending, done);
-                    } else if (response === 'save') {
+                    } else {
                         profileDialog(mode.taken, name => {
                             mode.save([...mode.own(), {name, colors: mode.current()}]);
                             mode.setActive(name);
                             saveUnsaved(pending, done);
                         }, [], `New ${label} color set`);
                     }
-                });
-                dialog.present(window);
+                }).present(window);
             };
 
             const addButton = flatButton({icon_name: 'media-floppy-symbolic', tooltip_text: 'New general color set'});
@@ -479,12 +481,9 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             const keys = [];
             for (const [groupTitle, rows] of COLOR_GROUPS) {
                 const group = new Adw.PreferencesGroup({title: groupTitle});
-                for (const [name, label, subtitle, emptyLabel, emptyColor] of rows) {
+                for (const [name, ...row] of rows) {
                     keys.push(`color-${name}${suffix}`);
-                    const load = colorRow(group, `color-${name}${suffix}`, label, subtitle, emptyLabel, emptyColor);
-                    // The active menu's empty swatch shows the idle menu's color.
-                    if (name === 'qs-active-menu')
-                        watch(`color-qs-menu${suffix}`, load);
+                    colorRow(group, name, suffix, ...row);
                 }
                 page.add(group);
             }
@@ -673,7 +672,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             s.set_boolean('dtp-notice-shown', true);
             if (s.get_boolean('override-dtp-colors'))
                 return;
-            const dialog = new Adw.AlertDialog({
+            alert({
                 heading: 'Dash to Panel detected',
                 body: 'Dash to Panel paints its panel and window previews with its own color and opacity ' +
                     'settings, so the two extensions can show mismatched colors. Turn on “Use this ' +
@@ -681,17 +680,8 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                     'color settings.\n\n' +
                     "Dash to Panel's own color settings are left untouched and take effect again if this " +
                     'option is turned off.',
-            });
-            dialog.add_response('later', 'Not now');
-            dialog.add_response('on', 'Turn on');
-            dialog.set_response_appearance('on', Adw.ResponseAppearance.SUGGESTED);
-            dialog.set_default_response('on');
-            dialog.set_close_response('later');
-            dialog.connect('response', (_d, response) => {
-                if (response === 'on')
-                    s.set_boolean('override-dtp-colors', true);
-            });
-            dialog.present(window);
+            }, [['later', 'Not now'], ['on', 'Turn on', SUGGESTED]], () => s.set_boolean('override-dtp-colors', true))
+                .present(window);
         };
         const showDtp = installed => {
             if (!dtpRow || closed)
@@ -873,27 +863,19 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                         toast(`Import failed: ${e.message}`);
                     return;
                 }
-                const choice = new Adw.AlertDialog({
+                alert({
                     heading: 'Import settings',
                     body: 'Add the color sets from this file to yours, or replace all current settings with it?',
-                });
-                choice.add_response('cancel', 'Cancel');
-                choice.add_response('replace', 'Replace all');
-                choice.add_response('add', 'Add color sets');
-                choice.set_response_appearance('replace', Adw.ResponseAppearance.DESTRUCTIVE);
-                choice.set_response_appearance('add', Adw.ResponseAppearance.SUGGESTED);
-                choice.set_default_response('add');
-                choice.set_close_response('cancel');
-                choice.connect('response', (_c, response) => {
+                }, [['cancel', 'Cancel'], ['replace', 'Replace all', DESTRUCTIVE], ['add', 'Add color sets', SUGGESTED]],
+                response => {
                     if (response === 'replace') {
                         replaceAll(values);
                         toast('Settings replaced');
-                    } else if (response === 'add') {
+                    } else {
                         const count = addProfiles(values);
                         toast(count ? `${count} color set${count > 1 ? 's' : ''} added` : 'No new color sets to add');
                     }
-                });
-                choice.present(window);
+                }).present(window);
             });
         };
 
