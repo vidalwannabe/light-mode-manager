@@ -92,7 +92,7 @@ const NATIVE = {
 
 // Settings that rebuild the theme of each mode: its colors (the rows of the Light mode and
 // Dark mode tabs) and the General tab options. Other keys (profiles...) never do.
-const EFFECT_KEYS = ['hide-borders', 'qs-borders', 'qs-active-borders', 'notification-borders', 'merge-arrow-buttons', 'calendar-background'];
+const EFFECT_KEYS = ['hide-borders', 'qs-borders', 'qs-active-borders', 'notification-borders', 'panel-active-borders', 'merge-arrow-buttons', 'calendar-background'];
 const THEME_KEYS = [false, true].map(dark =>
     [...ROW_NAMES.map(n => `color-${n}${dark ? '-dark' : ''}`), ...EFFECT_KEYS]);
 
@@ -333,6 +333,21 @@ function panelButtonsCss(color) {
     const white = alpha => `rgba(255, 255, 255, ${alpha})`;
     return fills(PANEL_BUTTONS, color, color, color) +
         fills(PANEL_LOCK_BUTTONS, white(0.17), white(0.28), white(0.32));
+}
+
+// "Active top bar buttons" (Borders): the top bar buttons pressed or with their menu open get
+// an outline. Their 3px transparent border (GNOME's fake padding) becomes a 1px outline plus
+// 2px of margin, so the fill and the button's size stay the same; the clock outlines its inner
+// .clock. The lock and login screens keep GNOME's look.
+function panelOutlineCss(outline) {
+    const states = (bases, child = '') => bases.flatMap(base => [':active', ':checked'].map(s => `${base}${s}${child}`)).join(', ');
+    const on = sel => rule(sel, 'border-width', '1px') + rule(sel, 'margin', '2px') + rule(sel, 'border-color', outline);
+    const off = sel => rule(sel, 'border-width', '3px') + rule(sel, 'margin', '0') + rule(sel, 'border-color', 'transparent');
+    const clock = bases => bases.map(base => `${base}.clock-display`);
+    return on(states(PANEL_BUTTONS)) + on(states(clock(PANEL_BUTTONS), ' .clock')) +
+        rule(states(clock(PANEL_BUTTONS)), 'margin', '0') +
+        off(states(PANEL_LOCK_BUTTONS)) + off(states(clock(PANEL_LOCK_BUTTONS), ' .clock')) +
+        rule(states(clock(PANEL_LOCK_BUTTONS)), 'margin', '0');
 }
 
 // "Overview and top bar highlights" on the overview search entry and the password entry of
@@ -1012,8 +1027,9 @@ export default class ShellColorManagerExtension extends Extension {
     // borders" hides them all, with the cards' faint shadow (hidden borders stay 1px wide but
     // transparent, so nothing changes size), and turns the others off. "Active Quick Settings
     // button" and "Idle Quick Settings button" outline those buttons and the menus they open,
-    // and "Notification buttons" the notifications' buttons, the Clear button and the Do Not
-    // Disturb switch, with the Menu borders color (GNOME's faint card border when empty).
+    // "Notification buttons" the notifications' buttons, the Clear button and the Do Not
+    // Disturb switch, and "Active top bar buttons" the pressed or open top bar buttons, with
+    // the Menu borders color (GNOME's faint card border when empty).
     // Outlines are drawn as an outer shadow, so nothing changes size.
     _borderCss(color, dark) {
         if (this._settings.get_boolean('hide-borders')) {
@@ -1035,7 +1051,7 @@ export default class ShellColorManagerExtension extends Extension {
             qs += rule('.quick-toggle:checked, .quick-toggle-has-menu:checked', 'box-shadow', `0 0 0 1px ${outline}`) +
                 rule('.quick-toggle-has-menu .quick-toggle', 'box-shadow', 'none');
         }
-        return css + qs + notifications;
+        return css + qs + notifications + (this._settings.get_boolean('panel-active-borders') ? panelOutlineCss(outline) : '');
     }
 
     // The stylesheet of a mode, over GNOME's own style: the rules of every color row and
