@@ -138,7 +138,7 @@ function buttonCss(selectors, base, dark) {
 const QS_BUTTONS = ['.quick-toggle', '.quick-settings-system-item .icon-button', '.quick-slider .icon-button'];
 const QS_MENU = '.quick-toggle-menu';
 // "Active expanded menu background": the menu of a toggle that is on. CSS cannot see the toggle's
-// state from its menu, so _trackActiveMenus() gives the menu this class while it is on.
+// state from its menu, so _prepareMenu() gives the menu this class while it is on.
 const ACTIVE_MENU_CLASS = 'scm-active';
 const QS_ACTIVE_MENU = `${QS_MENU}.${ACTIVE_MENU_CLASS}`;
 // The open menu is not reactive, so St gives it :insensitive, which GNOME (and buttonCss)
@@ -619,31 +619,31 @@ export default class ShellColorManagerExtension extends Extension {
             delete object[name];
     }
 
-    // Both options below act when a Quick Settings toggle opens its menu, so while either is on
-    // QuickToggleMenu.open() is wrapped (QuickToggleMenu is not exported: its prototype comes
-    // from a throwaway item). `enabled` false (disable()) turns both off.
+    // Quick Settings menus are prepared as a toggle opens one (_prepareMenu), in whatever
+    // panel it is: GNOME's, a copy another extension makes, or a panel built with libpanel
+    // (Quick Settings Audio Panel), which also rebuilds GNOME's own after this extension
+    // starts. QuickToggleMenu.open() is wrapped for that while the extension is enabled
+    // (QuickToggleMenu is not exported: its prototype comes from a throwaway item).
     //
-    // no-qs-dimming: while one of its menus is open, Quick Settings is darkened with a Clutter
-    // effect (not CSS) from _setDimmed(). GNOME's QuickSettingsMenu (the main panel, and the
-    // separate panels other extensions create from it) gets a _setDimmed() that does nothing.
-    // Panels built with libpanel (Quick Settings Audio Panel's independent panel, and the main
-    // panel when that library rebuilds it) dim themselves with their own _setDimmed(): each
-    // one gets an empty one too, found as an ancestor of a menu when it opens.
+    // no-qs-dimming: while one of its menus is open, a panel is darkened with a Clutter effect
+    // (not CSS) from _setDimmed(). GNOME's QuickSettingsMenu (and its copies) gets a
+    // _setDimmed() that does nothing; libpanel panels, which dim themselves with their own,
+    // get an empty one as a menu of theirs opens.
     //
     // fix-qs-menu-height: GNOME measures an expanded menu, and the room the buttons below make
     // for it, with get_preferred_height(-1): at no particular width. Text that wraps
     // (Bluetooth off: "Turn on Bluetooth to connect to devices") then counts as one line and
     // the menu covers the buttons below (GNOME issue 7622). Both are measured at the width of
-    // the menus' overlay instead, in any language: the menu when it opens, and the grid's
+    // the menus' overlay instead, in any language: the menu as it opens, and the panel grid's
     // placeholder, whose height the Quick Settings layout reads as the room for an open menu
     // (bound to the overlay by a constraint that measures it in C, at -1, so the placeholder's
     // own get_preferred_height() is replaced).
+    //
+    // `enabled` false (disable()) undoes everything.
     _syncQsMenus(enabled = true) {
         const menu = Main.panel.statusArea.quickSettings?.menu;
         const undim = enabled && this._settings.get_boolean('no-qs-dimming');
-        const overlay = menu?._overlay;
-        const placeholder = menu?._grid?.layout_manager?._overlay;
-        const fix = enabled && !!overlay && !!placeholder && this._settings.get_boolean('fix-qs-menu-height');
+        this._fixMenuHeight = enabled && this._settings.get_boolean('fix-qs-menu-height');
 
         if (undim && !this._noDimming) {
             // Undo a dimming already in place (a menu open right now).
@@ -651,26 +651,17 @@ export default class ShellColorManagerExtension extends Extension {
                 menu._setDimmed(false);
             this._noDimming = () => {};
             this._override(QuickSettingsMenu.prototype, '_setDimmed', this._noDimming);
-            this._undimmed = new Map();
         } else if (!undim && this._noDimming) {
             this._restore(this._noDimming);
-            for (const noop of this._undimmed.values())
-                this._restore(noop);
-            this._noDimming = this._undimmed = null;
+            this._restoreAll(this._undimmed);
+            this._noDimming = null;
             if (menu instanceof QuickSettingsMenu)
                 menu._setDimmed(!!menu._activeMenu);
         }
+        if (!this._fixMenuHeight)
+            this._restoreAll(this._fixedPlaceholders);
 
-        if (fix && !this._overlayHeight) {
-            this._overlayHeight = heightAtWidth(overlay, () => overlay.width);
-            this._override(placeholder, 'get_preferred_height', this._overlayHeight);
-        } else if (!fix && this._overlayHeight) {
-            this._restore(this._overlayHeight);
-            this._overlayHeight = null;
-        }
-        this._fixMenuHeight = fix;
-
-        if ((undim || fix) && !this._menuOpen) {
+        if (enabled && !this._menuOpen) {
             const item = new QuickSettingsItem({hasMenu: true});
             const proto = Object.getPrototypeOf(item.menu);
             item.menu.destroy();
@@ -678,8 +669,7 @@ export default class ShellColorManagerExtension extends Extension {
             const open = proto.open;
             const extension = this;
             this._menuOpen = function (animate) {
-                if (extension._noDimming)
-                    extension._undimPanels(this.actor);
+                extension._prepareMenu(this);
                 if (!extension._fixMenuHeight)
                     return open.call(this, animate);
                 const {actor} = this;
@@ -691,52 +681,57 @@ export default class ShellColorManagerExtension extends Extension {
                 }
             };
             this._override(proto, 'open', this._menuOpen);
-        } else if (!undim && !fix && this._menuOpen) {
+        } else if (!enabled && this._menuOpen) {
             this._restore(this._menuOpen);
             this._menuOpen = null;
-        }
-        // A menu open right now gets the new height.
-        if (overlay && placeholder)
-            menu._grid.queue_relayout();
-    }
-
-    // The libpanel panels holding `actor` (see _syncQsMenus) get an empty _setDimmed().
-    _undimPanels(actor) {
-        for (let panel = actor; panel; panel = panel.get_parent()) {
-            if (panel._dimEffect && typeof panel._setDimmed === 'function' && !this._undimmed.has(panel)) {
-                const noop = () => {};
-                this._undimmed.set(panel, noop);
-                this._override(panel, '_setDimmed', noop);
+            for (const [toggle, box] of this._activeMenus ?? []) {
+                toggle.disconnectObject(this);
+                box.remove_style_class_name(ACTIVE_MENU_CLASS);
             }
+            this._activeMenus = null;
         }
     }
 
-    // "Active expanded menu background": each Quick Settings menu gets ACTIVE_MENU_CLASS while its
-    // toggle is on, so the stylesheet can tell them apart. Items added later (by other
-    // extensions too) are followed through the grid's child-added signal.
-    _trackActiveMenus(track = true) {
-        const grid = Main.panel.statusArea.quickSettings?.menu?._grid;
-        if (!grid)
-            return;
-        const items = grid.get_children().filter(item => item.menu?.box);
-        if (!track) {
-            grid.disconnectObject(this);
-            for (const item of items) {
-                item.disconnectObject(this);
-                item.menu.box.remove_style_class_name(ACTIVE_MENU_CLASS);
-            }
-            return;
-        }
-        const follow = item => {
-            if (!item.menu?.box)
-                return;
-            const sync = () => item.menu.box[item.checked ? 'add_style_class_name' : 'remove_style_class_name'](
+    // Puts back the methods replaced for each object of `map` (object -> replacement).
+    _restoreAll(map) {
+        for (const fn of map?.values() ?? [])
+            this._restore(fn);
+        map?.clear();
+    }
+
+    // A Quick Settings toggle opens `menu` (see _syncQsMenus).
+    _prepareMenu(menu) {
+        const toggle = menu.sourceActor;
+        // "Active expanded menu background": the menu has ACTIVE_MENU_CLASS while its toggle is
+        // on, so the stylesheet can tell it apart.
+        this._activeMenus ??= new Map();
+        if (toggle && menu.box && !this._activeMenus.has(toggle)) {
+            const sync = () => menu.box[toggle.checked ? 'add_style_class_name' : 'remove_style_class_name'](
                 ACTIVE_MENU_CLASS);
-            item.connectObject('notify::checked', sync, this);
+            this._activeMenus.set(toggle, menu.box);
+            toggle.connectObject('notify::checked', sync, 'destroy', () => this._activeMenus?.delete(toggle), this);
             sync();
-        };
-        items.forEach(follow);
-        grid.connectObject('child-added', (_grid, item) => follow(item), this);
+        }
+        // The libpanel panels holding the menu get an empty _setDimmed().
+        if (this._noDimming) {
+            this._undimmed ??= new Map();
+            for (let panel = menu.actor; panel; panel = panel.get_parent()) {
+                if (panel._dimEffect && typeof panel._setDimmed === 'function' && !this._undimmed.has(panel)) {
+                    const noop = () => {};
+                    this._undimmed.set(panel, noop);
+                    this._override(panel, '_setDimmed', noop);
+                }
+            }
+        }
+        // The placeholder of the grid holding the toggle is measured at the overlay's width.
+        const overlay = menu.actor?.get_parent();
+        const placeholder = toggle?.get_parent()?.layout_manager?._overlay;
+        this._fixedPlaceholders ??= new Map();
+        if (this._fixMenuHeight && overlay && placeholder && !this._fixedPlaceholders.has(placeholder)) {
+            const height = heightAtWidth(overlay, () => overlay.width);
+            this._fixedPlaceholders.set(placeholder, height);
+            this._override(placeholder, 'get_preferred_height', height);
+        }
     }
 
     // ---------- Automatic switch ----------
@@ -1271,7 +1266,6 @@ export default class ShellColorManagerExtension extends Extension {
         });
         this._syncQuickSettings();
         this._syncQsMenus();
-        this._trackActiveMenus();
 
         this._syncAutoSwitch();
         this._applyTheme();
@@ -1299,7 +1293,6 @@ export default class ShellColorManagerExtension extends Extension {
         this._indicator?.destroy();
         this._indicator = null;
         this._syncQsMenus(false);
-        this._trackActiveMenus(false);
         if (this._forcedDark) {
             Main.sessionMode.colorScheme = this._modeScheme;
             St.Settings.get().notify('color-scheme');
