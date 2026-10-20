@@ -11,21 +11,21 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import {BackgroundMenu} from 'resource:///org/gnome/shell/ui/backgroundMenu.js';
 import {QuickMenuToggle, QuickSettingsItem, SystemIndicator} from 'resource:///org/gnome/shell/ui/quickSettings.js';
 
-import {createProfiles} from './profiles.js';
+import {createProfiles, ROW_NAMES} from './profiles.js';
 
 // Everything from this marker on (login/lock screen) is kept as is.
 const MARKER = '.login-dialog,\n.unlock-dialog {\n  color: #e1e1e1;';
 
-// [setting key, color used in templates/light.css, same color as "r, g, b"]
-// Several template colors can share one setting.
+// [color row, color used in templates/light.css, same color as "r, g, b"]
+// Several template colors can share one row.
 const TOKENS = [
-    ['color-fg', '#222226', '34, 34, 38'],
-    ['color-fg-muted', '#767679', '118, 118, 121'],
-    ['color-card', '#e8e8e8', '232, 232, 232'],
-    ['color-card', '#cecece', '206, 206, 206'],
-    ['color-general', '#dcdcdc', '220, 220, 220'],
-    ['color-general', '#e1e1e1', '225, 225, 225'],
-    ['color-general', 'whitesmoke', '245, 245, 245'],
+    ['fg', '#222226', '34, 34, 38'],
+    ['fg-muted', '#767679', '118, 118, 121'],
+    ['card', '#e8e8e8', '232, 232, 232'],
+    ['card', '#cecece', '206, 206, 206'],
+    ['general', '#dcdcdc', '220, 220, 220'],
+    ['general', '#e1e1e1', '225, 225, 225'],
+    ['general', 'whitesmoke', '245, 245, 245'],
 ];
 
 // Matches every token color and its rgba() variants.
@@ -45,30 +45,30 @@ const PANEL_SHOW_APPS_SEL = '#panel .show-apps .overview-icon';
 const PANEL_LOCK_SEL = '#panel.unlock-screen .panel-button, #panel.login-screen .panel-button, ' +
     '#panel.unlock-screen .panel-button.clock-display, #panel.login-screen .panel-button.clock-display';
 
-// Dark mode has no template: each setting overrides a list of elements.
-// [selectors, property, setting key]
+// Dark mode has no template: each color row overrides a list of elements.
+// [selectors, property, color row]
 const DARK_RULES = [
     [[
         '.popup-menu-content', '.candidate-popup-content',
         '.switcher-list', '.osd-window', '.workspace-switcher', '.resize-popup',
-    ], 'background-color', 'color-general-dark'],
+    ], 'background-color', 'general'],
     [[
         '.notification-banner',
-    ], 'background-color', 'color-card-dark'],
+    ], 'background-color', 'card'],
     [[
         '#dash .dash-background',
-    ], 'background-color', 'color-dash-dark'],
+    ], 'background-color', 'dash'],
     [[
         '.overview-tile', '.grid-search-result', '.app-folder', '.app-folder-dialog',
         '.app-folder-dialog .folder-name-container .folder-name-label', '.page-navigation-arrow',
-    ], 'color', 'color-grid-fg-dark'],
+    ], 'color', 'grid-fg'],
     [[
         'stage', '.popup-menu', '.popup-menu-item', '.popup-inactive-menu-item', '.message',
         '.quick-toggle-menu', '.events-button', '.world-clocks-button', '.weather-button',
         '.datemenu-today-button', '.calendar .calendar-day', '.calendar .calendar-month-header .calendar-month-label',
         '.modal-dialog', '.osd-window', '.switcher-list .item-box',
         '.list-search-result', '.search-section-content',
-    ], 'color', 'color-fg-dark'],
+    ], 'color', 'fg'],
     [[
         '.message .message-header', '.message .message-header .message-header-content .event-time',
         '.events-button .events-box .events-title', '.events-button .events-box .events-list .event-box .event-time',
@@ -77,8 +77,8 @@ const DARK_RULES = [
         '.weather-button .weather-box .weather-header-box .weather-header',
         '.calendar .calendar-day.calendar-weekend', '.calendar .calendar-week-number',
         '.list-search-result .list-search-result-description',
-    ], 'color', 'color-fg-muted-dark'],
-].map(([selectors, prop, key]) => [selectors.join(', '), prop, key]);
+    ], 'color', 'fg-muted'],
+].map(([selectors, prop, row]) => [selectors.join(', '), prop, row]);
 
 // Dark mode cards that are buttons: Quick Settings menus, notifications and the cards
 // below the calendar. They get every state, as GNOME draws them (see buttonCss). The
@@ -95,22 +95,12 @@ const MEDIA_TEXT = [
 ];
 const CARD_BUTTONS = ['.message', '.events-button', '.world-clocks-button', '.weather-button', CLEAR_BUTTON];
 
-// Color settings of each mode.
-const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button', 'color-panel-fg',
-    'color-qs-active-fg', 'color-qs-active', 'color-highlight', 'color-today', 'color-today-fg', 'color-qs-fg', 'color-qs-fg-muted', 'color-qs-menu', 'color-qs-active-menu',
-    'color-media-fg', 'color-media', 'color-dash', 'color-grid-fg', 'color-panel',
-    'color-overview'];
-const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
-// Settings that rebuild the theme of each mode (colors and Appearance tab options);
-// other keys (profiles...) never do.
-const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'hide-borders', 'match-arrow-buttons', 'merge-arrow-buttons',
-    'calendar-background', 'lock-screen-native'];
-const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
-const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark',
-    'color-qs-active-fg-dark', 'color-qs-active-dark', 'color-highlight-dark', 'color-today-dark', 'color-today-fg-dark',
-    'color-qs-fg-dark', 'color-qs-fg-muted-dark', 'color-qs-menu-dark',
-    'color-qs-active-menu-dark', 'color-media-fg-dark', 'color-media-dark', 'color-panel-dark',
-    'color-overview-dark', ...EFFECT_KEYS];
+// Settings that rebuild the theme of each mode: its colors (the rows of the Light mode and
+// Dark mode tabs) and the Appearance tab options. Other keys (profiles...) never do.
+const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'hide-borders', 'match-arrow-buttons',
+    'merge-arrow-buttons', 'calendar-background', 'lock-screen-native'];
+const THEME_KEYS = [false, true].map(dark =>
+    [...ROW_NAMES.map(n => `color-${n}${dark ? '-dark' : ''}`), ...EFFECT_KEYS]);
 
 // Accepted color values: #rgb, #rrggbb, rgb()/rgba() or a name. Anything else (edited in
 // dconf or imported) counts as system default, so it can never break the stylesheet.
@@ -134,7 +124,7 @@ const LIGHT_OPAQUE_RE = /overview|grid-search-result|modal-dialog|audio-device-s
 // template paints it with the card tokens, so those rules get the template's own card
 // colors back.
 const GRID_RE = /#dash|search|app-folder/;
-const CARD_TOKENS = TOKENS.filter(([key]) => key === 'color-card');
+const CARD_TOKENS = TOKENS.filter(([row]) => row === 'card');
 // The app grid (app and folder names, folder dialogs, page arrows) has its own text color,
 // "App grid text": "Card titles and icons" does not paint it. In light mode
 // the template paints it with the text token, so those rules are repeated with that color
@@ -151,23 +141,30 @@ const SHADOW_SEL = '.popup-menu-content, .candidate-popup-content, .switcher-lis
 const shade = dark => dark ? 'st-lighten' : 'st-darken';
 const focusTint = dark => dark ? 'st-mix(-st-accent-color, #ffffff, 60%)' : '-st-accent-color';
 
+// `selectors` (one or a list) in each of `states`, as one comma-separated selector.
+const inStates = (selectors, states) => states.flatMap(state => [selectors].flat().map(sel => sel + state)).join(', ');
+
+// Hover (`hover` states), click and click-hover backgrounds lit from `base`, by GNOME 48's
+// button amounts.
+function litCss(selectors, base, dark, hover = [':hover']) {
+    const adjust = shade(dark);
+    return rule(inStates(selectors, hover), 'background-color', `${adjust}(${base}, 4%)`) +
+        rule(inStates(selectors, [':active']), 'background-color', `${adjust}(${base}, 9%)`) +
+        rule(inStates(selectors, [':active:hover']), 'background-color', `${adjust}(${adjust}(${base}, 9%), 4%)`);
+}
+
 // The background of a button (one selector or a list) in every state, with the expressions
 // GNOME 48 uses. Extension stylesheets rank above GNOME's whatever the specificity, so a
 // plain rule would also replace GNOME's hover and active colors.
 function buttonCss(selectors, base, dark) {
     const adjust = shade(dark);
     const focus = focusTint(dark);
-    return [
-        ['', base],
-        [':hover', `${adjust}(${base}, 4%)`],
-        [':active', `${adjust}(${base}, 9%)`],
-        [':active:hover', `${adjust}(${adjust}(${base}, 9%), 4%)`],
-        [':focus', `st-mix(${focus}, ${base}, 5%)`],
-        [':focus:hover', `st-mix(${focus}, ${adjust}(${base}, 4%), 5%)`],
-        [':active:focus', `st-mix(${focus}, ${adjust}(${base}, 9%), 5%)`],
-        [':insensitive', `${shade(!dark)}(${base}, 3%)`],
-    ].map(([state, color]) => rule([selectors].flat().map(sel => sel + state).join(', '),
-        'background-color', color)).join('');
+    const paint = (state, color) => rule(inStates(selectors, [state]), 'background-color', color);
+    return paint('', base) + litCss(selectors, base, dark) +
+        paint(':focus', `st-mix(${focus}, ${base}, 5%)`) +
+        paint(':focus:hover', `st-mix(${focus}, ${adjust}(${base}, 4%), 5%)`) +
+        paint(':active:focus', `st-mix(${focus}, ${adjust}(${base}, 9%), 5%)`) +
+        paint(':insensitive', `${shade(!dark)}(${base}, 3%)`);
 }
 
 // Idle Quick Settings buttons: toggles that are off and the round buttons at the top.
@@ -186,15 +183,9 @@ const QS_ACTIVE_MENU = `${QS_MENU}.${ACTIVE_MENU_CLASS}`;
 // draws a shade lighter: it keeps its own color instead. Its items (networks, devices...)
 // are lit from the menu's own color by the same amounts as the buttons (see buttonCss),
 // instead of GNOME's fixed gray; disabled items keep GNOME's transparent background.
-function menuCss(color, dark, selector = QS_MENU) {
-    const adjust = shade(dark);
-    const item = `${selector} .popup-menu-item`;
-    return buttonCss(selector, color, dark) +
-        rule(`${selector}:insensitive`, 'background-color', color) +
-        rule(`${item}:hover, ${item}:selected, ${item}:checked`, 'background-color', `${adjust}(${color}, 4%)`) +
-        rule(`${item}:active`, 'background-color', `${adjust}(${color}, 9%)`) +
-        rule(`${item}:active:hover`, 'background-color', `${adjust}(${adjust}(${color}, 9%), 4%)`);
-}
+const menuCss = (color, dark, selector = QS_MENU) => buttonCss(selector, color, dark) +
+    rule(`${selector}:insensitive`, 'background-color', color) +
+    litCss(`${selector} .popup-menu-item`, color, dark, [':hover', ':selected', ':checked']);
 const QS_CHECKED = '.quick-toggle:checked';
 const QS_MENU_ICON_ON = '.quick-toggle-menu .header .icon.active';
 const QS_FLAT = '.background-apps-quick-toggle';
@@ -226,7 +217,7 @@ const CALENDAR_TODAY = '.calendar .calendar-day.calendar-today';
 const NATIVE_CARD = '#47474c';
 function calendarCss(card, dark) {
     const adjust = shade(dark);
-    const flat = (...states) => states.flatMap(state => CALENDAR_FLAT.map(sel => sel + state)).join(', ');
+    const flat = (...states) => inStates(CALENDAR_FLAT, states);
     return `.calendar {\n  background-color: ${card};\n  padding: 6px;\n}\n` +
         // The month name and weekday headings are not reactive, so St marks them
         // :insensitive, which GNOME paints with the menu color: transparent too.
@@ -261,7 +252,7 @@ const MENU_TITLE = 'Shell Color Manager…';
 
 const rule = (selector, prop, value) => `${selector} {\n  ${prop}: ${value};\n}\n`;
 const noShadowCss = rule(SHADOW_SEL, 'box-shadow', 'none');
-const insensitive = selectors => selectors.map(s => `${s}:insensitive`).join(', ');
+const insensitive = selectors => inStates(selectors, [':insensitive']);
 
 // "Idle button titles and icons": Quick Settings toggles and their arrows, the round buttons
 // at the top, the slider buttons and the heading of the menus toggles open. "Idle buttons
@@ -745,12 +736,8 @@ export default class ShellColorManagerExtension extends Extension {
         const follow = item => {
             if (!item.menu?.box)
                 return;
-            const sync = () => {
-                if (item.checked)
-                    item.menu.box.add_style_class_name(ACTIVE_MENU_CLASS);
-                else
-                    item.menu.box.remove_style_class_name(ACTIVE_MENU_CLASS);
-            };
+            const sync = () => item.menu.box[item.checked ? 'add_style_class_name' : 'remove_style_class_name'](
+                ACTIVE_MENU_CLASS);
             item.connectObject('notify::checked', sync, this);
             sync();
         };
@@ -911,12 +898,13 @@ export default class ShellColorManagerExtension extends Extension {
             .join('') + noShadowCss;
     }
 
-    // The colors of the given keys; empty means system default.
-    _values(keys) {
-        return keys.map(key => {
-            const value = this._settings.get_string(key).trim();
-            return COLOR_RE.test(value) ? value : '';
-        });
+    // The colors of a mode by row name ('fg', 'card'...): empty means system default, and
+    // "accent" (the default of some rows) the accent color set in GNOME Settings.
+    _colors(dark) {
+        return Object.fromEntries(ROW_NAMES.map(n => {
+            const value = this._settings.get_string(`color-${n}${dark ? '-dark' : ''}`).trim();
+            return [n, value === 'accent' ? '-st-accent-color' : COLOR_RE.test(value) ? value : ''];
+        }));
     }
 
     // A color or option changed: applied shortly (a profile changes several keys at once),
@@ -941,7 +929,7 @@ export default class ShellColorManagerExtension extends Extension {
     }
 
     _wantsForcedDark() {
-        return !this._isDark() && !this._lockedNative() && this._values(LIGHT_KEYS).every(v => !v);
+        return !this._isDark() && !this._lockedNative() && Object.values(this._colors(false)).every(v => !v);
     }
 
     // Vanilla GNOME keeps the shell dark in light mode. With every light color on system
@@ -972,16 +960,13 @@ export default class ShellColorManagerExtension extends Extension {
         return Main.sessionMode.isLocked && this._settings.get_boolean('lock-screen-native');
     }
 
-    // "Sliders" (the filled part of every slider: volume, brightness...) and "Today in the
-    // calendar", in all its states. Empty: GNOME's accent color.
-    _highlightCss(dark) {
-        const [slider, today, todayFg] = this._values(dark
-            ? ['color-highlight-dark', 'color-today-dark', 'color-today-fg-dark']
-            : ['color-highlight', 'color-today', 'color-today-fg']);
+    // "Volume and brightness sliders" (the filled part of every slider) and "Today in the
+    // calendar" background (in all its states) and text. `c`: the mode's colors (_colors).
+    _highlightCss(c, dark) {
         // The day number comes after textRolesCss, which sets it to the accent text color.
-        return (slider ? rule('.slider', '-barlevel-active-background-color', slider) : '') +
-            (today ? buttonCss(CALENDAR_TODAY, today, dark) : '') +
-            (todayFg ? rule(CALENDAR_TODAY, 'color', todayFg) : '');
+        return (c.highlight ? rule('.slider', '-barlevel-active-background-color', c.highlight) : '') +
+            (c.today ? buttonCss(CALENDAR_TODAY, c.today, dark) : '') +
+            (c['today-fg'] ? rule(CALENDAR_TODAY, 'color', c['today-fg']) : '');
     }
 
     // "Media player text and icons" and "Media player background": the card of the music or
@@ -989,25 +974,14 @@ export default class ShellColorManagerExtension extends Extension {
     // Empty, they follow the cards. The buttons are flat; on hover and click they light up
     // from the player's background (the cards' when empty) by the same amounts as buttons.
     // `card`: the "Card background" in use, empty for GNOME's own.
-    _mediaCss(dark, card) {
-        const [fg, value] = this._values(dark ? ['color-media-fg-dark', 'color-media-dark']
-            : ['color-media-fg', 'color-media']);
-        // "accent" (the default background) is the accent color set in GNOME Settings.
-        const bg = value === 'accent' ? '-st-accent-color' : value;
+    _mediaCss(c, dark, card) {
+        const {'media-fg': fg, media: bg} = c;
         const opacity = this._settings.get_int('card-opacity');
-        let css = '';
-        if (bg)
-            css += buttonCss(MEDIA_CARD, translucent(bg, opacity), dark);
-        const base = bg || card;
-        if (base) {
-            // The pointer over a button is also over the card, which is lit 4% (buttonCss):
-            // the button lights up from that.
-            const adjust = shade(dark);
-            const color = `${adjust}(${translucent(base, opacity)}, 4%)`;
-            css += rule(`${MEDIA_CONTROL}:hover`, 'background-color', `${adjust}(${color}, 4%)`) +
-                rule(`${MEDIA_CONTROL}:active`, 'background-color', `${adjust}(${color}, 9%)`) +
-                rule(`${MEDIA_CONTROL}:active:hover`, 'background-color', `${adjust}(${adjust}(${color}, 9%), 4%)`);
-        }
+        let css = bg ? buttonCss(MEDIA_CARD, translucent(bg, opacity), dark) : '';
+        // The pointer over a button is also over the card, which is lit 4% (buttonCss): the
+        // button lights up from that.
+        if (bg || card)
+            css += litCss(MEDIA_CONTROL, `${shade(dark)}(${translucent(bg || card, opacity)}, 4%)`, dark);
         if (fg) {
             css += rule([...MEDIA_TEXT, MEDIA_CONTROL, `${MEDIA_CONTROL}:hover`, `${MEDIA_CONTROL}:active`].join(', '),
                 'color', fg) +
@@ -1032,79 +1006,65 @@ export default class ShellColorManagerExtension extends Extension {
             rule(PANEL_LOCK_BAR_SEL, 'background-color', 'transparent');
     }
 
-    // The menu border rule for the given border color setting (none for the system's).
+    // The menu border rule for the given "Menu borders" color (none for the system's).
     // Hidden borders stay 1px wide but transparent, so menus keep their size.
-    _borderCss(key) {
+    _borderCss(color) {
         if (this._settings.get_boolean('hide-borders'))
             return rule(BORDER_SEL, 'border-color', 'transparent');
-        const [color] = key ? this._values([key]) : [''];
         return color ? rule(BORDER_SEL, 'border-color', color) : '';
     }
 
     _darkCss() {
-        const values = this._values(DARK_KEYS);
+        const c = this._colors(true);
         const opacity = this._settings.get_int('general-opacity');
-        const general = DARK_KEYS.indexOf('color-general-dark');
-        const opaque = withOpacity(values[general], 100);
-        values[general] = withOpacity(values[general], opacity);
         let css = '';
-        DARK_RULES.forEach(([selector, prop], i) => {
-            if (values[i])
-                css += rule(selector, prop, values[i]);
-        });
-        if (!opaque)
+        for (const [selector, prop, row] of DARK_RULES) {
+            const value = row === 'general' ? withOpacity(c.general, opacity) : c[row];
+            if (value)
+                css += rule(selector, prop, value);
+        }
+        if (!c.general)
             css += this._nativeOpacityCss();
         else if (opacity < 100)
             css += noShadowCss;
         // "Top bar background" and "Overview and dialogs background" (always opaque).
-        const [panel, overview] = this._values(['color-panel-dark', 'color-overview-dark']);
-        css += this._panelCss(panel, NATIVE_PANEL);
-        const dash = values[DARK_KEYS.indexOf('color-dash-dark')];
-        if (dash) {
-            css += entriesCss(dash, true, values[DARK_KEYS.indexOf('color-fg-dark')],
-                values[DARK_KEYS.indexOf('color-fg-muted-dark')]) + panelButtonsCss(dash);
-        }
-        if (overview)
-            css += rule(DARK_OPAQUE_SEL, 'background-color', withOpacity(overview, 100));
+        css += this._panelCss(c.panel, NATIVE_PANEL);
+        if (c.dash)
+            css += entriesCss(c.dash, true, c.fg, c['fg-muted']) + panelButtonsCss(c.dash);
+        if (c.overview)
+            css += rule(DARK_OPAQUE_SEL, 'background-color', withOpacity(c.overview, 100));
         // The top bar: "Top bar text and icons".
-        const [panelFg] = this._values(['color-panel-fg-dark']);
-        if (panelFg)
-            css += panelTextCss(panelFg);
+        if (c['panel-fg'])
+            css += panelTextCss(c['panel-fg']);
         // Titles and subtitles: "Card titles and icons", "Card subtitles", "Idle button titles
         // and icons", "Idle button subtitles" and "Active button text and icons".
-        const fg = values[DARK_KEYS.indexOf('color-fg-dark')];
-        const muted = values[DARK_KEYS.indexOf('color-fg-muted-dark')];
-        const [qsFg, qsMuted, active] = this._values(['color-qs-fg-dark', 'color-qs-fg-muted-dark',
-            'color-qs-active-fg-dark']);
-        css += textRolesCss(fg, muted) + quickSettingsTextCss(qsFg, qsMuted);
+        css += textRolesCss(c.fg, c['fg-muted']) + quickSettingsTextCss(c['qs-fg'], c['qs-fg-muted']);
         // After the subtitles, so a toggle that is on keeps its own subtitle color.
-        if (fg || muted || qsFg || qsMuted || active)
-            css += activeTextCss(active || '-st-accent-fg-color');
-        css += this._darkCardsCss(values[DARK_KEYS.indexOf('color-card-dark')],
-            ...this._values(['color-qs-button-dark', 'color-qs-active-dark']),
-            this._values(['color-qs-menu-dark', 'color-qs-active-menu-dark']));
-        return css + this._highlightCss(true) + this._mediaCss(true, values[DARK_KEYS.indexOf('color-card-dark')]) +
-            this._borderCss('color-border-dark');
+        if (c.fg || c['fg-muted'] || c['qs-fg'] || c['qs-fg-muted'] || c['qs-active-fg'])
+            css += activeTextCss(c['qs-active-fg'] || '-st-accent-fg-color');
+        return css + this._darkCardsCss(c) + this._highlightCss(c, true) + this._mediaCss(c, true, c.card) +
+            this._borderCss(c.border);
     }
 
     // Cards, inactive Quick Settings buttons and calendar background on GNOME's dark style;
     // an empty color is GNOME's own.
-    _darkCardsCss(card, qsButtons, active = '', menus = ['', '']) {
+    _darkCardsCss(c) {
         const opacity = this._settings.get_int('card-opacity');
-        const base = card || NATIVE_CARD;
-        let css = card || opacity < 100 ? buttonCss(CARD_BUTTONS, translucent(base, opacity), true) : '';
-        css += this._quickSettingsCss(true, qsButtons, {
+        const base = c.card || NATIVE_CARD;
+        let css = c.card || opacity < 100 ? buttonCss(CARD_BUTTONS, translucent(base, opacity), true) : '';
+        css += this._quickSettingsCss(true, c, {
             toggle: toggleOff(true), arrow: arrowOff(true), arrowChecked: arrowChecked(true), menu: NATIVE_CARD,
-        }, active, ...menus);
+        });
         if (this._settings.get_boolean('calendar-background'))
             css += calendarCss(translucent(base, opacity), true);
         return css;
     }
 
-    // Idle Quick Settings buttons, the menus they open and the arrow buttons. An empty
-    // color uses `native`: GNOME's own toggle, arrow (off, checked) and menu colors.
-    // `menu` and `activeMenu`: "Idle expanded menu" and "Active expanded menu".
-    _quickSettingsCss(dark, color, native, active = '', menu = '', activeMenu = '') {
+    // Idle Quick Settings buttons, the menus they open ("Idle expanded menu" and "Active
+    // expanded menu") and the arrow buttons. An empty color uses `native`: GNOME's own
+    // toggle, arrow (off, checked) and menu colors.
+    _quickSettingsCss(dark, c, native) {
+        const {'qs-button': color, 'qs-active': active, 'qs-menu': menu, 'qs-active-menu': activeMenu} = c;
         // "Active button background": toggles that are on, their arrows and the icon of the
         // menu they open. GNOME's own: the accent color.
         const accent = active || '-st-accent-color';
@@ -1129,14 +1089,10 @@ export default class ShellColorManagerExtension extends Extension {
         // always get their own color back. An active menu without a color keeps the idle one.
         let menus = menu || opacity < 100 || !dark ? menuCss(translucent(menu || native.menu, opacity), dark) : '';
         // On the active menu its heading (title and subtitle) takes "Active button text and icons".
-        // "accent" (the default) is the accent color set in GNOME Settings.
-        if (activeMenu === 'accent')
-            activeMenu = '-st-accent-color';
         if (activeMenu) {
-            const [activeFg] = this._values([dark ? 'color-qs-active-fg-dark' : 'color-qs-active-fg']);
             menus += menuCss(translucent(activeMenu, opacity), dark, QS_ACTIVE_MENU) +
                 rule(`${QS_ACTIVE_MENU} .header .title, ${QS_ACTIVE_MENU} .header .subtitle`, 'color',
-                    activeFg || '-st-accent-fg-color');
+                    c['qs-active-fg'] || '-st-accent-fg-color');
         }
         if (!css)
             return merged + menus;
@@ -1147,59 +1103,56 @@ export default class ShellColorManagerExtension extends Extension {
         return active ? css + rule(QS_MENU_ICON_ON, 'background-color', active) : css;
     }
 
-    // The template is only read when light mode first needs it.
+    // The template is only read when light mode first needs it: [head, tail (login and lock
+    // screens, kept as is), overview/dialog rules, grid rules, app grid text rules].
     _template() {
-        if (!this._templateHead) {
-            const [, bytes] = this.dir.get_child('templates').get_child('light.css').load_contents(null);
-            const template = new TextDecoder().decode(bytes);
-            const idx = template.indexOf(MARKER);
-            this._templateHead = idx >= 0 ? template.slice(0, idx) : template;
-            this._templateTail = idx >= 0 ? template.slice(idx) : '';
-            const rules = [...this._templateHead.matchAll(/([^{}]+)\{([^{}]*)\}/g)];
-            // The overview and dialog rules that use the general background, to repeat them opaque.
-            this._templateOpaque = rules
-                .filter(([, selector, body]) => LIGHT_OPAQUE_RE.test(selector) &&
-                    TOKENS.some(([key, color]) => key === 'color-general' && body.toLowerCase().includes(color)))
-                .map(([text]) => text.trim()).join('\n') + '\n';
-            // The grid rules painted with the card color, reduced to their backgrounds.
-            this._templateGrid = rules
-                .filter(([, selector, body]) => selector.replace(/\/\*[^]*?\*\//g, '').split(',')
-                    .every(part => GRID_RE.test(part)) &&
-                    CARD_TOKENS.some(([, color, rgb]) => body.toLowerCase().includes(color) || body.includes(rgb)))
-                .map(([, selector, body]) => [...body.matchAll(/(?:^|[^-])background-color:\s*([^;]+);/g)]
-                    .map(([, value]) => rule(selector.trim(), 'background-color', value.trim())).join(''))
-                .join('');
-            // The app grid's text colors, as the template has them (not filled in).
-            this._templateGridText = rules.map(([, selector, body]) => {
-                const parts = selector.replace(/\/\*[^]*?\*\//g, '').split(',').map(part => part.trim())
-                    .filter(part => APP_GRID_RE.test(part) && !part.startsWith('#dash'));
-                const colors = [...body.matchAll(/(?:^|[;\s])color:\s*([^;]+);/g)].map(([, value]) => value.trim())
-                    .filter(value => TEXT_TOKEN_RE.test(value));
-                return parts.length && colors.length ? rule(parts.join(', '), 'color', colors.at(-1)) : '';
-            }).join('');
-        }
-        return [this._templateHead, this._templateTail, this._templateOpaque, this._templateGrid,
-            this._templateGridText];
+        if (this._templateParts)
+            return this._templateParts;
+        const [, bytes] = this.dir.get_child('templates').get_child('light.css').load_contents(null);
+        const template = new TextDecoder().decode(bytes);
+        const idx = template.indexOf(MARKER);
+        const head = idx >= 0 ? template.slice(0, idx) : template;
+        const rules = [...head.matchAll(/([^{}]+)\{([^{}]*)\}/g)];
+        const parts = selector => selector.replace(/\/\*[^]*?\*\//g, '').split(',').map(part => part.trim());
+        // The overview and dialog rules that use the general background, to repeat them opaque.
+        const opaque = rules
+            .filter(([, selector, body]) => LIGHT_OPAQUE_RE.test(selector) &&
+                TOKENS.some(([row, color]) => row === 'general' && body.toLowerCase().includes(color)))
+            .map(([text]) => text.trim()).join('\n') + '\n';
+        // The grid rules painted with the card color, reduced to their backgrounds.
+        const grid = rules
+            .filter(([, selector, body]) => parts(selector).every(part => GRID_RE.test(part)) &&
+                CARD_TOKENS.some(([, color, rgb]) => body.toLowerCase().includes(color) || body.includes(rgb)))
+            .map(([, selector, body]) => [...body.matchAll(/(?:^|[^-])background-color:\s*([^;]+);/g)]
+                .map(([, value]) => rule(selector.trim(), 'background-color', value.trim())).join(''))
+            .join('');
+        // The app grid's text colors, as the template has them (not filled in).
+        const gridText = rules.map(([, selector, body]) => {
+            const grids = parts(selector).filter(part => APP_GRID_RE.test(part) && !part.startsWith('#dash'));
+            const colors = [...body.matchAll(/(?:^|[;\s])color:\s*([^;]+);/g)].map(([, value]) => value.trim())
+                .filter(value => TEXT_TOKEN_RE.test(value));
+            return grids.length && colors.length ? rule(grids.join(', '), 'color', colors.at(-1)) : '';
+        }).join('');
+        this._templateParts = [head, idx >= 0 ? template.slice(idx) : '', opaque, grid, gridText];
+        return this._templateParts;
     }
 
     _lightCss() {
-        const values = this._values(LIGHT_KEYS);
+        const c = this._colors(false);
         // Every color on system default (GNOME profile): the shell keeps its own dark style
         // (see _syncShellScheme), so only the Appearance tab options apply, on GNOME's colors.
-        if (values.every(v => !v))
-            return this._darkCardsCss('', '') + this._borderCss(null) + this._nativeOpacityCss() +
-                this._panelCss('', NATIVE_PANEL);
+        if (Object.values(c).every(v => !v))
+            return this._darkCardsCss({}) + this._borderCss('') + this._nativeOpacityCss() + this._panelCss('', NATIVE_PANEL);
 
         // An empty color keeps the template's original one.
-        const byKey = Object.fromEntries(LIGHT_KEYS.map((key, i) => [key, values[i]]));
         const opacity = this._settings.get_int('general-opacity');
         // Each token as a solid color, and with the opacity on the general background.
         const solid = {};
         const faded = {};
         const byRgb = {};
-        for (const [key, color, rgb] of TOKENS) {
-            const value = byKey[key] || (color.startsWith('#') ? color : `rgb(${rgb})`);
-            const general = key === 'color-general';
+        for (const [row, color, rgb] of TOKENS) {
+            const value = c[row] || (color.startsWith('#') ? color : `rgb(${rgb})`);
+            const general = row === 'general';
             solid[color] = general ? withOpacity(value, 100) : value;
             faded[color] = general ? withOpacity(value, opacity) : value;
             byRgb[rgb] = colorToRgb(value) ?? rgb;
@@ -1211,18 +1164,18 @@ export default class ShellColorManagerExtension extends Extension {
                 return `rgba(${rgbs[rgb]}, ${alpha})`;
             return (propertyAt(text, offset) === 'color' ? solid : colors)[m.toLowerCase()];
         });
+        const [text, muted] = [fill('#222226', solid), fill('#767679', solid)];
 
         const [head, tail, opaque, grid, gridText] = this._template();
         let css = fill(head, faded) + tail;
         // "Overview and dialogs background": the template's overview and dialog rules again,
         // opaque, with this color (the template's own when empty) instead of the menus one.
-        const overview = byKey['color-overview'];
-        if (overview || opacity < 100) {
+        if (c.overview || opacity < 100) {
             const colors = {...solid};
             const rgbs = {...byRgb};
-            for (const [, color, rgb] of TOKENS.filter(([key]) => key === 'color-general')) {
-                colors[color] = overview ? withOpacity(overview, 100) : color;
-                rgbs[rgb] = (overview && colorToRgb(overview)) || rgb;
+            for (const [, color, rgb] of TOKENS.filter(([row]) => row === 'general')) {
+                colors[color] = c.overview ? withOpacity(c.overview, 100) : color;
+                rgbs[rgb] = (c.overview && colorToRgb(c.overview)) || rgb;
             }
             css += fill(opaque, colors, rgbs);
         }
@@ -1231,21 +1184,20 @@ export default class ShellColorManagerExtension extends Extension {
             css += noShadowCss;
 
         // "Top bar background": the template's top bar color is not a token.
-        css += this._panelCss(byKey['color-panel'], TEMPLATE_PANEL);
+        css += this._panelCss(c.panel, TEMPLATE_PANEL);
         // The top bar: "Top bar text and icons".
-        if (byKey['color-panel-fg'])
-            css += panelTextCss(byKey['color-panel-fg']);
+        if (c['panel-fg'])
+            css += panelTextCss(c['panel-fg']);
         // Titles and subtitles (the template's own colors when empty), and active buttons. The
         // template paints Quick Settings text with the same tokens as the cards, so the idle
         // buttons get their own colors back here.
-        css += textRolesCss(fill('#222226', solid), fill('#767679', solid)) +
-            quickSettingsTextCss(byKey['color-qs-fg'] || '#222226', byKey['color-qs-fg-muted'] || '#767679');
+        css += textRolesCss(text, muted) + quickSettingsTextCss(c['qs-fg'] || '#222226', c['qs-fg-muted'] || '#767679');
         // After the subtitles, so a toggle that is on keeps its own subtitle color.
-        css += activeTextCss(byKey['color-qs-active-fg'] || '-st-accent-fg-color');
+        css += activeTextCss(c['qs-active-fg'] || '-st-accent-fg-color');
         // Cards (the template's own color when empty), inactive Quick Settings buttons and
         // calendar background. GNOME's light expressions get the template's tokens filled in;
         // the color settings are used as they are.
-        const card = byKey['color-card'] || '#e8e8e8';
+        const card = c.card || '#e8e8e8';
         const cardOpacity = this._settings.get_int('card-opacity');
         // The template paints the cards with its tokens but the Clear button as a plain button.
         css += buttonCss(cardOpacity < 100 ? CARD_BUTTONS : CLEAR_BUTTON, translucent(card, cardOpacity), false);
@@ -1257,34 +1209,30 @@ export default class ShellColorManagerExtension extends Extension {
             return cardColors.has(m.toLowerCase()) ? m : solid[m.toLowerCase()];
         });
         // "App grid text": the template's app grid text rules, recolored.
-        const gridFg = byKey['color-grid-fg'];
-        const gridRgb = gridFg && colorToRgb(gridFg);
-        css += gridFg ? gridText.replace(/#222226/g, gridFg).replace(/34, 34, 38/g, gridRgb ?? '34, 34, 38') : gridText;
+        const gridFg = c['grid-fg'];
+        css += gridFg ? gridText.replace(/#222226/g, gridFg).replace(/34, 34, 38/g, colorToRgb(gridFg) ?? '34, 34, 38')
+            : gridText;
         // "Overview and top bar highlights": dash, search and password entries and top bar
         // buttons, solid like the overview (the template's own colors when empty).
-        if (byKey['color-dash']) {
-            const dash = withOpacity(byKey['color-dash'], 100);
+        if (c.dash) {
+            const dash = withOpacity(c.dash, 100);
             css += rule('#dash .dash-background', 'background-color', dash) +
-                entriesCss(dash, false, fill('#222226', solid), fill('#767679', solid)) + panelButtonsCss(dash);
+                entriesCss(dash, false, text, muted) + panelButtonsCss(dash);
         }
         const token = expression => fill(expression, faded);
-        css += this._quickSettingsCss(false, byKey['color-qs-button'], {
+        css += this._quickSettingsCss(false, c, {
             toggle: token(toggleOff(false)), arrow: token(arrowOff(false)),
             arrowChecked: token(arrowChecked(false)), menu: '#e8e8e8',
-        }, byKey['color-qs-active'], byKey['color-qs-menu'], byKey['color-qs-active-menu']);
+        });
         if (this._settings.get_boolean('calendar-background'))
             css += calendarCss(translucent(card, cardOpacity), false);
-        return css + this._highlightCss(false) + this._mediaCss(false, card) + this._borderCss('color-border');
+        return css + this._highlightCss(c, false) + this._mediaCss(c, false, card) + this._borderCss(c.border);
     }
 
     // `fade`: fade from the old look to the new one, as when switching modes.
     _applyTheme(fade = false) {
         // A pending delayed apply would only repeat this one.
         this._clearSource('_applyId');
-        this._applyStylesheet(fade);
-    }
-
-    _applyStylesheet(fade = false) {
         let file = null;
         let faded = false;
         try {
@@ -1391,20 +1339,19 @@ export default class ShellColorManagerExtension extends Extension {
         this._clearCache();
 
         this._settings = this.getSettings();
+        const syncs = {
+            'background-menu-entry': () => this._syncBackgroundMenu(),
+            'override-dtp-colors': () => this._syncDtp(),
+            'quick-settings-profiles': () => this._syncQuickSettings(),
+            'no-qs-dimming': () => this._syncQsDimming(),
+            'fix-qs-menu-height': () => this._syncQsMenuHeight(),
+        };
         this._settingsId = this._settings.connect('changed', (_s, key) => {
-            if (key === 'background-menu-entry')
-                this._syncBackgroundMenu();
-            else if (key === 'override-dtp-colors')
-                this._syncDtp();
-            else if (key === 'quick-settings-profiles')
-                this._syncQuickSettings();
-            else if (key === 'no-qs-dimming')
-                this._syncQsDimming();
-            else if (key === 'fix-qs-menu-height')
-                this._syncQsMenuHeight();
+            if (syncs[key])
+                syncs[key]();
             else if (AUTO_KEYS.includes(key))
                 this._syncAutoSwitch(true);
-            else if ((this._isDark() ? DARK_THEME_KEYS : LIGHT_THEME_KEYS).includes(key))
+            else if (THEME_KEYS[Number(this._isDark())].includes(key))
                 this._colorChanged(key);
         });
         this._syncBackgroundMenu();
@@ -1475,8 +1422,6 @@ export default class ShellColorManagerExtension extends Extension {
         this._setLegacyColorScheme(this._getColorScheme());
 
         this._settings = this._interface = this._cacheDir = null;
-        this._lastCss = this._modeScheme = this._overrides = this._changedKeys = null;
-        this._templateHead = this._templateTail = this._templateOpaque = this._templateGrid = null;
-        this._templateGridText = null;
+        this._lastCss = this._modeScheme = this._overrides = this._changedKeys = this._templateParts = null;
     }
 }
