@@ -1087,6 +1087,9 @@ export default class ShellColorManagerExtension extends Extension {
         // always get their own color back. An active menu without a color keeps the idle one.
         let menus = menu || opacity < 100 || !dark ? menuCss(translucent(menu || native.menu, opacity), dark) : '';
         // On the active menu its heading (title and subtitle) takes "Active button text and icons".
+        // "accent" (the default) is the accent color set in GNOME Settings.
+        if (activeMenu === 'accent')
+            activeMenu = '-st-accent-color';
         if (activeMenu) {
             const [activeFg] = this._values([dark ? 'color-qs-active-fg-dark' : 'color-qs-active-fg']);
             menus += menuCss(translucent(activeMenu, opacity), dark, QS_ACTIVE_MENU) +
