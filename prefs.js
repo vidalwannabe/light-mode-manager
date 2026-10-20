@@ -23,7 +23,7 @@ const {SUGGESTED, DESTRUCTIVE} = Adw.ResponseAppearance;
 
 // The Light mode and Dark mode tabs show exactly these rows.
 // [key name, title, subtitle, swatch tooltip and color when empty]; a set color's tooltip is
-// its code. Transparency is set only in the Appearance tab.
+// its code.
 const ACCENT = 'Accent color set in\nGNOME Settings › Appearance';
 const COLOR_GROUPS = [
     ['Shell', [
@@ -55,7 +55,7 @@ const flatButton = props => {
 export default class ShellColorManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
-        window.set_default_size(605, 910);
+        window.set_default_size(605, 930);
         // Narrower, the color and schedule rows squeeze their titles and controls.
         window.set_size_request(605, 185);
         window.set_search_enabled(false);
@@ -656,7 +656,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                 heading: 'Dash to Panel detected',
                 body: 'Dash to Panel paints its panel and window previews with its own color and opacity ' +
                     'settings, so the two extensions can show mismatched colors. Turn on “Use this ' +
-                    "extension's colors in Dash to Panel” (Appearance tab) to prioritize this extension's " +
+                    "extension's colors in Dash to Panel” (General tab) to prioritize this extension's " +
                     'color settings.\n\n' +
                     "Dash to Panel's own color settings are left untouched and take effect again if this " +
                     'option is turned off.',
@@ -872,9 +872,9 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             return group;
         };
 
-        // Appearance: general profiles and visual tweaks.
-        const addAppearanceTab = ({general, light, dark}) => {
-            const page = new Adw.PreferencesPage({title: 'Appearance', icon_name: 'preferences-desktop-appearance-symbolic'});
+        // General: general color sets, visual tweaks, easy access, automatic switch and backup.
+        const addGeneralTab = ({general, light, dark}) => {
+            const page = new Adw.PreferencesPage({title: 'General', icon_name: 'preferences-desktop-appearance-symbolic'});
             page.add(generalProfilesGroup(general, light, dark));
 
             const effects = new Adw.PreferencesGroup({title: 'Visual tweaks'});
@@ -894,12 +894,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                 DTP_SUBTITLE);
             dtpRow.set_sensitive(false);
             page.add(effects);
-            window.add(page);
-        };
 
-        // General: easy access, automatic switch and backup.
-        const addGeneralTab = () => {
-            const page = new Adw.PreferencesPage({title: 'General', icon_name: 'preferences-other-symbolic'});
             const panel = new Adw.PreferencesGroup({title: 'Easy access'});
             switchRow(panel, 'background-menu-entry', 'Desktop menu entry',
                 'Adds “Shell Color Manager…” to the desktop right-click menu, below Change Background');
@@ -915,10 +910,9 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
         };
 
         const profiles = createProfiles(s);
-        addAppearanceTab(profiles);
+        addGeneralTab(profiles);
         addTab('Light mode', 'weather-clear-symbolic', '', profiles.light, {model: profiles.dark, label: 'Dark mode'});
         addTab('Dark mode', 'weather-clear-night-symbolic', '-dark', profiles.dark, {model: profiles.light, label: 'Light mode'});
-        addGeneralTab();
         watchDtp();
         // The shell turned the automatic switch off because the mode was changed by hand.
         if (s.get_boolean('auto-switch-off-notice')) {

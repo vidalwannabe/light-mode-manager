@@ -86,7 +86,7 @@ const NATIVE = {
 };
 
 // Settings that rebuild the theme of each mode: its colors (the rows of the Light mode and
-// Dark mode tabs) and the Appearance tab options. Other keys (profiles...) never do.
+// Dark mode tabs) and the General tab options. Other keys (profiles...) never do.
 const EFFECT_KEYS = ['hide-borders', 'match-arrow-buttons', 'merge-arrow-buttons', 'calendar-background'];
 const THEME_KEYS = [false, true].map(dark =>
     [...ROW_NAMES.map(n => `color-${n}${dark ? '-dark' : ''}`), ...EFFECT_KEYS]);
@@ -413,7 +413,7 @@ const AUTO_KEYS = ['auto-switch', 'auto-switch-1-time', 'auto-switch-1-mode', 'a
 const AUTO_CHECK_SECONDS = 30;
 
 // Quick Settings button: switches the color sets (profiles) of the current mode, light or
-// dark; its menu also opens these preferences (on their first tab, Appearance). The subtitle
+// dark; its menu also opens these preferences (on their first tab, General). The subtitle
 // shows the applied color set of the current mode.
 const ProfileToggle = GObject.registerClass(
 class ProfileToggle extends QuickMenuToggle {
@@ -561,7 +561,7 @@ export default class ShellColorManagerExtension extends Extension {
 
     // When the style is toggled, GNOME fades out a snapshot of the old screen. Rebuilding the
     // theme blocks the shell long enough for that fade to be skipped, so it is restarted
-    // once the new theme is in place, with the duration chosen in the Appearance tab.
+    // once the new theme is in place, with the duration chosen in the General tab.
     _restartTransition() {
         const transition = Main.layoutManager.screenTransition;
         const snapshot = transition.visible ? transition.content : null;
@@ -1006,9 +1006,9 @@ export default class ShellColorManagerExtension extends Extension {
     }
 
     // The stylesheet of a mode: in light mode the light template (GNOME's own light style),
-    // then the rules of every color row and Appearance tab option, the same in both modes.
+    // then the rules of every color row and General tab option, the same in both modes.
     // With every light color on system default (GNOME color set) the shell keeps GNOME's dark
-    // style (see _syncShellScheme): no template, and only the Appearance tab options apply.
+    // style (see _syncShellScheme): no template, and only the General tab options apply.
     _themeCss(dark) {
         const c = this._colors(dark);
         const style = dark || Object.values(c).every(v => !v);
