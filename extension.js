@@ -346,8 +346,8 @@ function entriesCss(color, dark) {
         rule(sel(ENTRY_SEL, ':focus'), 'background-color', `st-mix(-st-accent-color, ${color}, 5%)`);
 }
 // "Overview and top bar highlights" on app folders and the dialog a folder opens, search
-// result sections, the highlight of a hovered or selected app or search result, and the
-// selected app of the Alt+Tab switcher.
+// result sections, the highlight of a hovered or selected app (not in the dash) or search
+// result, and the selected app of the Alt+Tab switcher.
 const SELECTED = [':selected', ':highlighted', ':checked'];
 const FOLDER_APPS = ['.app-folder-dialog .overview-tile', '.app-folder-dialog .grid-search-result'];
 const FOLDER_EDIT = '.app-folder-dialog .folder-name-container .icon-button';
@@ -378,7 +378,11 @@ function overviewBoxesCss(color, dark) {
         rule(inStates(FOLDER_APPS, [':focus', ...SELECTED]), 'background-color', selected) +
         rule(inStates(apps, [':hover']), 'background-color', lit(color, 7)) +
         rule(inStates(FOLDER_APPS, hoverStates), 'background-color', lit(selected, 7)) +
-        rule(inStates(apps, [':active']), 'background-color', lit(color, 9));
+        rule(inStates(apps, [':active']), 'background-color', lit(color, 9)) +
+        // Dash apps are .overview-tile too, but GNOME highlights only their icon (with its own
+        // colors): their tall tile stays transparent.
+        rule(inStates(['#dash .overview-tile', '#dash .show-apps'], ['', ':focus', ':hover', ':active', ...SELECTED, ...hoverStates]),
+            'background-color', 'transparent');
 }
 const entryTextCss = color => rule(inStates(ENTRY_SEL, ['', ':hover', ':focus']), 'color', color) +
     rule(inStates(ENTRY_SEL, [' StLabel.hint-text']), 'color', `st-transparentize(${color}, 0.5)`);
