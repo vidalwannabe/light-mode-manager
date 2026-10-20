@@ -8,7 +8,7 @@ It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 app
 
 ### Light mode and Dark mode tabs
 
-Each tab has twenty-two colors in four groups:
+Each tab has twenty-three colors in four groups:
 
 **Top bar and overview**
 
@@ -34,25 +34,26 @@ Each tab has twenty-two colors in four groups:
 | Idle button titles and icons | Quick Settings toggles that are off and their arrows, the round buttons at the top, the slider buttons, the sliders' handles and the heading of the menus toggles open |
 | Idle button subtitles | The line under a toggle or a toggle menu heading (the connected network, the audio device…) and device subtitles |
 | Idle button background | Quick Settings toggles that are off, their arrows, the round buttons at the top, the slider buttons (volume, "›", brightness) and the sliders' track (the part not filled) |
-| Idle expanded menu | The menu a toggle opens (Wi-Fi, Bluetooth, Power Off…) while the toggle is off. Empty: system default |
+| Idle expanded menu text and icons | Every text and icon of the menu a toggle opens (Wi-Fi, Bluetooth, Power Off…) while the toggle is off: heading, items and device subtitles. Empty: system default |
+| Idle expanded menu background | The menu a toggle opens while the toggle is off, and the circle behind its heading icon. Empty: system default |
 | Active button text and icons | Quick Settings toggles that are on (Wi-Fi, Dark Style…), their arrows and subtitles, and the heading and items of their menus when Active expanded menu has a color. Empty: the accent's text color, subtitles included |
 | Active button background | Quick Settings toggles that are on, their arrows and the icon of the menu they open. Empty (default): the accent color set in GNOME Settings › Appearance |
-| Active expanded menu | The menu a toggle opens while the toggle is on; its heading and items then use Active button text and icons, and items light up from this color on hover. Default: the accent color set in GNOME Settings › Appearance. Empty (system default): same as Idle expanded menu |
+| Active expanded menu | The menu a toggle opens while the toggle is on; its heading, items and icons then use Active button text and icons, and items light up from this color on hover. Default: the accent color set in GNOME Settings › Appearance. Empty: system default |
 | Volume and brightness sliders | The filled part of the volume, brightness and other sliders. Empty (default): the accent color set in GNOME Settings › Appearance |
 
 **Notification panel**
 
 | Color | What it paints |
 | --- | --- |
-| Card titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, and also menus (the items of Idle expanded menu included) and dialogs (not the app grid, see App grid text) |
+| Card titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, and also menus and dialogs (not the app grid, see App grid text) |
 | Card subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday |
 | Card background | Notifications, banners, the Clear button and calendar widgets: Today, World Clocks and Weather. Search results and app folders keep the system background |
 | Today in the calendar background | The circle behind the current day. Empty (default): the accent color |
 | Today in the calendar text | The number of the current day. Default: white. Empty: system default |
-| Media player text and icons | The card of the music or video playing: title, artist, app name and the playback buttons. Default: white. Empty: same as the cards |
-| Media player background | The card of the music or video playing. Its playback buttons light up from this color on hover and click, like the other buttons. Default: the accent color set in GNOME Settings › Appearance. Empty: same as the cards |
+| Media player text and icons | The card of the music or video playing: title, artist, app name and the playback buttons. Default: white. Empty: system default |
+| Media player background | The card of the music or video playing. Its playback buttons light up from this color on hover and click, like the other buttons. Default: the accent color set in GNOME Settings › Appearance. Empty: system default |
 
-Color sets saved before a color existed take it from the color it came from (top bar and overview from the menu background, today from the sliders, idle button text from the card text, the idle expanded menu from the idle button background), so they keep their look.
+Color sets saved before a color existed take it from the color it came from (top bar and overview from the menu background, today from the sliders, idle button text from the card text, the idle expanded menu from the idle button background and its text from the idle button text), so they keep their look.
 
 Hover, focus and active states follow these colors automatically. Every color has a button to set it to system default. Ctrl+Z undoes the last color change in the open tab and Ctrl+Shift+Z redoes it; the Light mode and Dark mode tabs each keep their own history, and applying a color set is undone in one step. Hovering over a color shows its code, and right-clicking it copies the code.
 

@@ -17,10 +17,7 @@ const accentColor = () => {
     return rgba ? toHex(rgba) : '#3584e4';
 };
 
-// The swatch of a row that follows another one when empty: that row's color (in the same
-// mode), or the gray placeholder. `row` tells the tab to refresh it when that row changes.
-const sameAs = row => Object.assign(
-    (settings, suffix) => settings.get_string(`color-${row}${suffix}`).trim() || PLACEHOLDER, {row});
+// The swatch of a color on system default with no color of its own to show.
 const PLACEHOLDER = '#808080';
 const {SUGGESTED, DESTRUCTIVE} = Adw.ResponseAppearance;
 
@@ -44,26 +41,23 @@ const COLOR_GROUPS = [
         ['qs-fg', 'Idle button titles and icons', 'Toggles that are off, round buttons, slider buttons and handles, menu headings'],
         ['qs-fg-muted', 'Idle button subtitles', 'Text under toggle and menu headings, such as the connected network'],
         ['qs-button', 'Idle button background', 'Toggles that are off, round buttons, slider buttons and slider tracks'],
-        ['qs-menu', 'Idle expanded menu', 'Background of the menu a toggle that is off opens, such as Bluetooth'],
-        ['qs-active-fg', 'Active button text and icons', 'Toggles that are on, their arrows and the text of their menus',
+        ['qs-menu-fg', 'Idle expanded menu text and icons', 'Every text and icon of the menu a toggle that is off opens'],
+        ['qs-menu', 'Idle expanded menu background', 'Menu a toggle that is off opens and the circle of its icon'],
+        ['qs-active-fg', 'Active button text and icons', 'Toggles that are on, their arrows and the text and icons of their menus',
             'Accent text color', '#ffffff'],
         ['qs-active', 'Active button background', 'Toggles that are on, their arrows and the icon of their menus', ACCENT,
             accentColor],
-        ['qs-active-menu', 'Active expanded menu', 'Background of the menu a toggle that is on opens, such as Wi-Fi',
-            'Same as idle expanded menu',
-            sameAs('qs-menu')],
+        ['qs-active-menu', 'Active expanded menu', 'Background of the menu a toggle that is on opens, such as Wi-Fi'],
         ['highlight', 'Volume and brightness sliders', 'Filled part of the volume, brightness and other sliders', ACCENT, accentColor],
     ]],
     ['Notification panel', [
-        ['fg', 'Card titles and icons', 'Notifications, calendar and widgets; also menus, idle menus and dialogs'],
+        ['fg', 'Card titles and icons', 'Notifications, calendar and widgets; also menus and dialogs'],
         ['fg-muted', 'Card subtitles', 'Text under titles: notification body, times, locations and weekdays'],
         ['card', 'Card background', 'Notifications, banners, Clear button, widgets and Calendar as card'],
         ['today', 'Today in the calendar background', 'Circle behind the current day', ACCENT, accentColor],
         ['today-fg', 'Today in the calendar text', 'Number of the current day'],
-        ['media-fg', 'Media player text and icons', 'Title, artist, app name and playback buttons of the music playing',
-            'Same as card text', sameAs('fg')],
-        ['media', 'Media player background', 'Card of the music playing; its buttons light up from it on hover',
-            'Same as card background', sameAs('card')],
+        ['media-fg', 'Media player text and icons', 'Title, artist, app name and playback buttons of the music playing'],
+        ['media', 'Media player background', 'Card of the music playing; its buttons light up from it on hover'],
     ]],
 ];
 
@@ -144,8 +138,6 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                     s.set_string(key, toHex(button.get_rgba()));
             });
             watch(key, load);
-            if (emptyColor.row)
-                watch(`color-${emptyColor.row}${suffix}`, load);
 
             // Right-click copies the color code shown, if any.
             const copy = new Gtk.GestureClick({button: Gdk.BUTTON_SECONDARY});
