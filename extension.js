@@ -108,7 +108,8 @@ const COLOR_RE = /^(#[0-9a-f]{3}|#[0-9a-f]{6}|rgba?\([\d\s.,]+\)|[a-z]+)$/i;
 // The menus' border: Quick Settings, the calendar and notifications, panel and context menus.
 const BORDER_SEL = '.popup-menu-content, .candidate-popup-content';
 // The cards GNOME outlines in light mode, and the calendar with "Calendar as card".
-const CARD_OUTLINE_SEL = '.message, .events-button, .world-clocks-button, .weather-button, .datemenu-today-button, .calendar';
+const CARD_OUTLINE_SEL = '.message, .events-button, .world-clocks-button, .weather-button, .datemenu-today-button, ' +
+    '.calendar, .quick-toggle-menu';
 
 // GNOME draws a shadow under the whole menu, so a translucent menu showed it through
 // and looked darker than the panel. Below 100% opacity these shadows are removed.
@@ -1148,17 +1149,20 @@ export default class ShellColorManagerExtension extends Extension {
             css = (match ? buttonCss(ARROW_SEL, native.toggle, dark) : '') +
                 (active ? buttonCss(QS_CHECKED, accent, dark) : '');
         }
-        // "Idle expanded menu background" (also the circle behind its heading icon) and "Idle
+        // "Idle expanded menu background" (also its outline and the circle behind its heading
+        // icon; the active menu's likewise) and "Idle
         // expanded menu text and icons".
         const menuText = c['qs-menu-fg'];
         let menus = (menu || opacity < 100 ? menuCss(translucent(menu || native.menu, opacity), dark) : '') +
-            (menu ? rule(QS_MENU_ICON, 'background-color', translucent(menu, opacity)) : '') +
+            (menu ? rule(QS_MENU_ICON, 'background-color', translucent(menu, opacity)) +
+                rule(QS_MENU, 'border-color', translucent(menu, opacity)) : '') +
             (menuText ? menuTextCss(menuText) : '');
         if (activeMenu) {
             // "Active expanded menu background", also the circle behind its heading icon; its
             // heading and items take "Active button text and icons".
             menus += menuCss(translucent(activeMenu, opacity), dark, QS_ACTIVE_MENU) +
                 rule(QS_MENU_ICON_ON, 'background-color', translucent(activeMenu, opacity)) +
+                rule(QS_ACTIVE_MENU, 'border-color', translucent(activeMenu, opacity)) +
                 menuTextCss(c['qs-active-fg'] || '-st-accent-fg-color', QS_ACTIVE_MENU);
         } else {
             // On system default, the idle menu's colors are taken off the active menu.
