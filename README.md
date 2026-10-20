@@ -51,7 +51,7 @@ Each tab has a color set selector to apply a set of colors in one click. Built-i
 **Visual tweaks**
 
 - **Transition**: duration of the fade when switching between light and dark mode, or when a color set or color change shows on screen (the top bar always; the overview and menus while open), from 0 (instant) to 2000 ms. Default: 500 ms, like GNOME.
-- **Disable borders**: removes the outline of menus (Quick Settings and its expanded menus, the calendar, right-click menus) and of the cards (notifications, Today, World Clocks, Weather, the calendar as card), with the cards' faint shadow. Nothing changes size. Both modes.
+- **Disable borders**: removes the outline of menus (Quick Settings, the calendar, right-click menus) and of the cards (notifications, Today, World Clocks, Weather, the calendar as card), with the cards' faint shadow. Nothing changes size. Expanded Quick Settings menus never have a border. Both modes.
 - **Disable Quick Settings dimming**: Quick Settings is no longer darkened while one of its menus (Wi-Fi, Power Off…) is open. This also covers Quick Settings panels made by other extensions, such as the separate or independent panels of Quick Settings Audio Panel.
 - **Merge arrows into toggles**: the arrow (›) next to Quick Settings toggles such as Wi-Fi or Bluetooth takes the same color as its toggle, on and off, instead of GNOME's separate shade, and the 1px gap line between them is removed, so both read as one button. Works with any color set.
 - **Calendar as card** (on by default): the month calendar gets the color of the cards below it (Today, World Clocks, Weather), without a pill behind each day, and their outline (a faint border and shadow in light mode). With the GNOME color set it follows GNOME's own card color.

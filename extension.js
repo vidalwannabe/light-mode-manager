@@ -1006,13 +1006,15 @@ export default class ShellColorManagerExtension extends Extension {
             rule(PANEL_LOCK_BAR_SEL, 'background-color', 'transparent');
     }
 
-    // "Disable borders": hides the border of menus (Quick Settings, its expanded menus, the
-    // calendar, right-click menus) and of the cards, with the cards' faint shadow. Hidden
-    // borders stay 1px wide but transparent, so nothing changes size.
+    // Expanded Quick Settings menus never have a border. "Disable borders" also hides the
+    // border of menus (Quick Settings, the calendar, right-click menus) and of the cards, with
+    // the cards' faint shadow. Hidden borders stay 1px wide but transparent, so nothing
+    // changes size.
     _borderCss() {
+        const css = rule(QS_MENU, 'border-color', 'transparent');
         if (!this._settings.get_boolean('hide-borders'))
-            return '';
-        return rule(`${BORDER_SEL}, ${QS_MENU}`, 'border-color', 'transparent') +
+            return css;
+        return css + rule(BORDER_SEL, 'border-color', 'transparent') +
             rule(CARD_OUTLINE_SEL, 'border-color', 'transparent !important') + rule(CARD_OUTLINE_SEL, 'box-shadow', 'none');
     }
 
