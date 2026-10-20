@@ -884,10 +884,8 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                 'Hides the outline of menus (Quick Settings, calendar…) and of the cards');
             switchRow(effects, 'no-qs-dimming', 'Disable Quick Settings dimming',
                 'Keeps Quick Settings bright while a toggle menu is open');
-            switchRow(effects, 'match-arrow-buttons', 'Match arrows to toggles',
-                "The arrow (›) next to each Quick Settings toggle uses the toggle's color");
             switchRow(effects, 'merge-arrow-buttons', 'Merge arrows into toggles',
-                'Removes the gap line between each Quick Settings toggle and its arrow (›)');
+                "Each Quick Settings arrow (›) takes its toggle's color, without the gap line between them");
             switchRow(effects, 'calendar-background', 'Calendar as card',
                 'Gives the calendar the card background and removes the circles behind days');
             dtpRow = switchRow(effects, 'override-dtp-colors', "Use this extension's colors in Dash to Panel",

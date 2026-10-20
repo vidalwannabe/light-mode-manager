@@ -87,7 +87,7 @@ const NATIVE = {
 
 // Settings that rebuild the theme of each mode: its colors (the rows of the Light mode and
 // Dark mode tabs) and the General tab options. Other keys (profiles...) never do.
-const EFFECT_KEYS = ['hide-borders', 'match-arrow-buttons', 'merge-arrow-buttons', 'calendar-background'];
+const EFFECT_KEYS = ['hide-borders', 'merge-arrow-buttons', 'calendar-background'];
 const THEME_KEYS = [false, true].map(dark =>
     [...ROW_NAMES.map(n => `color-${n}${dark ? '-dark' : ''}`), ...EFFECT_KEYS]);
 
@@ -1058,9 +1058,10 @@ export default class ShellColorManagerExtension extends Extension {
         // "Active button background": toggles that are on and their arrows. GNOME's own: the
         // accent color.
         const accent = active || '-st-accent-color';
-        const match = this._settings.get_boolean('match-arrow-buttons');
+        // "Merge arrows into toggles": each arrow takes its toggle's color, without the gap line.
+        const match = this._settings.get_boolean('merge-arrow-buttons');
         // The sliders' track (the part not filled) takes "Idle button background".
-        const merged = (this._settings.get_boolean('merge-arrow-buttons') ? rule(ARROW_GAP_SEL, 'width', '0') : '') +
+        const merged = (match ? rule(ARROW_GAP_SEL, 'width', '0') : '') +
             (color ? rule(QS_SLIDER, '-barlevel-background-color', color) : '');
         let css;
         if (color) {
