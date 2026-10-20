@@ -78,7 +78,7 @@ Each tab has a color set selector to apply a set of colors in one click. Built-i
 - **Card opacity**: transparency of the notification cards (calendar, Today, World Clocks, Weather, notifications) and of the idle Quick Settings buttons with their menus and the slider buttons, from 0 to 100%, in both modes. Also works with the GNOME color set.
 - **Enable panel opacity**: the panel stays solid by default; when on, it also gets the shell opacity.
 - **Disable menu borders**: removes the outline of Quick Settings, the calendar and other menus, in both modes. Overrides the Menu borders color.
-- **Disable Quick Settings dimming**: Quick Settings is no longer darkened while one of its menus (Wi-Fi, Power Off…) is open.
+- **Disable Quick Settings dimming**: Quick Settings is no longer darkened while one of its menus (Wi-Fi, Power Off…) is open. This also covers Quick Settings panels made by other extensions, such as the separate or independent panels of Quick Settings Audio Panel.
 - **Match arrows to toggles**: the arrow (›) next to Quick Settings toggles such as Wi-Fi or Bluetooth uses the same color as its toggle, on and off, instead of GNOME's separate shade.
 - **Merge arrows into toggles**: removes the 1px gap line between a Quick Settings toggle and its arrow (›), so both read as one button. Works with any color set.
 - **Calendar as card** (on by default): the month calendar gets the color of the cards below it (Today, World Clocks, Weather), without a pill behind each day. With the GNOME color set it follows GNOME's own card color.
