@@ -56,16 +56,20 @@ const flatButton = props => {
 
 // Selectors are as wide as their text, up to 190px (a longer text is ellipsized).
 const SELECTOR_MAX_WIDTH = 190;
-const capped = Klass => GObject.registerClass(class extends Klass {
+// Each class needs its own name: GJS names the GType after it.
+const capMeasure = ([min, nat, minBaseline, natBaseline], orientation) => orientation === Gtk.Orientation.HORIZONTAL
+    ? [Math.min(min, SELECTOR_MAX_WIDTH), Math.min(nat, SELECTOR_MAX_WIDTH), minBaseline, natBaseline]
+    : [min, nat, minBaseline, natBaseline];
+const CappedMenuButton = GObject.registerClass(class CappedMenuButton extends Gtk.MenuButton {
     vfunc_measure(orientation, forSize) {
-        const [min, nat, minBaseline, natBaseline] = super.vfunc_measure(orientation, forSize);
-        return orientation === Gtk.Orientation.HORIZONTAL
-            ? [Math.min(min, SELECTOR_MAX_WIDTH), Math.min(nat, SELECTOR_MAX_WIDTH), minBaseline, natBaseline]
-            : [min, nat, minBaseline, natBaseline];
+        return capMeasure(super.vfunc_measure(orientation, forSize), orientation);
     }
 });
-const CappedMenuButton = capped(Gtk.MenuButton);
-const CappedDropDown = capped(Gtk.DropDown);
+const CappedDropDown = GObject.registerClass(class CappedDropDown extends Gtk.DropDown {
+    vfunc_measure(orientation, forSize) {
+        return capMeasure(super.vfunc_measure(orientation, forSize), orientation);
+    }
+});
 // A selector menu button: showLabel(text) shows `text`.
 const selectorButton = props => {
     const label = new Gtk.Label({ellipsize: Pango.EllipsizeMode.END});
