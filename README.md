@@ -37,7 +37,7 @@ Each tab has twenty colors in four groups:
 | Idle expanded menu | The menu a toggle opens (Wi-Fi, Bluetooth, Power Off…) while the toggle is off. Empty: system default |
 | Active button text and icons | Quick Settings toggles that are on (Wi-Fi, Dark Style…), their arrows and subtitles. Empty: the accent's text color, subtitles included |
 | Active button background | Quick Settings toggles that are on, their arrows and the icon of the menu they open. Empty (default): the accent color set in GNOME Settings › Appearance |
-| Active expanded menu | The menu a toggle opens while the toggle is on. Empty (default): same as Idle expanded menu |
+| Active expanded menu | The menu a toggle opens while the toggle is on; its heading then uses Active button text and icons. Empty (default): same as Idle expanded menu |
 | Volume and brightness sliders | The filled part of the volume, brightness and other sliders. Empty (default): the accent color set in GNOME Settings › Appearance |
 
 **Notification panel**

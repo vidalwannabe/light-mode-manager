@@ -1077,8 +1077,13 @@ export default class ShellColorManagerExtension extends Extension {
         // The light template paints the menus with the card token, so in light mode they
         // always get their own color back. An active menu without a color keeps the idle one.
         let menus = menu || opacity < 100 || !dark ? menuCss(translucent(menu || native.menu, opacity), dark) : '';
-        if (activeMenu)
-            menus += menuCss(translucent(activeMenu, opacity), dark, QS_ACTIVE_MENU);
+        // On the active menu its heading (title and subtitle) takes "Active button text and icons".
+        if (activeMenu) {
+            const [activeFg] = this._values([dark ? 'color-qs-active-fg-dark' : 'color-qs-active-fg']);
+            menus += menuCss(translucent(activeMenu, opacity), dark, QS_ACTIVE_MENU) +
+                rule(`${QS_ACTIVE_MENU} .header .title, ${QS_ACTIVE_MENU} .header .subtitle`, 'color',
+                    activeFg || '-st-accent-fg-color');
+        }
         if (!css)
             return merged + menus;
         css += menus;
