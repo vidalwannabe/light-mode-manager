@@ -3,6 +3,7 @@ import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk';
 import Gdk from 'gi://Gdk';
+import Pango from 'gi://Pango';
 import Adw from 'gi://Adw';
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
@@ -53,35 +54,24 @@ const flatButton = props => {
     return button;
 };
 
-// Selectors keep one width whatever they show, so their menu never moves: their label is a
-// stack holding every text they can show, as wide as the widest one.
-const stableLabel = () => new Gtk.Stack({hhomogeneous: true, vhomogeneous: true});
-const showStable = (stack, text, all, xalign = 0.5) => {
-    const texts = [...new Set([...all, text])];
-    const names = [];
-    for (let child = stack.get_first_child(); child; child = child.get_next_sibling())
-        names.push(stack.get_page(child).name);
-    if (names.join('\n') !== texts.join('\n')) {
-        for (let child = stack.get_first_child(); child; child = stack.get_first_child())
-            stack.remove(child);
-        for (const t of texts)
-            stack.add_named(new Gtk.Label({label: t, xalign}), t);
+// Selectors are as wide as their text, up to 190px (a longer text is ellipsized).
+const SELECTOR_MAX_WIDTH = 190;
+const capped = Klass => GObject.registerClass(class extends Klass {
+    vfunc_measure(orientation, forSize) {
+        const [min, nat, minBaseline, natBaseline] = super.vfunc_measure(orientation, forSize);
+        return orientation === Gtk.Orientation.HORIZONTAL
+            ? [Math.min(min, SELECTOR_MAX_WIDTH), Math.min(nat, SELECTOR_MAX_WIDTH), minBaseline, natBaseline]
+            : [min, nat, minBaseline, natBaseline];
     }
-    stack.set_visible_child_name(text);
-};
-// A menu button with a stable label: showLabel(text, all) shows `text`, sized for all of `all`.
-const stableMenuButton = props => {
-    const label = stableLabel();
-    const button = new Gtk.MenuButton({child: label, always_show_arrow: true, valign: Gtk.Align.CENTER, ...props});
-    button.showLabel = (text, all) => showStable(label, text, all);
+});
+const CappedMenuButton = capped(Gtk.MenuButton);
+const CappedDropDown = capped(Gtk.DropDown);
+// A selector menu button: showLabel(text) shows `text`.
+const selectorButton = props => {
+    const label = new Gtk.Label({ellipsize: Pango.EllipsizeMode.END});
+    const button = new CappedMenuButton({child: label, always_show_arrow: true, valign: Gtk.Align.CENTER, ...props});
+    button.showLabel = text => label.set_label(text);
     return button;
-};
-// The item factory of a drop-down or combo row of `strings`, with stable labels.
-const stableFactory = strings => {
-    const factory = new Gtk.SignalListItemFactory();
-    factory.connect('setup', (_f, item) => item.set_child(stableLabel()));
-    factory.connect('bind', (_f, item) => showStable(item.get_child(), item.get_item().get_string(), strings, 0));
-    return factory;
 };
 
 export default class ShellColorManagerPrefs extends ExtensionPreferences {
@@ -204,7 +194,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             const entry = new Adw.EntryRow({title: 'Color set name', text: initial});
             fields.append(entry);
             const choices = combos.map(({title, names, selected}) => {
-                const row = new Adw.ComboRow({title, model: Gtk.StringList.new(names), factory: stableFactory(names)});
+                const row = new Adw.ComboRow({title, model: Gtk.StringList.new(names)});
                 row.set_selected(Math.max(0, names.indexOf(selected)));
                 fields.append(row);
                 return () => names[row.get_selected()];
@@ -241,7 +231,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                 child: list, propagate_natural_height: true, max_content_height: 360,
                 hscrollbar_policy: Gtk.PolicyType.NEVER, width_request: 300,
             })});
-            const selector = stableMenuButton({popover, tooltip_text: 'Saved color sets'});
+            const selector = selectorButton({popover, tooltip_text: 'Saved color sets'});
 
             const profileRow = (profile, applied) => {
                 const builtin = model.builtins.includes(profile);
@@ -282,7 +272,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             const refresh = () => {
                 const profiles = model.all();
                 const applied = model.applied(profiles);
-                selector.showLabel(applied?.name ?? 'Unsaved', [...profiles.map(p => p.name), 'Unsaved']);
+                selector.showLabel(applied?.name ?? 'Unsaved');
                 list.remove_all();
                 for (const profile of profiles)
                     list.append(profileRow(profile, applied));
@@ -593,8 +583,8 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
 
             const row = new Adw.ActionRow({title: 'Schedule'});
             const labels = MODES.map(([, label]) => label);
-            const mode = new Gtk.DropDown({
-                valign: Gtk.Align.CENTER, model: Gtk.StringList.new(labels), factory: stableFactory(labels),
+            const mode = new CappedDropDown({
+                valign: Gtk.Align.CENTER, model: Gtk.StringList.new(labels),
             });
             mode.connect('notify::selected', () => {
                 const id = MODES[mode.get_selected()]?.[0];
@@ -892,12 +882,12 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                     s.bind('hide-borders', choice, 'sensitive', Gio.SettingsBindFlags.GET | Gio.SettingsBindFlags.INVERT_BOOLEAN);
                 choices.append(choice);
             }
-            const bordersButton = stableMenuButton({popover: new Gtk.Popover({child: choices})});
+            const bordersButton = selectorButton({popover: new Gtk.Popover({child: choices})});
             const loadBorders = () => {
                 const on = BORDER_KEYS.filter(([key]) => s.get_boolean(key));
-                const labels = ['System default', 'Disable menu borders', ...BORDER_KEYS.slice(1).map((_k, n) => `${n + 1} selected`)];
-                const label = s.get_boolean('hide-borders') ? labels[1] : on.length ? `${on.length} selected` : labels[0];
-                bordersButton.showLabel(label, labels);
+                const label = s.get_boolean('hide-borders') ? 'Disable menu borders'
+                    : on.length ? `${on.length} selected` : 'System default';
+                bordersButton.showLabel(label);
             };
             loadBorders();
             BORDER_KEYS.forEach(([key]) => watch(key, loadBorders));
