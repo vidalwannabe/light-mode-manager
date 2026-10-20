@@ -30,7 +30,6 @@ const COLOR_GROUPS = [
     ['Shell', [
         ['panel-fg', 'Shell text and icons', 'App grid, menus, OSD, overview, password field, search, switchers and top bar'],
         ['general', 'Shell background', 'Dialogs, menus, OSD, overview, top bar and window switcher'],
-        ['border', 'Menu borders', 'Cards, menus, notification and Quick Settings buttons (when enabled)'],
         ['dash', 'Overview and top bar highlights',
             'Alt+Tab selection, app hover, dash, folders, password field, search and top bar buttons'],
     ]],
@@ -865,41 +864,8 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             const effects = new Adw.PreferencesGroup({title: 'Visual tweaks'});
             sliderRow(effects, 'transition-duration', 'Transition',
                 'Fade duration when switching between light and dark mode', 2000, 100, ' ms');
-            // Borders: several choices in a popover. "Disable menu borders" turns the others off.
-            const BORDER_KEYS = [
-                ['hide-borders', 'Disable menu borders'],
-                ['qs-active-borders', 'Active Quick Settings button'],
-                ['qs-borders', 'Idle Quick Settings button'],
-                ['notification-borders', 'Notification buttons'],
-            ];
-            const choices = new Gtk.ListBox({
-                selection_mode: Gtk.SelectionMode.NONE, css_classes: ['boxed-list'],
-                margin_top: 6, margin_bottom: 6, margin_start: 6, margin_end: 6,
-            });
-            for (const [key, title] of BORDER_KEYS) {
-                const choice = new Adw.ActionRow({title});
-                const check = new Gtk.CheckButton({valign: Gtk.Align.CENTER});
-                s.bind(key, check, 'active', Gio.SettingsBindFlags.DEFAULT);
-                choice.add_prefix(check);
-                choice.set_activatable_widget(check);
-                if (key !== 'hide-borders')
-                    s.bind('hide-borders', choice, 'sensitive', Gio.SettingsBindFlags.GET | Gio.SettingsBindFlags.INVERT_BOOLEAN);
-                choices.append(choice);
-            }
-            const bordersButton = selectorButton({popover: new Gtk.Popover({child: choices})});
-            const loadBorders = () => {
-                const on = BORDER_KEYS.filter(([key]) => s.get_boolean(key));
-                const label = s.get_boolean('hide-borders') ? 'Disable menu borders'
-                    : on.length ? `${on.length} selected` : 'System default';
-                bordersButton.showLabel(label);
-            };
-            loadBorders();
-            BORDER_KEYS.forEach(([key]) => watch(key, loadBorders));
-            const borders = new Adw.ActionRow({
-                title: 'Borders', subtitle: 'Remove or add borders to the shell',
-            });
-            borders.add_suffix(bordersButton);
-            effects.add(borders);
+            switchRow(effects, 'hide-borders', 'Disable borders',
+                'Removes the borders of menus and cards');
             switchRow(effects, 'no-qs-dimming', 'Disable Quick Settings dimming',
                 'Keeps Quick Settings bright while a toggle menu is open');
             switchRow(effects, 'merge-arrow-buttons', 'Merge arrows into toggles',
