@@ -45,7 +45,7 @@ Each tab has twenty-three colors in four groups:
 
 | Color | What it paints |
 | --- | --- |
-| Card titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, and also menus and dialogs (not the app grid, see App grid text) |
+| Card titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar and the cards' buttons (not the app grid, see App grid text) |
 | Card subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday |
 | Card background | Notifications, banners, the Clear button and calendar widgets: Today, World Clocks and Weather. Search results and app folders keep the system background |
 | Today in the calendar background | The circle behind the current day. Empty (default): the accent color |

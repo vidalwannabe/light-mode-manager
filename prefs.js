@@ -51,7 +51,7 @@ const COLOR_GROUPS = [
         ['highlight', 'Volume and brightness sliders', 'Filled part of the volume, brightness and other sliders', ACCENT, accentColor],
     ]],
     ['Notification panel', [
-        ['fg', 'Card titles and icons', 'Notifications, calendar and widgets; also menus and dialogs'],
+        ['fg', 'Card titles and icons', 'Notifications, calendar, Today, World Clocks and Weather'],
         ['fg-muted', 'Card subtitles', 'Text under titles: notification body, times, locations and weekdays'],
         ['card', 'Card background', 'Notifications, banners, Clear button, widgets and Calendar as card'],
         ['today', 'Today in the calendar background', 'Circle behind the current day', ACCENT, accentColor],
