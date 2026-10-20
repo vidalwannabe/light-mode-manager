@@ -41,9 +41,9 @@ const COLOR_GROUPS = [
         ['qs-fg', 'Idle button text and icons', 'Idle menus, round buttons, slider handles and toggles that are off'],
         ['qs-button', 'Idle button background', 'Idle menus, round buttons, slider buttons, slider tracks and toggles that are off'],
         ['highlight', 'Volume and brightness sliders', 'OSD and Quick Settings sliders'],
-        ['fg', 'Card titles and icons', 'Calendar, notifications, Today, Weather and World Clocks'],
+        ['fg', 'Card titles and icons', 'Calendar, Clear button, Do Not Disturb label, notifications and their buttons, Today, Weather and World Clocks'],
         ['fg-muted', 'Card subtitles', 'Locations, notification body, times and weekdays'],
-        ['card', 'Card background', 'Banners, Calendar as card, Clear button, notifications, Today, Weather and World Clocks'],
+        ['card', 'Card background', 'Banners, Calendar as card, Clear button, Do Not Disturb switch, notifications and their buttons, Today, Weather and World Clocks'],
     ]],
 ];
 

@@ -28,9 +28,9 @@ Each tab has twelve colors in two groups. An empty color is the system default: 
 | Idle button text and icons | Toggles that are off (titles, subtitles and arrows), the menus they open (heading, items and icons), the round buttons at the top, the slider buttons and the sliders' handles |
 | Idle button background | Toggles that are off and their arrows, the menus they open (with their outline and the circle behind the heading icon), the round buttons at the top, the slider buttons, the sliders' track, the Background Apps toggle and the close buttons of its apps |
 | Volume and brightness sliders | The filled part of the volume, brightness and other sliders, and of the volume and brightness popup (OSD). Default: the accent color set in GNOME Settings › Appearance |
-| Card titles and icons | Titles and icons of notifications (app name and title), Today, World Clocks, Weather, the calendar and the cards' buttons |
+| Card titles and icons | Titles and icons of notifications (app name and title) and their buttons, Today, World Clocks, Weather, the calendar, the Clear button and the Do Not Disturb label |
 | Card subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday, week numbers |
-| Card background | Notifications, banners, the Clear button and the cards below the calendar (Today, World Clocks, Weather) |
+| Card background | Notifications and their buttons (actions, close, expand), banners, the Clear button, the Do Not Disturb switch when off, and the cards below the calendar (Today, World Clocks, Weather) |
 
 Color sets saved before a color existed take it from the color it came from (shell and idle button text from the card text, the dash from the card background), so they keep their look.
 

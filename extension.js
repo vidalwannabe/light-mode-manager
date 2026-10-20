@@ -62,8 +62,13 @@ const GRID_TEXT = inStates([...GRID_ITEMS, ...GRID_ITEMS.map(item => `.app-folde
 // "Card background": notifications and banners, the cards below the calendar and the
 // notification list's Clear button. They get every state, as GNOME draws them (buttonCss).
 const CLEAR_BUTTON = '.message-list-controls .button';
+// The notifications' buttons: actions ("Open File"...), close, expand and collapse.
+const NOTIFICATION_BUTTONS = ['.notification-button', '.message .message-header .message-close-button',
+    '.message .message-header .message-expand-button', '.message-notification-group .message-collapse-button'];
 const CARD_BUTTONS = ['.message', '.notification-banner', '.events-button', '.world-clocks-button', '.weather-button',
-    CLEAR_BUTTON];
+    CLEAR_BUTTON, ...NOTIFICATION_BUTTONS];
+// The Do Not Disturb switch of the notification list; on, it keeps the accent color.
+const DND_SWITCH = '.message-list-controls .dnd-button .toggle-switch';
 // The media player card; `.message.media-message` outranks the card and text rules.
 const MEDIA_CARD = '.message.media-message';
 const MEDIA_CONTROL = '.message-media-control';
@@ -257,6 +262,7 @@ function activeTextCss(color) {
 // weekends), so each role is set explicitly.
 const MAIN_TEXT = [
     '.message', '.events-button', '.world-clocks-button', '.weather-button', '.datemenu-today-button',
+    '.message-list-controls', CLEAR_BUTTON, '.notification-button',
     '.calendar .calendar-day',
     '.message .message-header .message-close-button', '.message .message-header .message-expand-button',
     '.message-notification-group .message-collapse-button',
@@ -1055,8 +1061,12 @@ export default class ShellColorManagerExtension extends Extension {
             css += activeTextCss(c['qs-active-fg'] || '-st-accent-fg-color');
         // Cards, Quick Settings and "Calendar as card" (GNOME's own card color on system default).
         const card = c.card || native.card;
-        if (c.card)
-            css += buttonCss(CARD_BUTTONS, card, style);
+        if (c.card) {
+            css += buttonCss(CARD_BUTTONS, card, style) + rule(DND_SWITCH, 'background-color', card) +
+                rule(`${DND_SWITCH}:hover`, 'background-color', `${shade(style)}(${card}, 4%)`) +
+                rule(`${DND_SWITCH}:checked`, 'background-color', '-st-accent-color') +
+                rule(`${DND_SWITCH}:checked:hover`, 'background-color', 'st-lighten(-st-accent-color, 5%)');
+        }
         css += this._quickSettingsCss(style, c, {
             toggle: toggleOff(style), arrow: arrowOff(style), arrowChecked: arrowChecked(style), menu: toggleOff(style),
         });
