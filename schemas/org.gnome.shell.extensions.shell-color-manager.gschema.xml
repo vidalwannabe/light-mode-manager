@@ -39,7 +39,9 @@
     <key name="transition-duration" type="i"><range min="0" max="2000"/><default>500</default><summary>Fade duration in ms when switching between light and dark mode</summary></key>
     <key name="override-dtp-colors" type="b"><default>false</default><summary>Dash to Panel takes its panel color and opacity from this extension, with preview titles in black or white</summary></key>
     <key name="dtp-notice-shown" type="b"><default>false</default><summary>The Dash to Panel notice was shown</summary></key>
-    <key name="border-style" type="s"><choices><choice value='default'/><choice value='hide'/><choice value='quick-settings'/></choices><default>'default'</default><summary>Borders: GNOME's own, hidden (menus and cards), or also on the idle Quick Settings buttons and expanded menus</summary></key>
+    <key name="hide-borders" type="b"><default>false</default><summary>Hide the borders of menus and cards (the other border options are then off)</summary></key>
+    <key name="qs-borders" type="b"><default>false</default><summary>Outline the idle Quick Settings buttons and the expanded menus</summary></key>
+    <key name="notification-borders" type="b"><default>false</default><summary>Outline the notifications' buttons, the Clear button and the Do Not Disturb switch</summary></key>
     <key name="merge-arrow-buttons" type="b"><default>false</default><summary>Quick Settings arrows take their toggle's color, with no gap between them</summary></key>
     <key name="no-qs-dimming" type="b"><default>false</default><summary>Quick Settings is not darkened while one of its menus is open</summary></key>
     <key name="calendar-background" type="b"><default>true</default><summary>The month calendar gets the cards' color, without a pill behind each day</summary></key>

@@ -92,7 +92,7 @@ const NATIVE = {
 
 // Settings that rebuild the theme of each mode: its colors (the rows of the Light mode and
 // Dark mode tabs) and the General tab options. Other keys (profiles...) never do.
-const EFFECT_KEYS = ['border-style', 'merge-arrow-buttons', 'calendar-background'];
+const EFFECT_KEYS = ['hide-borders', 'qs-borders', 'notification-borders', 'merge-arrow-buttons', 'calendar-background'];
 const THEME_KEYS = [false, true].map(dark =>
     [...ROW_NAMES.map(n => `color-${n}${dark ? '-dark' : ''}`), ...EFFECT_KEYS]);
 
@@ -1008,24 +1008,27 @@ export default class ShellColorManagerExtension extends Extension {
     }
 
     // "Menu borders": the border of menus and cards (GNOME's own on system default). Expanded
-    // Quick Settings menus have none. The "Borders" option of the General tab: "Disable menu
+    // Quick Settings menus have none. The "Borders" choices of the General tab: "Disable menu
     // borders" hides them all, with the cards' faint shadow (hidden borders stay 1px wide but
-    // transparent, so nothing changes size); "Enable border on Quick Settings buttons" also
-    // outlines the idle Quick Settings buttons and the expanded menus, with the Menu borders
-    // color (GNOME's faint card border when empty).
+    // transparent, so nothing changes size), and turns the others off; "Enable border on
+    // Quick Settings buttons" also outlines the idle Quick Settings buttons and the expanded
+    // menus, and "Enable border on notification buttons" the notifications' buttons, the
+    // Clear button and the Do Not Disturb switch, with the Menu borders color (GNOME's faint
+    // card border when empty). Outlines are drawn as an outer shadow, so nothing changes size.
     _borderCss(color, dark) {
-        const style = this._settings.get_string('border-style');
-        if (style === 'hide') {
+        if (this._settings.get_boolean('hide-borders')) {
             return rule(`${BORDER_SEL}, ${QS_MENU}`, 'border-color', 'transparent') +
                 rule(CARD_OUTLINE_SEL, 'border-color', 'transparent !important') + rule(CARD_OUTLINE_SEL, 'box-shadow', 'none');
         }
         const css = color ? rule(BORDER_SEL, 'border-color', color) + rule(CARD_OUTLINE_SEL, 'border-color', `${color} !important`)
             : '';
-        if (style !== 'quick-settings')
-            return css + rule(QS_MENU, 'border-color', 'transparent');
         const outline = color || `st-transparentize(${NATIVE[dark ? 'dark' : 'light'].text}, 0.9)`;
+        const notifications = this._settings.get_boolean('notification-borders')
+            ? rule([...NOTIFICATION_BUTTONS, CLEAR_BUTTON, DND_SWITCH].join(', '), 'box-shadow', `0 0 0 1px ${outline}`) : '';
+        if (!this._settings.get_boolean('qs-borders'))
+            return css + rule(QS_MENU, 'border-color', 'transparent') + notifications;
         return css + rule(QS_MENU, 'border-color', outline) + rule(QS_OUTLINED, 'box-shadow', `0 0 0 1px ${outline}`) +
-            rule(QS_NOT_OUTLINED, 'box-shadow', 'none');
+            rule(QS_NOT_OUTLINED, 'box-shadow', 'none') + notifications;
     }
 
     // The stylesheet of a mode, over GNOME's own style: the rules of every color row and

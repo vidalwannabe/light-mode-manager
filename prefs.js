@@ -29,7 +29,7 @@ const COLOR_GROUPS = [
     ['Shell', [
         ['panel-fg', 'Shell text and icons', 'App grid, menus, OSD, overview, password field, search, switchers and top bar'],
         ['general', 'Shell background', 'Dialogs, menus, OSD, overview, top bar and window switcher'],
-        ['border', 'Menu borders', 'Cards, menus and Quick Settings buttons (when enabled)'],
+        ['border', 'Menu borders', 'Cards, menus, notification and Quick Settings buttons (when enabled)'],
         ['dash', 'Overview and top bar highlights',
             'Alt+Tab selection, app hover, dash, folders, password field, search and top bar buttons'],
     ]],
@@ -840,22 +840,39 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             const effects = new Adw.PreferencesGroup({title: 'Visual tweaks'});
             sliderRow(effects, 'transition-duration', 'Transition',
                 'Fade duration when switching between light and dark mode', 2000, 100, ' ms');
-            // Borders: GNOME's own, hidden, or also on the idle Quick Settings buttons.
-            const BORDER_STYLES = [['default', 'System default'], ['hide', 'Disable menu borders'],
-                ['quick-settings', 'Enable border on Quick Settings buttons']];
-            const borders = new Adw.ComboRow({
-                title: 'Borders', subtitle: 'Outline of menus, cards and Quick Settings buttons',
-                model: Gtk.StringList.new(BORDER_STYLES.map(([, label]) => label)),
+            // Borders: several choices in a popover. "Disable menu borders" turns the others off.
+            const BORDER_KEYS = [
+                ['hide-borders', 'Disable menu borders', 'Hides the outline of menus, cards and the calendar as card'],
+                ['qs-borders', 'Enable border on Quick Settings buttons', 'Outlines idle toggles, round buttons and expanded menus'],
+                ['notification-borders', 'Enable border on notification buttons',
+                    'Outlines notification buttons, Clear and Do Not Disturb'],
+            ];
+            const choices = new Gtk.ListBox({
+                selection_mode: Gtk.SelectionMode.NONE, css_classes: ['boxed-list'],
+                margin_top: 6, margin_bottom: 6, margin_start: 6, margin_end: 6,
             });
-            const loadBorders = () => borders.set_selected(
-                Math.max(0, BORDER_STYLES.findIndex(([id]) => id === s.get_string('border-style'))));
+            for (const [key, title, subtitle] of BORDER_KEYS) {
+                const choice = new Adw.ActionRow({title, subtitle});
+                const check = new Gtk.CheckButton({valign: Gtk.Align.CENTER});
+                s.bind(key, check, 'active', Gio.SettingsBindFlags.DEFAULT);
+                choice.add_prefix(check);
+                choice.set_activatable_widget(check);
+                if (key !== 'hide-borders')
+                    s.bind('hide-borders', choice, 'sensitive', Gio.SettingsBindFlags.GET | Gio.SettingsBindFlags.INVERT_BOOLEAN);
+                choices.append(choice);
+            }
+            const bordersButton = new Gtk.MenuButton({
+                popover: new Gtk.Popover({child: choices}), valign: Gtk.Align.CENTER,
+            });
+            const loadBorders = () => {
+                const on = BORDER_KEYS.filter(([key]) => s.get_boolean(key));
+                bordersButton.set_label(s.get_boolean('hide-borders') ? 'Disable menu borders'
+                    : on.length ? `${on.length} selected` : 'System default');
+            };
             loadBorders();
-            borders.connect('notify::selected', () => {
-                const id = BORDER_STYLES[borders.get_selected()]?.[0];
-                if (id && id !== s.get_string('border-style'))
-                    s.set_string('border-style', id);
-            });
-            watch('border-style', loadBorders);
+            BORDER_KEYS.forEach(([key]) => watch(key, loadBorders));
+            const borders = new Adw.ActionRow({title: 'Borders', subtitle: 'Outline of menus, cards and buttons'});
+            borders.add_suffix(bordersButton);
             effects.add(borders);
             switchRow(effects, 'no-qs-dimming', 'Disable Quick Settings dimming',
                 'Keeps Quick Settings bright while a toggle menu is open');
