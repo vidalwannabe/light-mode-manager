@@ -1107,7 +1107,12 @@ export default class ShellColorManagerExtension extends Extension {
         // Cards, Quick Settings and "Calendar as card" (GNOME's own card color on system default).
         const card = c.card || native.card;
         if (c.card) {
-            css += buttonCss(CARD_BUTTONS, card, style) + rule(DND_SWITCH, 'background-color', card) +
+            // Stacked notifications behind the first get GNOME's darker shades (1% and 4% in
+            // dark style, 4% and 7% in light style).
+            css += buttonCss(CARD_BUTTONS, card, style) +
+                rule('.message:second-in-stack', 'background-color', `st-darken(${card}, ${style ? 1 : 4}%)`) +
+                rule('.message:lower-in-stack', 'background-color', `st-darken(${card}, ${style ? 4 : 7}%)`) +
+                rule(DND_SWITCH, 'background-color', card) +
                 rule(`${DND_SWITCH}:hover`, 'background-color', `${shade(style)}(${card}, 4%)`) +
                 rule(`${DND_SWITCH}:checked`, 'background-color', '-st-accent-color') +
                 rule(`${DND_SWITCH}:checked:hover`, 'background-color', 'st-lighten(-st-accent-color, 5%)');
