@@ -31,20 +31,20 @@ Each tab has twenty-two colors in four groups:
 
 | Color | What it paints |
 | --- | --- |
-| Idle button titles and icons | Quick Settings toggles that are off and their arrows, the round buttons at the top, the slider buttons and the heading of the menus toggles open |
+| Idle button titles and icons | Quick Settings toggles that are off and their arrows, the round buttons at the top, the slider buttons, the sliders' handles and the heading of the menus toggles open |
 | Idle button subtitles | The line under a toggle or a toggle menu heading (the connected network, the audio device…) and device subtitles |
-| Idle button background | Quick Settings toggles that are off, their arrows, the round buttons at the top and the slider buttons (volume, "›", brightness) |
+| Idle button background | Quick Settings toggles that are off, their arrows, the round buttons at the top, the slider buttons (volume, "›", brightness) and the sliders' track (the part not filled) |
 | Idle expanded menu | The menu a toggle opens (Wi-Fi, Bluetooth, Power Off…) while the toggle is off. Empty: system default |
-| Active button text and icons | Quick Settings toggles that are on (Wi-Fi, Dark Style…), their arrows and subtitles. Empty: the accent's text color, subtitles included |
+| Active button text and icons | Quick Settings toggles that are on (Wi-Fi, Dark Style…), their arrows and subtitles, and the heading and items of their menus when Active expanded menu has a color. Empty: the accent's text color, subtitles included |
 | Active button background | Quick Settings toggles that are on, their arrows and the icon of the menu they open. Empty (default): the accent color set in GNOME Settings › Appearance |
-| Active expanded menu | The menu a toggle opens while the toggle is on; its heading then uses Active button text and icons. Default: the accent color set in GNOME Settings › Appearance. Empty (system default): same as Idle expanded menu |
+| Active expanded menu | The menu a toggle opens while the toggle is on; its heading and items then use Active button text and icons, and items light up from this color on hover. Default: the accent color set in GNOME Settings › Appearance. Empty (system default): same as Idle expanded menu |
 | Volume and brightness sliders | The filled part of the volume, brightness and other sliders. Empty (default): the accent color set in GNOME Settings › Appearance |
 
 **Notification panel**
 
 | Color | What it paints |
 | --- | --- |
-| Card titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, and also menus and dialogs (not the app grid, see App grid text) |
+| Card titles and icons | Titles and icons: notifications (app name and title), Today, World Clocks, Weather, the calendar, and also menus (the items of Idle expanded menu included) and dialogs (not the app grid, see App grid text) |
 | Card subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday |
 | Card background | Notifications, banners, the Clear button and calendar widgets: Today, World Clocks and Weather. Search results and app folders keep the system background |
 | Today in the calendar background | The circle behind the current day. Empty (default): the accent color |

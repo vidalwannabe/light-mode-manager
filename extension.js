@@ -255,11 +255,14 @@ const noShadowCss = rule(SHADOW_SEL, 'box-shadow', 'none');
 const insensitive = selectors => inStates(selectors, [':insensitive']);
 
 // "Idle button titles and icons": Quick Settings toggles and their arrows, the round buttons
-// at the top, the slider buttons and the heading of the menus toggles open. "Idle buttons
-// subtitles": the line under a toggle or menu heading, and device subtitles (Bluetooth...).
+// at the top, the slider buttons, the sliders' handles and the heading of the menus toggles
+// open. "Idle button subtitles": the line under a toggle or menu heading, and device
+// subtitles (Bluetooth...).
 // Toggles that are on get "Active button text and icons" afterwards (activeTextCss).
 const QS_TEXT = ['.quick-settings .button', '.quick-settings .icon-button'];
-const QS_TITLE = [...QS_TEXT, '.quick-toggle-menu .header .title'];
+// The sliders' handle is drawn in their text color, also when hovered.
+const QS_SLIDER = '.quick-slider .slider';
+const QS_TITLE = [...QS_TEXT, '.quick-toggle-menu .header .title', QS_SLIDER, `${QS_SLIDER}:hover`];
 const QS_SUBTITLE = ['.quick-settings .quick-toggle .quick-toggle-subtitle', '.quick-toggle-menu .header .subtitle',
     '.device-subtitle'];
 function quickSettingsTextCss(main, secondary) {
@@ -1070,7 +1073,11 @@ export default class ShellColorManagerExtension extends Extension {
         const accent = active || '-st-accent-color';
         const match = this._settings.get_boolean('match-arrow-buttons');
         const opacity = this._settings.get_int('card-opacity');
-        const merged = this._settings.get_boolean('merge-arrow-buttons') ? rule(ARROW_GAP_SEL, 'width', '0') : '';
+        // The sliders' track (the part not filled) takes "Idle button background"; the light
+        // template's own track otherwise, as it fills it with the card text token.
+        const track = color || (dark ? '' : 'rgba(34, 34, 38, 0.1)');
+        const merged = (this._settings.get_boolean('merge-arrow-buttons') ? rule(ARROW_GAP_SEL, 'width', '0') : '') +
+            (track ? rule(QS_SLIDER, '-barlevel-background-color', translucent(track, opacity)) : '');
         let css;
         if (color || opacity < 100) {
             const amount = ARROW_SHADE[dark ? 'dark' : 'light'];
@@ -1088,11 +1095,15 @@ export default class ShellColorManagerExtension extends Extension {
         // The light template paints the menus with the card token, so in light mode they
         // always get their own color back. An active menu without a color keeps the idle one.
         let menus = menu || opacity < 100 || !dark ? menuCss(translucent(menu || native.menu, opacity), dark) : '';
-        // On the active menu its heading (title and subtitle) takes "Active button text and icons".
+        // On the active menu its heading and items (networks, devices...) take "Active button
+        // text and icons", in every state; disabled items at half strength.
         if (activeMenu) {
+            const text = c['qs-active-fg'] || '-st-accent-fg-color';
+            const items = `${QS_ACTIVE_MENU} .popup-menu-item`;
             menus += menuCss(translucent(activeMenu, opacity), dark, QS_ACTIVE_MENU) +
-                rule(`${QS_ACTIVE_MENU} .header .title, ${QS_ACTIVE_MENU} .header .subtitle`, 'color',
-                    c['qs-active-fg'] || '-st-accent-fg-color');
+                rule(`${QS_ACTIVE_MENU} .header .title, ${QS_ACTIVE_MENU} .header .subtitle, ` +
+                    inStates(items, ['', ':hover', ':active', ':selected', ':checked']), 'color', text) +
+                rule(`${items}:insensitive`, 'color', `st-transparentize(${text}, 0.5)`);
         }
         if (!css)
             return merged + menus;
