@@ -877,7 +877,6 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                 ['qs-active-borders', 'Active Quick Settings button'],
                 ['qs-borders', 'Idle Quick Settings button'],
                 ['notification-borders', 'Notification buttons'],
-                ['panel-active-borders', 'Active top bar buttons'],
             ];
             const choices = new Gtk.ListBox({
                 selection_mode: Gtk.SelectionMode.NONE, css_classes: ['boxed-list'],
