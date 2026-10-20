@@ -29,7 +29,7 @@ const COLOR_GROUPS = [
     ['Shell', [
         ['panel-fg', 'Shell text and icons', 'Top bar, menus, OSD, switchers, app grid, overview, search and password'],
         ['general', 'Shell background', 'Top bar, menus, OSD, window switcher, overview and dialogs'],
-        ['border', 'Menu borders', 'Outline of menus, cards and expanded Quick Settings menus'],
+        ['border', 'Menu borders', 'Outline of menus and cards; Quick Settings buttons when enabled'],
         ['dash', 'Overview and top bar highlights',
             'Dash, folders, app hover, Alt+Tab selection, search, password field, top bar buttons'],
     ]],
@@ -840,8 +840,23 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             const effects = new Adw.PreferencesGroup({title: 'Visual tweaks'});
             sliderRow(effects, 'transition-duration', 'Transition',
                 'Fade duration when switching between light and dark mode', 2000, 100, ' ms');
-            switchRow(effects, 'hide-borders', 'Disable menu borders',
-                'Hides the outline of menus (Quick Settings, calendar…) and of the cards');
+            // Borders: GNOME's own, hidden, or also on the idle Quick Settings buttons.
+            const BORDER_STYLES = [['default', 'System default'], ['hide', 'Disable menu borders'],
+                ['quick-settings', 'Enable border on Quick Settings buttons']];
+            const borders = new Adw.ComboRow({
+                title: 'Borders', subtitle: 'Outline of menus, cards and Quick Settings buttons',
+                model: Gtk.StringList.new(BORDER_STYLES.map(([, label]) => label)),
+            });
+            const loadBorders = () => borders.set_selected(
+                Math.max(0, BORDER_STYLES.findIndex(([id]) => id === s.get_string('border-style'))));
+            loadBorders();
+            borders.connect('notify::selected', () => {
+                const id = BORDER_STYLES[borders.get_selected()]?.[0];
+                if (id && id !== s.get_string('border-style'))
+                    s.set_string('border-style', id);
+            });
+            watch('border-style', loadBorders);
+            effects.add(borders);
             switchRow(effects, 'no-qs-dimming', 'Disable Quick Settings dimming',
                 'Keeps Quick Settings bright while a toggle menu is open');
             switchRow(effects, 'merge-arrow-buttons', 'Merge arrows into toggles',

@@ -16,7 +16,7 @@ Each tab has twelve colors in two groups. An empty color is the system default: 
 | --- | --- |
 | Shell text and icons | Top bar text and icons (clock, indicators, overview button, Dash to Panel's app grid button), menu items, OSD and window switcher text, app and folder names, the folder edit button, page arrows, overview search results and window captions, and the text typed in the search and password fields (their hint dimmed). The lock and login screens keep their white top bar text |
 | Shell background | The top bar, menus (Quick Settings, calendar, right-click menus), OSD, window switcher, the overview and dialogs (Power Off, passwords…). The lock and login screens keep their transparent top bar |
-| Menu borders | The outline of menus (Quick Settings, calendar, right-click menus), of the cards (notifications, Today, World Clocks, Weather, the calendar as card) and of expanded Quick Settings menus. Empty: system default |
+| Menu borders | The outline of menus (Quick Settings, calendar, right-click menus) and of the cards (notifications, Today, World Clocks, Weather, the calendar as card); with **Enable border on Quick Settings buttons**, also of the idle Quick Settings buttons and expanded menus. Default: the idle button background of the default color set |
 | Overview and top bar highlights | The dash, app folders and the dialog a folder opens (its name field included), the highlight of a hovered or selected app, the search bar and search result sections, the selected app of the Alt+Tab switcher, the password field of the lock and login screens, and hovered or open top bar buttons |
 
 **Quick Settings and Notification Panel**
@@ -52,7 +52,7 @@ Each tab has a color set selector to apply a set of colors in one click. Built-i
 **Visual tweaks**
 
 - **Transition**: duration of the fade when switching between light and dark mode, or when a color set or color change shows on screen (the top bar always; the overview and menus while open), from 0 (instant) to 2000 ms. Default: 500 ms, like GNOME.
-- **Disable menu borders**: removes the outline of Quick Settings, the calendar and other menus, and of the cards (notifications, Today, World Clocks, Weather, the calendar as card), in both modes. Overrides the Menu borders color.
+- **Borders**: **System default** keeps GNOME's borders; expanded Quick Settings menus have none. **Disable menu borders** removes the outline of menus (Quick Settings, the calendar, right-click menus) and of the cards (notifications, Today, World Clocks, Weather, the calendar as card). **Enable border on Quick Settings buttons** also outlines the idle Quick Settings buttons (a toggle and its arrow as one) and the expanded menus, in the Menu borders color. Both modes.
 - **Disable Quick Settings dimming**: Quick Settings is no longer darkened while one of its menus (Wi-Fi, Power Off…) is open. This also covers Quick Settings panels made by other extensions, such as the separate or independent panels of Quick Settings Audio Panel.
 - **Merge arrows into toggles**: the arrow (›) next to Quick Settings toggles such as Wi-Fi or Bluetooth takes the same color as its toggle, on and off, instead of GNOME's separate shade, and the 1px gap line between them is removed, so both read as one button. Works with any color set.
 - **Calendar as card** (on by default): the month calendar gets the color of the cards below it (Today, World Clocks, Weather), without a pill behind each day, and their outline (a faint border and shadow in light mode). With the GNOME color set it follows GNOME's own card color.

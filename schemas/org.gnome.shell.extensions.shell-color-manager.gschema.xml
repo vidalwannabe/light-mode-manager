@@ -8,7 +8,7 @@
     <key name="color-panel-fg" type="s"><default>'#000000'</default><summary>Shell text and icons</summary></key>
     <key name="color-fg-muted" type="s"><default>'#77767b'</default><summary>Card subtitles</summary></key>
     <key name="color-card" type="s"><default>'#e6e6e7'</default><summary>Card background</summary></key>
-    <key name="color-border" type="s"><default>''</default><summary>Menu borders: menus, cards and expanded Quick Settings menus (empty: system default)</summary></key>
+    <key name="color-border" type="s"><default>'#e6e6e7'</default><summary>Menu borders: menus and cards, and Quick Settings buttons when enabled (empty: system default)</summary></key>
     <key name="color-dash" type="s"><default>'#e6e6e7'</default><summary>Overview and top bar highlights</summary></key>
     <key name="color-qs-active-fg" type="s"><default>''</default><summary>Active button text and icons (empty: accent text color)</summary></key>
     <key name="color-qs-active" type="s"><default>'accent'</default><summary>Active button background: toggles that are on and the menus they open (accent: the accent color set in GNOME Settings)</summary></key>
@@ -21,7 +21,7 @@
     <key name="color-panel-fg-dark" type="s"><default>'#ffffff'</default><summary>Shell text and icons</summary></key>
     <key name="color-fg-muted-dark" type="s"><default>'#c0bfbc'</default><summary>Card subtitles</summary></key>
     <key name="color-card-dark" type="s"><default>'#343437'</default><summary>Card background</summary></key>
-    <key name="color-border-dark" type="s"><default>''</default><summary>Menu borders: menus, cards and expanded Quick Settings menus (empty: system default)</summary></key>
+    <key name="color-border-dark" type="s"><default>'#343437'</default><summary>Menu borders: menus and cards, and Quick Settings buttons when enabled (empty: system default)</summary></key>
     <key name="color-dash-dark" type="s"><default>'#343437'</default><summary>Overview and top bar highlights</summary></key>
     <key name="color-qs-active-fg-dark" type="s"><default>''</default><summary>Active button text and icons (empty: accent text color)</summary></key>
     <key name="color-qs-active-dark" type="s"><default>'accent'</default><summary>Active button background: toggles that are on and the menus they open (accent: the accent color set in GNOME Settings)</summary></key>
@@ -39,7 +39,7 @@
     <key name="transition-duration" type="i"><range min="0" max="2000"/><default>500</default><summary>Fade duration in ms when switching between light and dark mode</summary></key>
     <key name="override-dtp-colors" type="b"><default>false</default><summary>Dash to Panel takes its panel color and opacity from this extension, with preview titles in black or white</summary></key>
     <key name="dtp-notice-shown" type="b"><default>false</default><summary>The Dash to Panel notice was shown</summary></key>
-    <key name="hide-borders" type="b"><default>false</default><summary>Hide the menu borders, both modes</summary></key>
+    <key name="border-style" type="s"><choices><choice value='default'/><choice value='hide'/><choice value='quick-settings'/></choices><default>'default'</default><summary>Borders: GNOME's own, hidden (menus and cards), or also on the idle Quick Settings buttons and expanded menus</summary></key>
     <key name="merge-arrow-buttons" type="b"><default>false</default><summary>Quick Settings arrows take their toggle's color, with no gap between them</summary></key>
     <key name="no-qs-dimming" type="b"><default>false</default><summary>Quick Settings is not darkened while one of its menus is open</summary></key>
     <key name="calendar-background" type="b"><default>true</default><summary>The month calendar gets the cards' color, without a pill behind each day</summary></key>

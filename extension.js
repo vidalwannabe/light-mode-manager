@@ -87,7 +87,7 @@ const NATIVE = {
 
 // Settings that rebuild the theme of each mode: its colors (the rows of the Light mode and
 // Dark mode tabs) and the General tab options. Other keys (profiles...) never do.
-const EFFECT_KEYS = ['hide-borders', 'merge-arrow-buttons', 'calendar-background'];
+const EFFECT_KEYS = ['border-style', 'merge-arrow-buttons', 'calendar-background'];
 const THEME_KEYS = [false, true].map(dark =>
     [...ROW_NAMES.map(n => `color-${n}${dark ? '-dark' : ''}`), ...EFFECT_KEYS]);
 
@@ -99,7 +99,12 @@ const COLOR_RE = /^(#[0-9a-f]{3}|#[0-9a-f]{6}|rgba?\([\d\s.,]+\)|[a-z]+)$/i;
 const BORDER_SEL = '.popup-menu-content, .candidate-popup-content';
 // The cards GNOME outlines in light mode, and the calendar with "Calendar as card".
 const CARD_OUTLINE_SEL = '.message, .events-button, .world-clocks-button, .weather-button, .datemenu-today-button, ' +
-    '.calendar, .quick-toggle-menu';
+    '.calendar';
+// "Enable border on Quick Settings buttons": idle toggles (a toggle with an arrow outlined as
+// one, around both) and the round buttons at the top, drawn as an outer shadow so nothing
+// changes size; toggles that are on keep none.
+const QS_OUTLINED = '.quick-toggle, .quick-toggle-has-menu, .quick-settings-system-item .icon-button';
+const QS_NOT_OUTLINED = '.quick-toggle-has-menu .quick-toggle, .quick-toggle:checked, .quick-toggle-has-menu:checked';
 
 
 // Hover/active shading (darker in light mode, lighter in dark mode) and focus tint of
@@ -996,16 +1001,25 @@ export default class ShellColorManagerExtension extends Extension {
             rule(PANEL_LOCK_BAR_SEL, 'background-color', 'transparent');
     }
 
-    // "Menu borders": the border of menus, cards and expanded Quick Settings menus (GNOME's
-    // own on system default). "Disable menu borders" hides them all, with the cards' faint
-    // shadow; hidden borders stay 1px wide but transparent, so nothing changes size.
-    _borderCss(color) {
-        if (this._settings.get_boolean('hide-borders')) {
-            return rule(BORDER_SEL, 'border-color', 'transparent') +
+    // "Menu borders": the border of menus and cards (GNOME's own on system default). Expanded
+    // Quick Settings menus have none. The "Borders" option of the General tab: "Disable menu
+    // borders" hides them all, with the cards' faint shadow (hidden borders stay 1px wide but
+    // transparent, so nothing changes size); "Enable border on Quick Settings buttons" also
+    // outlines the idle Quick Settings buttons and the expanded menus, with the Menu borders
+    // color (GNOME's faint card border when empty).
+    _borderCss(color, dark) {
+        const style = this._settings.get_string('border-style');
+        if (style === 'hide') {
+            return rule(`${BORDER_SEL}, ${QS_MENU}`, 'border-color', 'transparent') +
                 rule(CARD_OUTLINE_SEL, 'border-color', 'transparent !important') + rule(CARD_OUTLINE_SEL, 'box-shadow', 'none');
         }
-        return color ? rule(BORDER_SEL, 'border-color', color) +
-            rule(CARD_OUTLINE_SEL, 'border-color', `${color} !important`) : '';
+        const css = color ? rule(BORDER_SEL, 'border-color', color) + rule(CARD_OUTLINE_SEL, 'border-color', `${color} !important`)
+            : '';
+        if (style !== 'quick-settings')
+            return css + rule(QS_MENU, 'border-color', 'transparent');
+        const outline = color || `st-transparentize(${NATIVE[dark ? 'dark' : 'light'].text}, 0.9)`;
+        return css + rule(QS_MENU, 'border-color', outline) + rule(QS_OUTLINED, 'box-shadow', `0 0 0 1px ${outline}`) +
+            rule(QS_NOT_OUTLINED, 'box-shadow', 'none');
     }
 
     // The stylesheet of a mode, over GNOME's own style: the rules of every color row and
@@ -1048,7 +1062,7 @@ export default class ShellColorManagerExtension extends Extension {
         });
         if (this._settings.get_boolean('calendar-background'))
             css += calendarCss(card, style, c['qs-active'] || '-st-accent-color');
-        return css + this._highlightCss(c, style) + this._mediaCss(c, style, native) + this._borderCss(c.border);
+        return css + this._highlightCss(c, style) + this._mediaCss(c, style, native) + this._borderCss(c.border, style);
     }
 
     // Idle Quick Settings buttons, the menus they open and the arrow buttons. An empty color
@@ -1085,14 +1099,12 @@ export default class ShellColorManagerExtension extends Extension {
         }
         // Idle menus: background, outline, the circle behind the heading icon, and text; the
         // active menus' likewise.
-        let menus = (menu ? menuCss(menu, dark) + rule(QS_MENU_ICON, 'background-color', menu) +
-                rule(QS_MENU, 'border-color', menu) : '') +
+        let menus = (menu ? menuCss(menu, dark) + rule(QS_MENU_ICON, 'background-color', menu) : '') +
             (menuText ? menuTextCss(menuText) : '');
         if (activeMenu) {
             // Their heading and items take "Active button text and icons".
             menus += menuCss(activeMenu, dark, QS_ACTIVE_MENU) +
                 rule(QS_MENU_ICON_ON, 'background-color', activeMenu) +
-                rule(QS_ACTIVE_MENU, 'border-color', activeMenu) +
                 menuTextCss(c['qs-active-fg'] || '-st-accent-fg-color', QS_ACTIVE_MENU);
         } else {
             // On system default, the idle menu's colors are taken off the active menu.
