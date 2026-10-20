@@ -348,6 +348,17 @@ function entriesCss(color, dark) {
         rule(sel(ENTRY_SEL, ':hover'), 'background-color', `${shade(dark)}(${color}, 4%)`) +
         rule(sel(ENTRY_SEL, ':focus'), 'background-color', `st-mix(-st-accent-color, ${color}, 5%)`);
 }
+// "Overview and top bar highlights" on app folders, search result sections and the
+// highlight of a selected or hovered search result.
+const SELECTED = [':selected', ':highlighted', ':checked'];
+function overviewBoxesCss(color, dark) {
+    const lit = `${shade(dark)}(${color}, 8%)`;
+    return buttonCss(['.app-folder', '.list-search-result'], color, dark) +
+        rule(inStates(['.app-folder', '.list-search-result'], SELECTED), 'background-color', lit) +
+        rule('.search-section-content', 'background-color', color) +
+        rule(inStates('.grid-search-result', [':hover', ':focus', ...SELECTED]), 'background-color', color) +
+        rule(inStates('.grid-search-result', [':active']), 'background-color', lit);
+}
 const entryTextCss = color => rule(inStates(ENTRY_SEL, ['', ':hover', ':focus']), 'color', color) +
     rule(inStates(ENTRY_SEL, [' StLabel.hint-text']), 'color', `st-transparentize(${color}, 0.5)`);
 
@@ -1058,7 +1069,7 @@ export default class ShellColorManagerExtension extends Extension {
         if (c.dash) {
             const dash = withOpacity(c.dash, 100);
             css += rule('#dash .dash-background', 'background-color', dash) +
-                entriesCss(dash, style) + panelButtonsCss(dash);
+                entriesCss(dash, style) + panelButtonsCss(dash) + overviewBoxesCss(dash, style);
         }
         if (c['entry-fg'])
             css += entryTextCss(c['entry-fg']);

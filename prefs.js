@@ -31,9 +31,10 @@ const COLOR_GROUPS = [
         ['panel', 'Top bar background', 'Panel color; solid unless "Enable panel opacity" is on'],
         ['entry-fg', 'Search and password text', 'Text typed in the overview search and lock screen password fields'],
         ['overview-fg', 'Overview text', 'Search results, search status and window captions in the overview'],
-        ['overview', 'Overview and dialogs background', 'Overview, Power Off and password dialogs; always solid'],
         ['grid-fg', 'App grid text', 'App and folder names, folder titles and page arrows in the app grid'],
-        ['dash', 'Overview and top bar highlights', 'Dash, search and password fields, and hovered or open top bar buttons'],
+        ['overview', 'Overview and dialogs background', 'Overview, Power Off and password dialogs; always solid'],
+        ['dash', 'Overview and top bar highlights',
+            'Dash, folders, search fields and results, password field and active top bar buttons'],
     ]],
     ['Menus', [
         ['menu-fg', 'Menu text', 'Menu items, OSD and window switcher'],

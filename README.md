@@ -18,9 +18,9 @@ Each tab has twenty-six colors in four groups:
 | Top bar background | The panel; solid unless **Enable panel opacity** is on |
 | Search and password text | The text typed in the overview search field and the lock and login screen password field; their hint text, dimmed. Empty: system default |
 | Overview text | Search results (titles, and descriptions dimmed), the search status and window captions in the overview. Empty: system default |
-| Overview and dialogs background | The overview and dialogs (Power Off, passwords, "not responding"…), always solid |
 | App grid text | App and folder names, folder titles and page arrows in the app grid. Default: black in light mode, white in dark mode |
-| Overview and top bar highlights | The overview dock (dash) and search bar, the password field of the lock and login screens (its text in the titles color) and top bar buttons that are hovered or have their menu open (not on the lock screen). Default: the cards background |
+| Overview and dialogs background | The overview and dialogs (Power Off, passwords, "not responding"…), always solid |
+| Overview and top bar highlights | The overview dock (dash), app folders, search bar, search result sections and the highlight of a selected search result, the password field of the lock and login screens (its text in the titles color) and top bar buttons that are hovered or have their menu open (not on the lock screen). Default: the cards background |
 
 **Menus**
 
