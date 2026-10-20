@@ -174,9 +174,18 @@ const QS_MENU = '.quick-toggle-menu';
 const ACTIVE_MENU_CLASS = 'scm-active';
 const QS_ACTIVE_MENU = `${QS_MENU}.${ACTIVE_MENU_CLASS}`;
 // The open menu is not reactive, so St gives it :insensitive, which GNOME (and buttonCss)
-// draws a shade lighter: it keeps its own color instead.
-const menuCss = (color, dark, selector = QS_MENU) => buttonCss(selector, color, dark) +
-    rule(`${selector}:insensitive`, 'background-color', color);
+// draws a shade lighter: it keeps its own color instead. Its items (networks, devices...)
+// are lit from the menu's own color by the same amounts as the buttons (see buttonCss),
+// instead of GNOME's fixed gray; disabled items keep GNOME's transparent background.
+function menuCss(color, dark, selector = QS_MENU) {
+    const adjust = shade(dark);
+    const item = `${selector} .popup-menu-item`;
+    return buttonCss(selector, color, dark) +
+        rule(`${selector}:insensitive`, 'background-color', color) +
+        rule(`${item}:hover, ${item}:selected, ${item}:checked`, 'background-color', `${adjust}(${color}, 4%)`) +
+        rule(`${item}:active`, 'background-color', `${adjust}(${color}, 9%)`) +
+        rule(`${item}:active:hover`, 'background-color', `${adjust}(${adjust}(${color}, 9%), 4%)`);
+}
 const QS_CHECKED = '.quick-toggle:checked';
 const QS_MENU_ICON_ON = '.quick-toggle-menu .header .icon.active';
 const QS_FLAT = '.background-apps-quick-toggle';
