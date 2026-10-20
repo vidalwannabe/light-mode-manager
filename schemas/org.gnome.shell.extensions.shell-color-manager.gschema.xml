@@ -12,7 +12,6 @@
     <key name="color-qs-active-fg" type="s"><default>''</default><summary>Active button text and icons (empty: accent text color)</summary></key>
     <key name="color-qs-active" type="s"><default>'accent'</default><summary>Active button background: toggles that are on and the menus they open (accent: the accent color set in GNOME Settings)</summary></key>
     <key name="color-highlight" type="s"><default>''</default><summary>Volume and brightness sliders (empty: GNOME accent color)</summary></key>
-    <key name="color-media" type="s"><default>'accent'</default><summary>Media player background (empty: system default; accent: the accent color set in GNOME Settings)</summary></key>
     <key name="color-qs-button" type="s"><default>'#e6e6e7'</default><summary>Idle button background</summary></key>
     <!-- Dark mode (empty = system default) -->
     <key name="color-general-dark" type="s"><default>'#222226'</default><summary>Shell background</summary></key>
@@ -25,7 +24,6 @@
     <key name="color-qs-active-fg-dark" type="s"><default>''</default><summary>Active button text and icons (empty: accent text color)</summary></key>
     <key name="color-qs-active-dark" type="s"><default>'accent'</default><summary>Active button background: toggles that are on and the menus they open (accent: the accent color set in GNOME Settings)</summary></key>
     <key name="color-highlight-dark" type="s"><default>''</default><summary>Volume and brightness sliders (empty: GNOME accent color)</summary></key>
-    <key name="color-media-dark" type="s"><default>'accent'</default><summary>Media player background (empty: system default; accent: the accent color set in GNOME Settings)</summary></key>
     <key name="color-qs-button-dark" type="s"><default>'#343437'</default><summary>Idle button background</summary></key>
     <!-- Saved color profiles: JSON list of {"name": ..., "colors": {row: color}} -->
     <key name="profiles" type="s"><default>'[]'</default><summary>Light mode color sets</summary></key>

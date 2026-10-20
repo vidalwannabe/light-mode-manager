@@ -957,12 +957,13 @@ export default class ShellColorManagerExtension extends Extension {
             (c['qs-active-fg'] ? rule(CALENDAR_TODAY, 'color', c['qs-active-fg']) : '');
     }
 
-    // "Media player background": the card of the music or video playing (a notification with
-    // the media-message class) and its playback buttons, which light up from it on hover and
-    // click by the same amounts as buttons. Its text and icons take "Active button text and
-    // icons". Empty, they keep GNOME's own colors, also when the cards' colors are set.
+    // The media player: the card of the music or video playing (a notification with the
+    // media-message class) takes "Active button background", and its playback buttons light up
+    // from it on hover and click by the same amounts as buttons; its text and icons take
+    // "Active button text and icons". Empty, they keep GNOME's own colors, also when the
+    // cards' colors are set.
     _mediaCss(c, dark, native) {
-        const {'qs-active-fg': fg, media: bg} = c;
+        const {'qs-active-fg': fg, 'qs-active': bg} = c;
         let css = '';
         if (bg) {
             // The pointer over a button is also over the card, which is lit 4% (buttonCss): the

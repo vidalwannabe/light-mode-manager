@@ -32,21 +32,18 @@ const COLOR_GROUPS = [
         ['dash', 'Overview and top bar highlights',
             'Dash, folders, app hover, Alt+Tab selection, search, password field, top bar buttons'],
     ]],
-    ['Quick Settings', [
-        ['qs-fg', 'Idle button text and icons', 'Toggles that are off, their menus, round buttons and slider handles'],
-        ['qs-button', 'Idle button background', 'Toggles that are off, their menus, round and slider buttons, slider tracks'],
+    ['Quick Settings and Notification Panel', [
         ['qs-active-fg', 'Active button text and icons', 'Toggles that are on and their menus, today in the calendar, media player',
             'Accent text color', '#ffffff'],
-        ['qs-active', 'Active button background', 'Toggles that are on, their arrows and menus, today in the calendar', ACCENT,
-            accentColor],
+        ['qs-active', 'Active button background', 'Toggles that are on and their menus, today in the calendar, media player',
+            ACCENT, accentColor],
+        ['qs-fg', 'Idle button text and icons', 'Toggles that are off, their menus, round buttons and slider handles'],
+        ['qs-button', 'Idle button background', 'Toggles that are off, their menus, round and slider buttons, slider tracks'],
         ['highlight', 'Volume and brightness sliders', 'Filled part of the sliders and of the volume and brightness popup',
             ACCENT, accentColor],
-    ]],
-    ['Notification panel', [
         ['fg', 'Card titles and icons', 'Notifications, calendar, Today, World Clocks and Weather'],
         ['fg-muted', 'Card subtitles', 'Text under titles: notification body, times, locations and weekdays'],
         ['card', 'Card background', 'Notifications, banners, Clear button, widgets and Calendar as card'],
-        ['media', 'Media player background', 'Card of the music playing; its buttons light up from it on hover'],
     ]],
 ];
 
