@@ -197,10 +197,11 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
         const confirm = (heading, body, label, onConfirm) =>
             alert({heading, body}, [['cancel', 'Cancel'], ['ok', label, DESTRUCTIVE]], onConfirm).present(window);
 
-        // A "Color sets" group: one row with a selector (apply; send, rename and delete the user's
+        // A "Color sets" group: one row with a selector (apply; send, edit and delete the user's
         // own) and the given add button. `sendTo`: {model, label} of the other mode, for the
-        // Light and Dark tabs.
-        const selectorGroup = ({groupTitle = 'Color sets', title, subtitle, model, describe, addButton, onRefresh, sendTo}) => {
+        // Light and Dark tabs. editButton(profile, close) makes a row's edit button; close()
+        // closes the selector.
+        const selectorGroup = ({groupTitle = 'Color sets', title, subtitle, model, describe, addButton, sendTo, editButton}) => {
             const list = new Gtk.ListBox({selection_mode: Gtk.SelectionMode.NONE});
             list.add_css_class('boxed-list');
             list.add_css_class('lmm-profile-list');
@@ -234,15 +235,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                     row.add_suffix(send);
                 }
                 if (!builtin) {
-                    const rename = flatButton({icon_name: 'document-edit-symbolic', tooltip_text: 'Rename'});
-                    rename.connect('clicked', () => {
-                        popover.popdown();
-                        profileDialog(model.taken, name => {
-                            if (name !== profile.name)
-                                model.rename(profile.name, name);
-                        }, [], 'Rename color set', profile.name, 'Rename');
-                    });
-                    row.add_suffix(rename);
+                    row.add_suffix(editButton(profile, () => popover.popdown()));
                     const del = flatButton({icon_name: 'user-trash-symbolic', tooltip_text: 'Delete'});
                     del.connect('clicked', () => {
                         popover.popdown();
@@ -261,7 +254,6 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                 list.remove_all();
                 for (const profile of profiles)
                     list.append(profileRow(profile, applied));
-                onRefresh?.();
             };
 
             // Applying a profile changes several keys at once; rebuild only once.
@@ -291,53 +283,47 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             return group;
         };
 
-        // Light or Dark tab profiles, with a "+" menu to save the current colors
-        // as a new profile or into an existing one.
+        // Light or Dark tab color sets: the save button asks a name for the current colors; each
+        // saved color set's edit menu renames it or updates it with the current colors.
         const modeProfilesGroup = (model, sendTo) => {
-            const actions = new Gio.SimpleActionGroup();
-            const newAction = new Gio.SimpleAction({name: 'new'});
-            newAction.connect('activate', () => profileDialog(model.taken, name => {
+            const addButton = flatButton({icon_name: 'media-floppy-symbolic', tooltip_text: 'Save current colors'});
+            addButton.connect('clicked', () => profileDialog(model.taken, name => {
                 model.save([...model.own(), {name, colors: model.current()}]);
                 model.setActive(name);
             }));
-            const overwriteAction = new Gio.SimpleAction({name: 'overwrite', parameter_type: new GLib.VariantType('s')});
-            overwriteAction.connect('activate', (_a, param) => {
-                const name = param.unpack();
-                confirm(`Update "${name}"?`, 'Its saved colors will be replaced with the current ones.', 'Update', () => {
-                    model.save(model.own().map(p => p.name === name ? {name, colors: model.current()} : p));
-                    model.setActive(name);
+            const editButton = (profile, close) => {
+                const actions = new Gio.SimpleActionGroup();
+                const action = (name, fn) => {
+                    const a = new Gio.SimpleAction({name});
+                    a.connect('activate', () => {
+                        close();
+                        fn();
+                    });
+                    actions.add_action(a);
+                };
+                action('rename', () => profileDialog(model.taken, name => {
+                    if (name !== profile.name)
+                        model.rename(profile.name, name);
+                }, [], 'Rename color set', profile.name, 'Rename'));
+                action('update', () => {
+                    model.save(model.own().map(p => p.name === profile.name ? {name: p.name, colors: model.current()} : p));
+                    model.setActive(profile.name);
+                    toast(`“${profile.name}” updated`);
                 });
-            });
-            [newAction, overwriteAction, new Gio.SimpleAction({name: 'none', enabled: false})]
-                .forEach(a => actions.add_action(a));
-
-            const addButton = new Gtk.MenuButton({
-                icon_name: 'media-floppy-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Save current colors',
-            });
-            addButton.add_css_class('flat');
-            addButton.insert_action_group('profile', actions);
-            const buildAddMenu = () => {
-                const own = model.own();
                 const menu = new Gio.Menu();
-                menu.append('Create new color set', 'profile.new');
-                if (own.length === 0) {
-                    menu.append('Update existing color set', 'profile.none');
-                } else {
-                    const sub = new Gio.Menu();
-                    for (const p of own) {
-                        const item = Gio.MenuItem.new(p.name, null);
-                        item.set_action_and_target_value('profile.overwrite', new GLib.Variant('s', p.name));
-                        sub.append_item(item);
-                    }
-                    menu.append_submenu('Update existing color set', sub);
-                }
-                addButton.set_menu_model(menu);
+                menu.append('Rename color set', 'edit.rename');
+                menu.append('Update with current colors', 'edit.update');
+                const button = new Gtk.MenuButton({
+                    icon_name: 'document-edit-symbolic', valign: Gtk.Align.CENTER, tooltip_text: 'Edit', menu_model: menu,
+                });
+                button.add_css_class('flat');
+                button.insert_action_group('edit', actions);
+                return button;
             };
 
             return selectorGroup({
-                title: 'Color set', subtitle: 'Create, update or load a color set', model, addButton,
-                describe: () => '',
-                onRefresh: buildAddMenu, sendTo,
+                title: 'Color set', subtitle: 'Create, update or load a color set', model, addButton, editButton,
+                describe: () => '', sendTo,
             });
         };
 
@@ -345,49 +331,37 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
         const generalProfilesGroup = (model, light, dark) => {
             const side = (mode, name) => model.exists(mode, name) ? name : `${name} (deleted)`;
 
-            const newGeneral = () => profileDialog(model.taken, (name, l, d) => {
-                // Only saved: applying it here would overwrite unsaved colors.
-                model.save([...model.own(), {name, light: l, dark: d}]);
-            }, [
-                // The profiles applied in each tab, or Default when a tab's colors are unsaved.
-                {title: 'Light mode color set', names: light.all().map(p => p.name), selected: light.applied()?.name ?? light.builtins[0].name},
-                {title: 'Dark mode color set', names: dark.all().map(p => p.name), selected: dark.applied()?.name ?? dark.builtins[0].name},
-            ], 'New general color set');
-
-            // A tab with unsaved colors is offered to be saved as a new profile first, so the
-            // general profile can use it; skipping uses Default, cancelling stops.
-            const saveUnsaved = (pending, done) => {
-                const next = pending.shift();
-                if (!next) {
-                    done();
-                    return;
-                }
-                const [mode, label] = next;
-                alert({
-                    heading: `Save ${label} colors?`,
-                    body: `Your color set on the ${label} tab isn't saved. Save it to use it in this new ` +
-                        'general color set, or skip to choose another one.',
-                }, [['cancel', 'Cancel'], ['skip', 'Skip'], ['save', 'Save…', SUGGESTED]], response => {
-                    if (response === 'skip') {
-                        saveUnsaved(pending, done);
-                    } else {
-                        profileDialog(mode.taken, name => {
-                            mode.save([...mode.own(), {name, colors: mode.current()}]);
-                            mode.setActive(name);
-                            saveUnsaved(pending, done);
-                        }, [], `New ${label} color set`);
-                    }
-                }).present(window);
-            };
-
+            // A name, and the light and dark color sets (the given ones selected).
+            const sides = (l, d) => [
+                {title: 'Light mode color set', names: light.all().map(p => p.name), selected: l},
+                {title: 'Dark mode color set', names: dark.all().map(p => p.name), selected: d},
+            ];
+            // Saving asks a name and the color sets: the ones applied in each tab, or the tab's
+            // default when its colors are unsaved. Only saved: applying it here would overwrite
+            // unsaved colors.
             const addButton = flatButton({icon_name: 'media-floppy-symbolic', tooltip_text: 'New general color set'});
-            addButton.connect('clicked', () => saveUnsaved(
-                [[light, 'Light mode'], [dark, 'Dark mode']].filter(([mode]) => !mode.applied()), newGeneral));
+            addButton.connect('clicked', () => profileDialog(model.taken, (name, l, d) => {
+                model.save([...model.own(), {name, light: l, dark: d}]);
+            }, sides(light.applied()?.name ?? light.builtins[0].name, dark.applied()?.name ?? dark.builtins[0].name),
+            'New general color set'));
+            // Editing changes the name and the color sets of a general color set.
+            const editButton = (profile, close) => {
+                const button = flatButton({icon_name: 'document-edit-symbolic', tooltip_text: 'Edit'});
+                button.connect('clicked', () => {
+                    close();
+                    profileDialog(model.taken, (name, l, d) => {
+                        model.save(model.own().map(p => p.name === profile.name ? {name, light: l, dark: d} : p));
+                        if (name !== profile.name && model.activeName() === profile.name)
+                            model.setActive(name);
+                    }, sides(profile.light, profile.dark), 'Edit general color set', profile.name, 'Save');
+                });
+                return button;
+            };
 
             return selectorGroup({
                 groupTitle: 'General color sets', title: 'Color set',
                 subtitle: 'Create or load a light and a dark mode color set at once',
-                model, addButton,
+                model, addButton, editButton,
                 describe: p => `Light: ${side(light, p.light)} · Dark: ${side(dark, p.dark)}`,
             });
         };
