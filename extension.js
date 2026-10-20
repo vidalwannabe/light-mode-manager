@@ -66,7 +66,7 @@ const CLEAR_BUTTON = '.message-list-controls .button';
 const NOTIFICATION_BUTTONS = ['.notification-button', '.message .message-header .message-close-button',
     '.message .message-header .message-expand-button', '.message-notification-group .message-collapse-button'];
 const CARD_BUTTONS = ['.message', '.notification-banner', '.events-button', '.world-clocks-button', '.weather-button',
-    CLEAR_BUTTON, ...NOTIFICATION_BUTTONS];
+    CLEAR_BUTTON];
 // The Do Not Disturb switch of the notification list; on, it keeps the accent color.
 const DND_SWITCH = '.message-list-controls .dnd-button .toggle-switch';
 // The media player card; `.message.media-message` outranks the card and text rules.
@@ -1078,7 +1078,11 @@ export default class ShellColorManagerExtension extends Extension {
         if (c.card) {
             // Stacked notifications behind the first get GNOME's darker shades (1% and 4% in
             // dark style, 4% and 7% in light style).
+            // The notifications' buttons 4% darker than the card in dark style and 4% lighter in
+            // light style, so they show without hovering the notification (which lights the card
+            // the other way).
             css += buttonCss(CARD_BUTTONS, card, style) +
+                buttonCss(NOTIFICATION_BUTTONS, `${shade(!style)}(${card}, 4%)`, style) +
                 rule('.message:second-in-stack', 'background-color', `st-darken(${card}, ${style ? 1 : 4}%)`) +
                 rule('.message:lower-in-stack', 'background-color', `st-darken(${card}, ${style ? 4 : 7}%)`) +
                 rule(DND_SWITCH, 'background-color', card) +
