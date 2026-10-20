@@ -996,13 +996,16 @@ export default class ShellColorManagerExtension extends Extension {
             rule(PANEL_LOCK_BAR_SEL, 'background-color', 'transparent');
     }
 
-    // "Disable menu borders": the menus' border (1px wide but transparent, so menus keep their
-    // size) and the outline (border and faint shadow) of the cards. GNOME's own otherwise.
-    _borderCss() {
-        if (!this._settings.get_boolean('hide-borders'))
-            return '';
-        return rule(BORDER_SEL, 'border-color', 'transparent') +
-            rule(CARD_OUTLINE_SEL, 'border-color', 'transparent !important') + rule(CARD_OUTLINE_SEL, 'box-shadow', 'none');
+    // "Menu borders": the border of menus, cards and expanded Quick Settings menus (GNOME's
+    // own on system default). "Disable menu borders" hides them all, with the cards' faint
+    // shadow; hidden borders stay 1px wide but transparent, so nothing changes size.
+    _borderCss(color) {
+        if (this._settings.get_boolean('hide-borders')) {
+            return rule(BORDER_SEL, 'border-color', 'transparent') +
+                rule(CARD_OUTLINE_SEL, 'border-color', 'transparent !important') + rule(CARD_OUTLINE_SEL, 'box-shadow', 'none');
+        }
+        return color ? rule(BORDER_SEL, 'border-color', color) +
+            rule(CARD_OUTLINE_SEL, 'border-color', `${color} !important`) : '';
     }
 
     // The stylesheet of a mode, over GNOME's own style: the rules of every color row and
@@ -1045,7 +1048,7 @@ export default class ShellColorManagerExtension extends Extension {
         });
         if (this._settings.get_boolean('calendar-background'))
             css += calendarCss(card, style, c['qs-active'] || '-st-accent-color');
-        return css + this._highlightCss(c, style) + this._mediaCss(c, style, native) + this._borderCss();
+        return css + this._highlightCss(c, style) + this._mediaCss(c, style, native) + this._borderCss(c.border);
     }
 
     // Idle Quick Settings buttons, the menus they open and the arrow buttons. An empty color

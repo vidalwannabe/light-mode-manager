@@ -8,7 +8,7 @@ It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 app
 
 ### Light mode and Dark mode tabs
 
-Each tab has eleven colors in two groups. An empty color is the system default: GNOME's own color in that mode.
+Each tab has twelve colors in two groups. An empty color is the system default: GNOME's own color in that mode.
 
 **Shell**
 
@@ -16,6 +16,7 @@ Each tab has eleven colors in two groups. An empty color is the system default: 
 | --- | --- |
 | Shell text and icons | Top bar text and icons (clock, indicators, overview button, Dash to Panel's app grid button), menu items, OSD and window switcher text, app and folder names, the folder edit button, page arrows, overview search results and window captions, and the text typed in the search and password fields (their hint dimmed). The lock and login screens keep their white top bar text |
 | Shell background | The top bar, menus (Quick Settings, calendar, right-click menus), OSD, window switcher, the overview and dialogs (Power Off, passwords…). The lock and login screens keep their transparent top bar |
+| Menu borders | The outline of menus (Quick Settings, calendar, right-click menus), of the cards (notifications, Today, World Clocks, Weather, the calendar as card) and of expanded Quick Settings menus. Empty: system default |
 | Overview and top bar highlights | The dash, app folders and the dialog a folder opens (its name field included), the highlight of a hovered or selected app, the search bar and search result sections, the selected app of the Alt+Tab switcher, the password field of the lock and login screens, and hovered or open top bar buttons |
 
 **Quick Settings and Notification Panel**

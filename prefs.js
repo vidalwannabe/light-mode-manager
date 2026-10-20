@@ -29,6 +29,7 @@ const COLOR_GROUPS = [
     ['Shell', [
         ['panel-fg', 'Shell text and icons', 'Top bar, menus, OSD, switchers, app grid, overview, search and password'],
         ['general', 'Shell background', 'Top bar, menus, OSD, window switcher, overview and dialogs'],
+        ['border', 'Menu borders', 'Outline of menus, cards and expanded Quick Settings menus'],
         ['dash', 'Overview and top bar highlights',
             'Dash, folders, app hover, Alt+Tab selection, search, password field, top bar buttons'],
     ]],
@@ -55,9 +56,9 @@ const flatButton = props => {
 export default class ShellColorManagerPrefs extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const s = this.getSettings();
-        window.set_default_size(605, 930);
+        window.set_default_size(600, 790);
         // Narrower, the color and schedule rows squeeze their titles and controls.
-        window.set_size_request(605, 185);
+        window.set_size_request(600, 185);
         window.set_search_enabled(false);
         // One-line profile rows in the selectors, instead of libadwaita's 50px rows.
         const css = new Gtk.CssProvider();
