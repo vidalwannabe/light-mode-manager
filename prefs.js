@@ -842,17 +842,17 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                 'Fade duration when switching between light and dark mode', 2000, 100, ' ms');
             // Borders: several choices in a popover. "Disable menu borders" turns the others off.
             const BORDER_KEYS = [
-                ['hide-borders', 'Disable menu borders', 'Hides the outline of menus, cards and the calendar as card'],
-                ['qs-borders', 'Enable border on Quick Settings buttons', 'Outlines idle toggles, round buttons and expanded menus'],
-                ['notification-borders', 'Enable border on notification buttons',
-                    'Outlines notification buttons, Clear and Do Not Disturb'],
+                ['hide-borders', 'Disable menu borders'],
+                ['qs-active-borders', 'Active Quick Settings button'],
+                ['qs-borders', 'Idle Quick Settings button'],
+                ['notification-borders', 'Notification buttons'],
             ];
             const choices = new Gtk.ListBox({
                 selection_mode: Gtk.SelectionMode.NONE, css_classes: ['boxed-list'],
                 margin_top: 6, margin_bottom: 6, margin_start: 6, margin_end: 6,
             });
-            for (const [key, title, subtitle] of BORDER_KEYS) {
-                const choice = new Adw.ActionRow({title, subtitle});
+            for (const [key, title] of BORDER_KEYS) {
+                const choice = new Adw.ActionRow({title});
                 const check = new Gtk.CheckButton({valign: Gtk.Align.CENTER});
                 s.bind(key, check, 'active', Gio.SettingsBindFlags.DEFAULT);
                 choice.add_prefix(check);
@@ -871,7 +871,9 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             };
             loadBorders();
             BORDER_KEYS.forEach(([key]) => watch(key, loadBorders));
-            const borders = new Adw.ActionRow({title: 'Borders', subtitle: 'Outline of menus, cards and buttons'});
+            const borders = new Adw.ActionRow({
+                title: 'Borders', subtitle: 'Removes the borders of menus and cards, or adds borders to buttons',
+            });
             borders.add_suffix(bordersButton);
             effects.add(borders);
             switchRow(effects, 'no-qs-dimming', 'Disable Quick Settings dimming',
