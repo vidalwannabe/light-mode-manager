@@ -1,7 +1,7 @@
 {
   "uuid": "shell-color-manager@vidalwannabe.github.io",
   "name": "Shell Color Manager",
-  "description": "Customizes GNOME Shell colors in light and dark mode: brings light mode to the parts of the shell GNOME keeps dark (top bar, menus, Quick Settings, notifications, overview...), with color sets, automatic light/dark switching, opacity and Dash to Panel support. Derived from Luminus.",
+  "description": "Customizes GNOME Shell colors in light and dark mode, on top of GNOME's own style: each color paints only its own part of the shell (top bar, menus, Quick Settings, notifications, overview...), with color sets, automatic light/dark switching and Dash to Panel support. Originally derived from Luminus.",
   "url": "https://github.com/vidalwannabe/shell-color-manager",
   "settings-schema": "org.gnome.shell.extensions.shell-color-manager",
   "session-modes": [

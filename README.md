@@ -1,6 +1,6 @@
 # Shell Color Manager
 
-GNOME Shell extension (GNOME 48) that customizes the shell's colors in light and dark mode. It brings light mode to the parts of the shell GNOME keeps dark (top bar, menus, Quick Settings, notifications, overview, dash…), with color color sets, automatic light/dark switching, opacity and Dash to Panel support. Formerly Light Mode Manager.
+GNOME Shell extension (GNOME 48) that customizes the shell's colors in light and dark mode. Each color paints only its own part of the shell, on top of GNOME's own light or dark style, with color sets, automatic light/dark switching and Dash to Panel support. Formerly Light Mode Manager.
 
 It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 apps only follow light and dark mode, when their theme has a dark variant installed (Adwaita / Adwaita-dark).
 
@@ -15,7 +15,7 @@ Each tab has twenty-five colors in four groups:
 | Color | What it paints |
 | --- | --- |
 | Top bar text and icons | Top bar text and icons: clock, indicators, the overview button and Dash to Panel's app grid button |
-| Top bar background | The panel; solid unless **Enable panel opacity** is on |
+| Top bar background | The panel |
 | Search and password text | The text typed in the overview search field and the lock and login screen password field; their hint text, dimmed. Empty: system default |
 | Overview text | Search results (titles, and descriptions dimmed), the search status and window captions in the overview. Empty: system default |
 | App grid text and icons | App and folder names, folder titles, the folder edit button and page arrows in the app grid. Default: black in light mode, white in dark mode |
@@ -75,16 +75,13 @@ Each tab has a color set selector to apply a set of colors in one click. Built-i
 **Visual tweaks**
 
 - **Transition**: duration of the fade when switching between light and dark mode, or when a color set or color change shows on screen (the top bar always; the overview and menus while open), from 0 (instant) to 2000 ms. Default: 500 ms, like GNOME.
-- **Shell opacity**: transparency of the menus background (Quick Settings, calendar, menus, OSD and switcher), from 0 to 100%, in both modes. The top bar only gets it with **Enable panel opacity**. The overview and dialogs (Power Off, passwords, "not responding"…) stay opaque so they are easy to read, and below 100% menu shadows are removed so they do not darken translucent menus. Also works with the GNOME color set, on GNOME's own colors.
-- **Card opacity**: transparency of the notification cards (calendar, Today, World Clocks, Weather, notifications) and of the idle Quick Settings buttons with their menus and the slider buttons, from 0 to 100%, in both modes. Also works with the GNOME color set.
-- **Enable panel opacity**: the panel stays solid by default; when on, it also gets the shell opacity.
 - **Disable menu borders**: removes the outline of Quick Settings, the calendar and other menus, and of the cards (notifications, Today, World Clocks, Weather, the calendar as card), in both modes. Overrides the Menu borders color.
 - **Disable Quick Settings dimming**: Quick Settings is no longer darkened while one of its menus (Wi-Fi, Power Off…) is open. This also covers Quick Settings panels made by other extensions, such as the separate or independent panels of Quick Settings Audio Panel.
 - **Match arrows to toggles**: the arrow (›) next to Quick Settings toggles such as Wi-Fi or Bluetooth uses the same color as its toggle, on and off, instead of GNOME's separate shade.
 - **Merge arrows into toggles**: removes the 1px gap line between a Quick Settings toggle and its arrow (›), so both read as one button. Works with any color set.
 - **Calendar as card** (on by default): the month calendar gets the color of the cards below it (Today, World Clocks, Weather), without a pill behind each day, and their outline (a faint border and shadow in light mode). With the GNOME color set it follows GNOME's own card color.
-- **Fix menu overlap** (on by default): GNOME sizes the menus Quick Settings toggles open without their width, so a menu with wrapped text (Bluetooth when off) covers the buttons below it ([GNOME issue 7622](https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/7622)). This measures them at their real width, in any language.
-- **Use this extension's colors in Dash to Panel**: Dash to Panel's panels and window previews take this extension's top bar color and opacity (or GNOME's own with the GNOME color set), and preview titles turn black in light mode and white in dark mode. Dash to Panel's settings are never changed and everything else it does is kept: dynamic opacity when a window touches the panel, gradients, borders and preview opacity. Inactive when Dash to Panel is not installed; the first time it is found, the preferences explain the color conflict and offer to turn this on.
+- **Menu overlap fix** (always on, no option): GNOME sizes the menus Quick Settings toggles open without their width, so a menu with wrapped text (Bluetooth when off) covers the buttons below it ([GNOME issue 7622](https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/7622)). This measures them at their real width, in any language.
+- **Use this extension's colors in Dash to Panel**: Dash to Panel's panels and window previews take this extension's top bar color (or GNOME's own with the GNOME color set), and preview titles turn black in light mode and white in dark mode. Dash to Panel's settings are never changed and everything else it does is kept: its opacity (dynamic or custom), gradients, borders and preview opacity. Inactive when Dash to Panel is not installed; the first time it is found, the preferences explain the color conflict and offer to turn this on.
 
 ### General tab
 
@@ -96,10 +93,6 @@ Each tab has a color set selector to apply a set of colors in one click. Built-i
 **Automatic switch**
 
 - **Automatic switch**: one row sets a mode (light or dark) and two times of day: the mode is on between them and the opposite one the rest of the day, also across midnight (Dark mode from 19:00 to 07:00, light mode the rest of the day). Equal times turn the switch off, even with **Enable** on; both times are marked and the subtitle says so. Each mode keeps its own color set and colors. Turning it on or changing the schedule applies the current mode right away. Changing the mode by hand while it is on turns the automatic switch off, so your choice stays; the next time the preferences open, a dialog says so and offers to turn it on again.
-
-**Lock screen**
-
-- **Use GNOME colors on the lock screen**: if turned on, the lock screen shows GNOME's own colors: the extension's stylesheet is unloaded on lock and loaded again on unlock, which can cause a short delay or flicker when unlocking on slower computers. When turned off (the default), the lock screen keeps your colors and unlocking is instant, with nothing to reload; on the lock screen the extension only touches colors, through its CSS stylesheet.
 
 **Backup**
 

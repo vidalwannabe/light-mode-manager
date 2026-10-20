@@ -28,7 +28,7 @@ const ACCENT = 'Accent color set in\nGNOME Settings › Appearance';
 const COLOR_GROUPS = [
     ['Top bar and overview', [
         ['panel-fg', 'Top bar text and icons', 'Clock, indicators, overview button and Dash to Panel app grid icon'],
-        ['panel', 'Top bar background', 'Panel color; solid unless "Enable panel opacity" is on'],
+        ['panel', 'Top bar background', 'Panel color'],
         ['entry-fg', 'Search and password text', 'Text typed in the overview search and lock screen password fields'],
         ['overview-fg', 'Overview text', 'Search results, search status and window captions in the overview'],
         ['grid-fg', 'App grid text and icons', 'App and folder names, folder titles, edit button and page arrows'],
@@ -898,12 +898,6 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             const effects = new Adw.PreferencesGroup({title: 'Visual tweaks'});
             sliderRow(effects, 'transition-duration', 'Transition',
                 'Fade duration when switching between light and dark mode', 2000, 100, ' ms');
-            sliderRow(effects, 'general-opacity', 'Shell opacity',
-                'Menus, OSD and switcher; dialogs and overview stay solid', 100, 1, '%', 5);
-            sliderRow(effects, 'card-opacity', 'Card opacity',
-                'Cards, slider buttons, idle Quick Settings buttons and their menus', 100, 1, '%', 5);
-            switchRow(effects, 'panel-opacity', 'Enable panel opacity',
-                'Applies shell opacity to the top bar; solid when off');
             switchRow(effects, 'hide-borders', 'Disable menu borders',
                 'Hides the outline of menus (Quick Settings, calendar…) and of the cards');
             switchRow(effects, 'no-qs-dimming', 'Disable Quick Settings dimming',
@@ -914,8 +908,6 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
                 'Removes the gap line between each Quick Settings toggle and its arrow (›)');
             switchRow(effects, 'calendar-background', 'Calendar as card',
                 'Gives the calendar the card background and removes the circles behind days');
-            switchRow(effects, 'fix-qs-menu-height', 'Fix menu overlap',
-                'Stops wrapped-text menus (Bluetooth off) from covering buttons below');
             dtpRow = switchRow(effects, 'override-dtp-colors', "Use this extension's colors in Dash to Panel",
                 DTP_SUBTITLE);
             dtpRow.set_sensitive(false);
@@ -934,15 +926,6 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             page.add(panel);
 
             page.add(autoSwitchGroup());
-
-            const lock = new Adw.PreferencesGroup({title: 'Lock screen'});
-            switchRow(lock, 'lock-screen-native', 'Use GNOME colors on the lock screen',
-                "If turned on, the lock screen shows GNOME's own colors: this extension's stylesheet is unloaded on lock " +
-                'and loaded again on unlock, which can cause a short delay or flicker when unlocking on ' +
-                'slower computers. When turned off, the lock screen keeps your colors and unlocking is ' +
-                'instant, with nothing to reload; on the lock screen this extension only touches colors, ' +
-                'through its CSS stylesheet.');
-            page.add(lock);
 
             page.add(backupGroup());
 

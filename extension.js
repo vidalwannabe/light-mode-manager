@@ -77,27 +77,17 @@ const MEDIA_BODY = [
 ];
 const MEDIA_TEXT = [...MEDIA_HEADER, ...MEDIA_BODY];
 
-// GNOME's own colors of each style, for options that work on system default colors too
-// (the opacities) and for elements a row's color would otherwise reach (an empty active
-// expanded menu, an empty media player): top bar, cards, media player card, text, card
-// header text and the "Menu background" elements.
+// GNOME's own colors of each style, for "Calendar as card" on system default and for
+// elements a row's color would otherwise reach (an empty active expanded menu, an empty
+// media player): cards, media player card, text and card header text.
 const NATIVE = {
-    dark: {
-        panel: '#000000', card: '#47474c', media: '#54545a', text: '#ffffff', header: '#9b9b9d',
-        general: [['.popup-menu-content, .candidate-popup-content', '#36363a'],
-            ['.switcher-list, .osd-window, .workspace-switcher, .resize-popup', '#2e2e33']],
-    },
-    light: {
-        panel: '#fafafb', card: '#ffffff', media: '#ffffff', text: '#222226', header: '#78787b',
-        general: [['.popup-menu-content, .candidate-popup-content', '#fafafb'],
-            ['.switcher-list, .osd-window, .workspace-switcher, .resize-popup', '#2e2e33']],
-    },
+    dark: {card: '#47474c', media: '#54545a', text: '#ffffff', header: '#9b9b9d'},
+    light: {card: '#ffffff', media: '#ffffff', text: '#222226', header: '#78787b'},
 };
 
 // Settings that rebuild the theme of each mode: its colors (the rows of the Light mode and
 // Dark mode tabs) and the Appearance tab options. Other keys (profiles...) never do.
-const EFFECT_KEYS = ['general-opacity', 'panel-opacity', 'card-opacity', 'hide-borders', 'match-arrow-buttons',
-    'merge-arrow-buttons', 'calendar-background', 'lock-screen-native'];
+const EFFECT_KEYS = ['hide-borders', 'match-arrow-buttons', 'merge-arrow-buttons', 'calendar-background'];
 const THEME_KEYS = [false, true].map(dark =>
     [...ROW_NAMES.map(n => `color-${n}${dark ? '-dark' : ''}`), ...EFFECT_KEYS]);
 
@@ -111,9 +101,6 @@ const BORDER_SEL = '.popup-menu-content, .candidate-popup-content';
 const CARD_OUTLINE_SEL = '.message, .events-button, .world-clocks-button, .weather-button, .datemenu-today-button, ' +
     '.calendar, .quick-toggle-menu';
 
-// GNOME draws a shadow under the whole menu, so a translucent menu showed it through
-// and looked darker than the panel. Below 100% opacity these shadows are removed.
-const SHADOW_SEL = '.popup-menu-content, .candidate-popup-content, .switcher-list';
 
 // Hover/active shading (darker in light mode, lighter in dark mode) and focus tint of
 // GNOME 48's buttons.
@@ -148,7 +135,7 @@ function buttonCss(selectors, base, dark) {
 // GNOME's accent states again after them, and the Background Apps item (also a toggle)
 // its transparent background, which still gives way to the hover.
 // The slider buttons (volume icon and "›", brightness icon) are flat buttons GNOME paints in
-// the menu's own color, a pill that shows on a translucent menu: they join them.
+// the menu's own color: they join them.
 const QS_BUTTONS = ['.quick-toggle', '.quick-settings-system-item .icon-button', '.quick-slider .icon-button'];
 const QS_MENU = '.quick-toggle-menu';
 // "Active expanded menu background": the menu of a toggle that is on. CSS cannot see the toggle's
@@ -224,15 +211,14 @@ function calendarCss(card, dark) {
 const TRANSITION_DELAY = 250;
 
 const DTP_UUID = 'dash-to-panel@jderose9.github.com';
-// Dash to Panel settings read through this extension: its custom panel color and opacity
-// (always off) and its window preview title color.
-const DTP_FORCED_OFF = ['trans-use-custom-bg', 'trans-use-custom-opacity'];
+// Dash to Panel settings read through this extension: its custom panel color (always off)
+// and its window preview title color.
+const DTP_FORCED_OFF = ['trans-use-custom-bg'];
 const DTP_TITLE_KEY = 'window-preview-title-font-color';
 // The desktop right-click menu entry.
 const MENU_TITLE = 'Shell Color Manager…';
 
 const rule = (selector, prop, value) => `${selector} {\n  ${prop}: ${value};\n}\n`;
-const noShadowCss = rule(SHADOW_SEL, 'box-shadow', 'none');
 const insensitive = selectors => inStates(selectors, [':insensitive']);
 
 // "Idle button text and icons": Quick Settings toggles (titles and subtitles) and their
@@ -391,33 +377,6 @@ const entryTextCss = color => rule(inStates(ENTRY_SEL, ['', ':hover', ':focus'])
 const panelTextCss = color => rule(PANEL_TEXT_SEL, 'color', color) + rule(PANEL_LOCK_SEL, 'color', '#ffffff') +
     rule(PANEL_DOTS_SEL, 'background-color', color) + rule(PANEL_SHOW_APPS_SEL, 'color', color);
 
-// "r, g, b" of a #rgb, #rrggbb, rgb() or rgba() color, so hover/active variants follow it.
-function colorToRgb(value) {
-    if (/^#[0-9a-f]{3}$/i.test(value))
-        value = `#${[...value.slice(1)].map(c => c + c).join('')}`;
-    let m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(value);
-    if (m)
-        return m.slice(1).map(h => parseInt(h, 16)).join(', ');
-    m = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*[,)]/i.exec(value);
-    return m ? m.slice(1).join(', ') : null;
-}
-
-// The general background with the opacity from the Appearance tab. Any alpha already in the
-// color (older settings or profiles) is ignored: the Appearance tab is the only source.
-// A solid color without alpha is kept as written.
-function withOpacity(value, opacity) {
-    const rgb = value ? colorToRgb(value) : null;
-    if (!rgb || (opacity >= 100 && !/^rgba/i.test(value)))
-        return value;
-    return `rgba(${rgb}, ${opacity / 100})`;
-}
-
-// `color` at `opacity` percent, for any CSS color expression: st-transparentize() lowers
-// only the alpha, and St's shades (st-darken/st-lighten) keep it.
-function translucent(color, opacity) {
-    return opacity >= 100 ? color : `st-transparentize(${color}, ${(100 - opacity) / 100})`;
-}
-
 // Whether GTK 3 can load this theme: built in (Adwaita) or installed in one of its theme
 // folders, with one of the subfolders it reads (gtk-3.0 to gtk-3.24).
 const GTK3_SUBDIRS = Array.from({length: 13}, (_v, i) => `gtk-3.${i * 2}`);
@@ -446,7 +405,7 @@ const PROFILE_ICON = 'preferences-desktop-appearance-symbolic';
 // Color changes (a profile applied, a color or option edited) fade like a mode switch when
 // they change something on screen: the top bar is always visible, the overview and the menus
 // (Quick Settings, calendar...) only while open. Keys without "-dark".
-const TOP_BAR_KEYS = ['color-panel', 'color-panel-fg', 'panel-opacity'];
+const TOP_BAR_KEYS = ['color-panel', 'color-panel-fg'];
 const OVERVIEW_KEYS = ['color-overview', 'color-grid-fg', 'color-dash'];
 const AUTO_KEYS = ['auto-switch', 'auto-switch-1-time', 'auto-switch-1-mode', 'auto-switch-2-time'];
 // How often the automatic switch checks the clock. A check is a few comparisons; checking
@@ -545,10 +504,7 @@ class ProfileIndicator extends SystemIndicator {
 //   make the shell flash between GNOME's colors and the user's colors.
 // - The automatic switch (light/dark mode at set times) has to keep its timer while locked,
 //   so a switch time that passes during the lock is applied on time.
-// "Use GNOME colors on the lock screen" (lock-screen-native, off by default) unloads the
-// stylesheet on lock and loads it again on unlock (_lockedNative, the session mode
-// "updated" handler), for users who want GNOME's own lock screen; the rest below still
-// applies. Without it, while locked the extension only keeps its stylesheet loaded, so what
+// While locked the extension only keeps its stylesheet loaded, so what
 // the lock screen shows (the top bar, Quick Settings opened from it, notifications, OSDs and the password
 // field) keeps the user's colors. Nothing interactive of its own is shown there:
 // - the Quick Settings profile switcher is removed on lock and added back on unlock
@@ -682,8 +638,8 @@ export default class ShellColorManagerExtension extends Extension {
     // _setDimmed() that does nothing; libpanel panels, which dim themselves with their own,
     // get an empty one as a menu of theirs opens.
     //
-    // fix-qs-menu-height: GNOME measures an expanded menu, and the room the buttons below make
-    // for it, with get_preferred_height(-1): at no particular width. Text that wraps
+    // Menu heights (always fixed): GNOME measures an expanded menu, and the room the buttons
+    // below make for it, with get_preferred_height(-1): at no particular width. Text that wraps
     // (Bluetooth off: "Turn on Bluetooth to connect to devices") then counts as one line and
     // the menu covers the buttons below (GNOME issue 7622). Both are measured at the width of
     // the menus' overlay instead, in any language: the menu as it opens, and the panel grid's
@@ -695,7 +651,7 @@ export default class ShellColorManagerExtension extends Extension {
     _syncQsMenus(enabled = true) {
         const menu = Main.panel.statusArea.quickSettings?.menu;
         const undim = enabled && this._settings.get_boolean('no-qs-dimming');
-        this._fixMenuHeight = enabled && this._settings.get_boolean('fix-qs-menu-height');
+        this._fixMenuHeight = enabled;
 
         if (undim && !this._noDimming) {
             // Undo a dimming already in place (a menu open right now).
@@ -845,11 +801,11 @@ export default class ShellColorManagerExtension extends Extension {
     }
 
     // ---------- Dash to Panel colors ----------
-    // With override-dtp-colors, Dash to Panel reads three of its own settings through this
-    // extension: no custom panel color and no custom panel opacity, so it takes both from
-    // the loaded stylesheets (its own default behavior), and window preview titles in black
-    // or white to match the shell. Its settings are never written, and everything else it
-    // does (dynamic opacity, gradients, borders, preview opacity...) is left as it is.
+    // With override-dtp-colors, Dash to Panel reads two of its own settings through this
+    // extension: no custom panel color, so it takes the color from the loaded stylesheets
+    // (its own default behavior), and window preview titles in black or white to match the
+    // shell. Its settings are never written, and everything else it does (its opacity,
+    // gradients, borders, preview opacity...) is left as it is.
     // Its settings object comes from its own module, already loaded by GNOME Shell.
     _syncDtp() {
         const token = this._dtpToken = (this._dtpToken ?? 0) + 1;
@@ -957,9 +913,8 @@ export default class ShellColorManagerExtension extends Extension {
     _changeVisible() {
         const keys = [...this._changedKeys ?? []];
         this._changedKeys = null;
-        const panelOpacity = this._settings.get_boolean('panel-opacity');
         return keys.some(key => {
-            if (TOP_BAR_KEYS.includes(key) || (key === 'general-opacity' && panelOpacity))
+            if (TOP_BAR_KEYS.includes(key))
                 return true;
             if (OVERVIEW_KEYS.includes(key))
                 return Main.overview.visible;
@@ -968,7 +923,7 @@ export default class ShellColorManagerExtension extends Extension {
     }
 
     _wantsForcedDark() {
-        return !this._isDark() && !this._lockedNative() && Object.values(this._colors(false)).every(v => !v);
+        return !this._isDark() && Object.values(this._colors(false)).every(v => !v);
     }
 
     // Vanilla GNOME keeps the shell dark in light mode. With every light color on system
@@ -993,12 +948,6 @@ export default class ShellColorManagerExtension extends Extension {
     }
 
     // ---------- Stylesheet ----------
-    // With "Use GNOME colors on the lock screen", the lock screen gets no stylesheet: it
-    // shows GNOME's own colors, and the user's colors come back on unlock.
-    _lockedNative() {
-        return Main.sessionMode.isLocked && this._settings.get_boolean('lock-screen-native');
-    }
-
     // "Volume and brightness sliders" (the filled part of every slider) and "Today in the
     // calendar" background (in all its states) and text. `c`: the mode's colors (_colors).
     _highlightCss(c, dark) {
@@ -1014,15 +963,13 @@ export default class ShellColorManagerExtension extends Extension {
     // Empty, they keep GNOME's own colors, also when the cards' colors are set.
     _mediaCss(c, dark, native) {
         const {'media-fg': fg, media: bg} = c;
-        const opacity = this._settings.get_int('card-opacity');
         let css = '';
         if (bg) {
             // The pointer over a button is also over the card, which is lit 4% (buttonCss): the
             // button lights up from that.
-            css += buttonCss(MEDIA_CARD, translucent(bg, opacity), dark) +
-                litCss(MEDIA_CONTROL, `${shade(dark)}(${translucent(bg, opacity)}, 4%)`, dark);
+            css += buttonCss(MEDIA_CARD, bg, dark) + litCss(MEDIA_CONTROL, `${shade(dark)}(${bg}, 4%)`, dark);
         } else if (c.card) {
-            css += buttonCss(MEDIA_CARD, translucent(native.media, opacity), dark);
+            css += buttonCss(MEDIA_CARD, native.media, dark);
         }
         if (fg) {
             css += rule([...MEDIA_TEXT, MEDIA_CONTROL, `${MEDIA_CONTROL}:hover`, `${MEDIA_CONTROL}:active`].join(', '),
@@ -1034,19 +981,17 @@ export default class ShellColorManagerExtension extends Extension {
         return css;
     }
 
-    // "Top bar background": with "Enable panel opacity" it also gets the shell opacity.
-    // `fallback` is the color used on system default. With no color and full opacity nothing
-    // is written: the top bar stays as GNOME (or the light template) and other extensions leave it.
-    _panelCss(panel, fallback) {
-        const opacity = this._settings.get_boolean('panel-opacity') ? this._settings.get_int('general-opacity') : 100;
-        if (!panel && opacity >= 100)
+    // "Top bar background"; nothing is written on system default, so the top bar stays as GNOME
+    // or other extensions draw it.
+    _panelCss(panel) {
+        if (!panel)
             return '';
         // GNOME draws the top bar of the lock and login screens transparent, over the
         // wallpaper. Extension stylesheets outrank GNOME's whatever the specificity, so the
         // #panel rule above would make it solid there (seen after resuming from suspend,
         // which shows the lock screen); this rule gives those screens their transparent
-        // top bar back. In light mode the template already has it; the rule is harmless.
-        return rule('#panel', 'background-color', withOpacity(panel || fallback, opacity)) +
+        // top bar back.
+        return rule('#panel', 'background-color', panel) +
             rule(PANEL_LOCK_BAR_SEL, 'background-color', 'transparent');
     }
 
@@ -1070,24 +1015,18 @@ export default class ShellColorManagerExtension extends Extension {
         const c = this._colors(dark);
         const style = dark || Object.values(c).every(v => !v);
         const native = NATIVE[style ? 'dark' : 'light'];
-        const opacity = this._settings.get_int('general-opacity');
-        let css = '';
-        // "Menu background" with the shell opacity (GNOME's own colors on system default).
-        // Translucent menus lose their shadow, which would darken them.
+        // Expanded Quick Settings menus 1px narrower on each side.
+        let css = rule(QS_MENU, 'margin-left', '19px') + rule(QS_MENU, 'margin-right', '19px');
         if (c.general)
-            css += rule(GENERAL_SEL, 'background-color', withOpacity(c.general, opacity));
-        else if (opacity < 100)
-            css += native.general.map(([selector, color]) => rule(selector, 'background-color', withOpacity(color, opacity))).join('');
-        if (opacity < 100)
-            css += noShadowCss;
+            css += rule(GENERAL_SEL, 'background-color', c.general);
         if (c['menu-fg'])
             css += rule(MENU_TEXT, 'color', c['menu-fg']);
         // Top bar, overview (always opaque), app grid, dash, search and password fields.
-        css += this._panelCss(c.panel, native.panel);
+        css += this._panelCss(c.panel);
         if (c['panel-fg'])
             css += panelTextCss(c['panel-fg']);
         if (c.overview)
-            css += rule(OPAQUE_SEL, 'background-color', withOpacity(c.overview, 100));
+            css += rule(OPAQUE_SEL, 'background-color', c.overview);
         if (c['grid-fg'])
             css += rule(GRID_TEXT, 'color', c['grid-fg']);
         if (c['overview-fg']) {
@@ -1095,7 +1034,7 @@ export default class ShellColorManagerExtension extends Extension {
                 rule(OVERVIEW_DIM_TEXT, 'color', `st-transparentize(${c['overview-fg']}, 0.3)`);
         }
         if (c.dash) {
-            const dash = withOpacity(c.dash, 100);
+            const dash = c.dash;
             css += rule('#dash .dash-background', 'background-color', dash) +
                 entriesCss(dash, style) + panelButtonsCss(dash) + overviewBoxesCss(dash, style);
         }
@@ -1106,11 +1045,9 @@ export default class ShellColorManagerExtension extends Extension {
         css += textRolesCss(c.fg, c['fg-muted']) + quickSettingsTextCss(c['qs-fg']);
         if (c['qs-fg'] || c['qs-active-fg'])
             css += activeTextCss(c['qs-active-fg'] || '-st-accent-fg-color');
-        // Cards with "Card opacity" (GNOME's own color on system default), Quick Settings and
-        // "Calendar as card".
-        const cardOpacity = this._settings.get_int('card-opacity');
-        const card = translucent(c.card || native.card, cardOpacity);
-        if (c.card || cardOpacity < 100)
+        // Cards, Quick Settings and "Calendar as card" (GNOME's own card color on system default).
+        const card = c.card || native.card;
+        if (c.card)
             css += buttonCss(CARD_BUTTONS, card, style);
         css += this._quickSettingsCss(style, c, {
             toggle: toggleOff(style), arrow: arrowOff(style), arrowChecked: arrowChecked(style), menu: toggleOff(style),
@@ -1128,23 +1065,22 @@ export default class ShellColorManagerExtension extends Extension {
         // accent color.
         const accent = active || '-st-accent-color';
         const match = this._settings.get_boolean('match-arrow-buttons');
-        const opacity = this._settings.get_int('card-opacity');
         // The sliders' track (the part not filled) takes "Idle button background".
         const merged = (this._settings.get_boolean('merge-arrow-buttons') ? rule(ARROW_GAP_SEL, 'width', '0') : '') +
-            (color ? rule(QS_SLIDER, '-barlevel-background-color', translucent(color, opacity)) : '');
+            (color ? rule(QS_SLIDER, '-barlevel-background-color', color) : '');
         let css;
-        if (color || opacity < 100) {
+        if (color) {
             const amount = ARROW_SHADE[dark ? 'dark' : 'light'];
             let arrow = color ? `${shade(dark)}(${color}, ${amount}%)` : native.arrow;
             if (match)
                 arrow = color || native.toggle;
             // With a color, the Background Apps toggle (flat in GNOME) and the close buttons of
             // its apps take it too.
-            css = buttonCss(QS_BUTTONS, translucent(color || native.toggle, opacity), dark) +
+            css = buttonCss(QS_BUTTONS, color, dark) +
                 buttonCss(QS_CHECKED, accent, dark) +
-                (color ? buttonCss([QS_FLAT, BACKGROUND_APP_CLOSE], translucent(color, opacity), dark)
+                (color ? buttonCss([QS_FLAT, BACKGROUND_APP_CLOSE], color, dark)
                     : rule(QS_FLAT, 'background-color', 'transparent')) +
-                buttonCss(ARROW_SEL, translucent(arrow, opacity), dark);
+                buttonCss(ARROW_SEL, arrow, dark);
         } else {
             css = (match ? buttonCss(ARROW_SEL, native.toggle, dark) : '') +
                 (active ? buttonCss(QS_CHECKED, accent, dark) : '');
@@ -1153,20 +1089,19 @@ export default class ShellColorManagerExtension extends Extension {
         // icon; the active menu's likewise) and "Idle
         // expanded menu text and icons".
         const menuText = c['qs-menu-fg'];
-        let menus = (menu || opacity < 100 ? menuCss(translucent(menu || native.menu, opacity), dark) : '') +
-            (menu ? rule(QS_MENU_ICON, 'background-color', translucent(menu, opacity)) +
-                rule(QS_MENU, 'border-color', translucent(menu, opacity)) : '') +
+        let menus = (menu ? menuCss(menu, dark) + rule(QS_MENU_ICON, 'background-color', menu) +
+                rule(QS_MENU, 'border-color', menu) : '') +
             (menuText ? menuTextCss(menuText) : '');
         if (activeMenu) {
             // "Active expanded menu background", also the circle behind its heading icon; its
             // heading and items take "Active button text and icons".
-            menus += menuCss(translucent(activeMenu, opacity), dark, QS_ACTIVE_MENU) +
-                rule(QS_MENU_ICON_ON, 'background-color', translucent(activeMenu, opacity)) +
-                rule(QS_ACTIVE_MENU, 'border-color', translucent(activeMenu, opacity)) +
+            menus += menuCss(activeMenu, dark, QS_ACTIVE_MENU) +
+                rule(QS_MENU_ICON_ON, 'background-color', activeMenu) +
+                rule(QS_ACTIVE_MENU, 'border-color', activeMenu) +
                 menuTextCss(c['qs-active-fg'] || '-st-accent-fg-color', QS_ACTIVE_MENU);
         } else {
             // On system default, the idle menu's colors are taken off the active menu.
-            menus += (menu ? menuCss(translucent(native.menu, opacity), dark, QS_ACTIVE_MENU) : '') +
+            menus += (menu ? menuCss(native.menu, dark, QS_ACTIVE_MENU) : '') +
                 (menuText ? menuTextCss(NATIVE[dark ? 'dark' : 'light'].text, QS_ACTIVE_MENU) : '');
         }
         if (!css)
@@ -1186,7 +1121,7 @@ export default class ShellColorManagerExtension extends Extension {
         let faded = false;
         try {
             // "Use GNOME colors on the lock screen": no stylesheet while locked.
-            const css = this._lockedNative() ? '' : this._themeCss(this._isDark());
+            const css = this._themeCss(this._isDark());
             // A visible color change: GNOME's screen transition snapshots the screen before
             // the change, then fades it out with the Transition duration.
             if (fade && this._settings.get_int('transition-duration') > 0 &&
@@ -1293,7 +1228,6 @@ export default class ShellColorManagerExtension extends Extension {
             'override-dtp-colors': () => this._syncDtp(),
             'quick-settings-profiles': () => this._syncQuickSettings(),
             'no-qs-dimming': () => this._syncQsMenus(),
-            'fix-qs-menu-height': () => this._syncQsMenus(),
         };
         this._settingsId = this._settings.connect('changed', (_s, key) => {
             if (syncs[key])
@@ -1324,9 +1258,6 @@ export default class ShellColorManagerExtension extends Extension {
             this._forcedDark = false;
             this._syncShellScheme();
             this._syncQuickSettings();
-            // Unloads the stylesheet on lock and loads it again on unlock.
-            if (this._settings.get_boolean('lock-screen-native'))
-                this._applyTheme();
         });
         this._syncQuickSettings();
         this._syncQsMenus();
