@@ -344,6 +344,7 @@ function entriesCss(color, dark) {
 // selected app of the Alt+Tab switcher.
 const SELECTED = [':selected', ':highlighted', ':checked'];
 const FOLDER_APPS = ['.app-folder-dialog .overview-tile', '.app-folder-dialog .grid-search-result'];
+const FOLDER_EDIT = '.app-folder-dialog .folder-name-container .icon-button';
 function overviewBoxesCss(color, dark) {
     const lit = `${shade(dark)}(${color}, 8%)`;
     return buttonCss(['.app-folder', '.list-search-result'], color, dark) +
@@ -352,11 +353,14 @@ function overviewBoxesCss(color, dark) {
         rule('.app-folder-dialog', 'background-color', color) +
         // The selected app of the Alt+Tab switcher.
         rule('.switcher-list .item-box:selected', 'background-color', color) +
-        rule(inStates(['.grid-search-result', '.overview-tile'], [':hover', ':focus', ...SELECTED]), 'background-color', color) +
+        rule(inStates(['.grid-search-result', '.overview-tile'], [':focus', ...SELECTED]), 'background-color', color) +
         rule(inStates(['.grid-search-result', '.overview-tile'], [':active']), 'background-color', lit) +
-        // Over a folder, or an app inside a folder's dialog (painted the same color), 30% stronger.
-        rule(inStates(['.app-folder', ...FOLDER_APPS], [':hover', ':focus', ...SELECTED]), 'background-color',
-            `${shade(dark)}(${color}, 30%)`);
+        rule(FOLDER_EDIT, 'background-color', color) +
+        // 30% stronger: a folder or a hovered app; an app or the edit button inside a folder's
+        // dialog (painted the same color) also when focused or selected.
+        rule(inStates(['.app-folder', ...FOLDER_APPS], [':focus', ...SELECTED]) + ', ' +
+            inStates(['.app-folder', '.grid-search-result', '.overview-tile', FOLDER_EDIT], [':hover']) + ', ' +
+            inStates(FOLDER_EDIT, [':focus', ':active']), 'background-color', `${shade(dark)}(${color}, 30%)`);
 }
 const entryTextCss = color => rule(inStates(ENTRY_SEL, ['', ':hover', ':focus']), 'color', color) +
     rule(inStates(ENTRY_SEL, [' StLabel.hint-text']), 'color', `st-transparentize(${color}, 0.5)`);
