@@ -1005,10 +1005,10 @@ export default class ShellColorManagerExtension extends Extension {
             rule(CARD_OUTLINE_SEL, 'border-color', 'transparent !important') + rule(CARD_OUTLINE_SEL, 'box-shadow', 'none');
     }
 
-    // The stylesheet of a mode: in light mode the light template (GNOME's own light style),
-    // then the rules of every color row and General tab option, the same in both modes.
-    // With every light color on system default (GNOME color set) the shell keeps GNOME's dark
-    // style (see _syncShellScheme): no template, and only the General tab options apply.
+    // The stylesheet of a mode, over GNOME's own style: the rules of every color row and
+    // General tab option, the same in both modes. With every light color on system default
+    // (GNOME color set) the shell keeps GNOME's dark style (see _syncShellScheme), and only
+    // the General tab options apply.
     _themeCss(dark) {
         const c = this._colors(dark);
         const style = dark || Object.values(c).every(v => !v);

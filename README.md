@@ -44,7 +44,7 @@ Each tab has a color set selector to apply a set of colors in one click. Built-i
   - **GNOME** keeps the vanilla GNOME look, the same in light and dark mode.
 - **Your own color sets**: the save button saves the current colors as a new color set, or replaces the colors of one of yours with **Update existing color set**. Your color sets can be deleted from the selector. In the selector, each of your own color sets has three buttons: **Send to Dark mode** (or Light mode), which copies it with the same colors to the other tab's list (numbered if the name is in use there); **Rename**, which also updates the general color sets that use it; and **Delete**.
 
-### Appearance tab
+### General tab
 
 - **General color set**: pairs a light mode color set with a dark mode color set and applies both at once. Built-in **Default** (Light Default + Dark Default) and **GNOME** general color sets are included. The selector shows the general color set that pairs the color sets the Light and Dark tabs show, in real time, even right after saving it. Adding a color set (with the save button or by importing) only saves it; it is applied from the selector. The save button preselects the color sets applied in each tab, and offers to save a tab with unsaved colors as a new color set first (skipping lets you choose another color set, Default preselected).
 
@@ -58,8 +58,6 @@ Each tab has a color set selector to apply a set of colors in one click. Built-i
 - **Calendar as card** (on by default): the month calendar gets the color of the cards below it (Today, World Clocks, Weather), without a pill behind each day, and their outline (a faint border and shadow in light mode). With the GNOME color set it follows GNOME's own card color.
 - **Menu overlap fix** (always on, no option): GNOME sizes the menus Quick Settings toggles open without their width, so a menu with wrapped text (Bluetooth when off) covers the buttons below it ([GNOME issue 7622](https://gitlab.gnome.org/GNOME/gnome-shell/-/issues/7622)). This measures them at their real width, in any language.
 - **Use this extension's colors in Dash to Panel**: Dash to Panel's panels and window previews take this extension's top bar color (or GNOME's own with the GNOME color set), and preview titles turn black in light mode and white in dark mode. Dash to Panel's settings are never changed and everything else it does is kept: its opacity (dynamic or custom), gradients, borders and preview opacity. Inactive when Dash to Panel is not installed; the first time it is found, the preferences explain the color conflict and offer to turn this on.
-
-### General tab
 
 **Easy access**
 
