@@ -33,7 +33,7 @@ Each tab has twenty-three colors in four groups:
 | --- | --- |
 | Idle button titles and icons | Quick Settings toggles that are off and their arrows, the round buttons at the top, the slider buttons, the sliders' handles and the heading of the menus toggles open |
 | Idle button subtitles | The line under a toggle or a toggle menu heading (the connected network, the audio device…) and device subtitles |
-| Idle button background | Quick Settings toggles that are off, their arrows, the round buttons at the top, the slider buttons (volume, "›", brightness) and the sliders' track (the part not filled) |
+| Idle button background | Quick Settings toggles that are off, their arrows, the round buttons at the top, the slider buttons (volume, "›", brightness), the sliders' track (the part not filled), the Background Apps toggle and the close buttons of its apps |
 | Idle expanded menu text and icons | Every text and icon of the menu a toggle opens (Wi-Fi, Bluetooth, Power Off…) while the toggle is off: heading, items and device subtitles. Empty: system default |
 | Idle expanded menu background | The menu a toggle opens while the toggle is off, and the circle behind its heading icon. Empty: system default |
 | Active button text and icons | Quick Settings toggles that are on (Wi-Fi, Dark Style…), their arrows and subtitles, and the heading and items of their menus when Active expanded menu has a color. Empty: the accent's text color, subtitles included |

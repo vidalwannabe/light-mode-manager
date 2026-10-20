@@ -208,6 +208,7 @@ const QS_CHECKED = '.quick-toggle:checked';
 const QS_MENU_ICON_ON = '.quick-toggle-menu .header .icon.active';
 const QS_MENU_ICON = '.quick-toggle-menu .header .icon';
 const QS_FLAT = '.background-apps-quick-toggle';
+const BACKGROUND_APP_CLOSE = '.background-app-item .icon-button';
 // The Quick Settings buttons GNOME paints like toggles (the slider buttons are flat).
 const QS_NATIVE_BUTTONS = ['.quick-toggle', '.quick-settings-system-item .icon-button'];
 
@@ -1109,9 +1110,12 @@ export default class ShellColorManagerExtension extends Extension {
             let arrow = color ? `${shade(dark)}(${color}, ${amount}%)` : native.arrow;
             if (match)
                 arrow = color || native.toggle;
+            // With a color, the Background Apps toggle (flat in GNOME) and the close buttons of
+            // its apps take it too.
             css = buttonCss(QS_BUTTONS, translucent(color || native.toggle, opacity), dark) +
                 buttonCss(QS_CHECKED, accent, dark) +
-                rule(QS_FLAT, 'background-color', 'transparent') +
+                (color ? buttonCss(BACKGROUND_APP_CLOSE, translucent(color, opacity), dark)
+                    : rule(QS_FLAT, 'background-color', 'transparent')) +
                 buttonCss(ARROW_SEL, translucent(arrow, opacity), dark);
         } else {
             css = (match ? buttonCss(ARROW_SEL, native.toggle, dark) : '') +
