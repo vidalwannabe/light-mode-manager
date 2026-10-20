@@ -4,6 +4,8 @@
     <!-- Light mode (empty = system default) -->
     <key name="color-panel" type="s"><default>'#fafafb'</default><summary>Top bar background</summary></key>
     <key name="color-entry-fg" type="s"><default>'#000000'</default><summary>Search and password text (empty: system default)</summary></key>
+    <key name="color-overview-fg" type="s"><default>'#000000'</default><summary>Overview text (empty: system default)</summary></key>
+    <key name="color-menu-fg" type="s"><default>'#000000'</default><summary>Menu text (empty: system default)</summary></key>
     <key name="color-overview" type="s"><default>'#fafafb'</default><summary>Overview and dialogs background</summary></key>
     <key name="color-general" type="s"><default>'#fafafb'</default><summary>Menu background</summary></key>
     <key name="color-fg" type="s"><default>'#000000'</default><summary>Card titles and icons</summary></key>
@@ -29,6 +31,8 @@
     <!-- Dark mode (empty = system default) -->
     <key name="color-panel-dark" type="s"><default>'#222226'</default><summary>Top bar background</summary></key>
     <key name="color-entry-fg-dark" type="s"><default>'#ffffff'</default><summary>Search and password text (empty: system default)</summary></key>
+    <key name="color-overview-fg-dark" type="s"><default>'#ffffff'</default><summary>Overview text (empty: system default)</summary></key>
+    <key name="color-menu-fg-dark" type="s"><default>'#ffffff'</default><summary>Menu text (empty: system default)</summary></key>
     <key name="color-overview-dark" type="s"><default>'#222226'</default><summary>Overview and dialogs background</summary></key>
     <key name="color-general-dark" type="s"><default>'#222226'</default><summary>Menu background</summary></key>
     <key name="color-fg-dark" type="s"><default>'#ffffff'</default><summary>Card titles and icons</summary></key>

@@ -14,10 +14,10 @@ import {QuickMenuToggle, QuickSettingsItem, QuickSettingsMenu, SystemIndicator}
 
 import {createProfiles, ROW_NAMES} from './profiles.js';
 
-// The light template (templates/light.css) is GNOME 48's own light shell style, loaded as it
-// is: it is light mode's system default, as GNOME's dark style is dark mode's. Over either,
-// each color row paints only its own list of elements, the same in both modes; an empty
-// color writes nothing, so those elements keep the system's colors.
+// In light mode ("prefer-light") GNOME loads its own light shell style, as it loads its dark
+// one in dark mode: each is that mode's system default. Over either, each color row paints
+// only its own list of elements, the same in both modes; an empty color writes nothing, so
+// those elements keep GNOME's colors.
 
 // `selectors` (one or a list) in each of `states`, as one comma-separated selector.
 const inStates = (selectors, states) => states.flatMap(state => [selectors].flat().map(sel => sel + state)).join(', ');
@@ -36,6 +36,15 @@ const PANEL_LOCK_SEL = '#panel.unlock-screen .panel-button, #panel.login-screen 
 // "Menu background": menus (Quick Settings, calendar, right-click menus), OSD and switchers.
 const GENERAL_SEL = '.popup-menu-content, .candidate-popup-content, .switcher-list, .osd-window, ' +
     '.workspace-switcher, .resize-popup';
+// "Menu text": menu items, OSD and switchers, in every state of a menu item.
+const MENU_TEXT = inStates(['.popup-menu-item', '.popup-inactive-menu-item'],
+    ['', ':hover', ':focus', ':active', ':selected', ':checked']) +
+    ', .osd-window, .switcher-list, .switcher-list .item-box, .workspace-switcher, .resize-popup';
+// "Overview text": search results (with their descriptions dimmed), the search status and
+// window captions.
+const OVERVIEW_TEXT = '.list-search-result, .list-search-result .list-search-result-title, .search-statustext, ' +
+    '.list-search-provider-details, .window-caption';
+const OVERVIEW_DIM_TEXT = '.list-search-result .list-search-result-description';
 // "Overview and dialogs background": the overview and modal dialogs (Power Off, passwords,
 // "not responding"...), always opaque: dialogs ask for attention, so they stay easy to read.
 const OPAQUE_SEL = '#overviewGroup, .modal-dialog';
@@ -77,9 +86,9 @@ const NATIVE = {
             ['.switcher-list, .osd-window, .workspace-switcher, .resize-popup', '#2e2e33']],
     },
     light: {
-        panel: '#f5f5f5', card: '#e8e8e8', media: '#e8e8e8', text: '#222226', header: '#767679',
-        general: [['.popup-menu-content, .candidate-popup-content', '#f5f5f5'],
-            ['.switcher-list, .osd-window, .workspace-switcher, .resize-popup', '#dcdcdc']],
+        panel: '#fafafb', card: '#ffffff', media: '#ffffff', text: '#222226', header: '#78787b',
+        general: [['.popup-menu-content, .candidate-popup-content', '#fafafb'],
+            ['.switcher-list, .osd-window, .workspace-switcher, .resize-popup', '#2e2e33']],
     },
 };
 
@@ -171,8 +180,8 @@ const ARROW_SEL = '.quick-toggle-has-menu .quick-toggle-menu-button';
 // The 1px gap between a toggle and its arrow; "Merge arrows into toggles" closes it.
 const ARROW_GAP_SEL = '.quick-toggle-has-menu .quick-toggle-separator';
 // GNOME's toggle color when off, and its own arrow color off and on.
-const toggleOff = dark => dark ? 'st-mix(#ffffff, #36363a, 9%)' : 'st-mix(#222226, whitesmoke, 12%)';
-const arrowOff = dark => dark ? 'st-mix(#ffffff, #4a4a4f, 9%)' : 'st-mix(#222226, #e8e8e8, 12%)';
+const toggleOff = dark => dark ? 'st-mix(#ffffff, #36363a, 9%)' : 'st-mix(#222226, #fafafb, 12%)';
+const arrowOff = dark => dark ? 'st-mix(#ffffff, #4a4a4f, 9%)' : 'st-mix(#222226, #ececf0, 12%)';
 const arrowChecked = dark => dark ? 'st-mix(-st-accent-color, #ffffff, 85%)' : 'st-mix(-st-accent-color, #222226, 92%)';
 // How far GNOME's arrow is from its toggle when off (lighter in dark mode, darker in light).
 const ARROW_SHADE = {dark: 8, light: 5};
@@ -1023,7 +1032,7 @@ export default class ShellColorManagerExtension extends Extension {
         const style = dark || Object.values(c).every(v => !v);
         const native = NATIVE[style ? 'dark' : 'light'];
         const opacity = this._settings.get_int('general-opacity');
-        let css = style ? '' : this._template();
+        let css = '';
         // "Menu background" with the shell opacity (GNOME's own colors on system default).
         // Translucent menus lose their shadow, which would darken them.
         if (c.general)
@@ -1032,6 +1041,8 @@ export default class ShellColorManagerExtension extends Extension {
             css += native.general.map(([selector, color]) => rule(selector, 'background-color', withOpacity(color, opacity))).join('');
         if (opacity < 100)
             css += noShadowCss;
+        if (c['menu-fg'])
+            css += rule(MENU_TEXT, 'color', c['menu-fg']);
         // Top bar, overview (always opaque), app grid, dash, search and password fields.
         css += this._panelCss(c.panel, native.panel);
         if (c['panel-fg'])
@@ -1040,6 +1051,10 @@ export default class ShellColorManagerExtension extends Extension {
             css += rule(OPAQUE_SEL, 'background-color', withOpacity(c.overview, 100));
         if (c['grid-fg'])
             css += rule(GRID_TEXT, 'color', c['grid-fg']);
+        if (c['overview-fg']) {
+            css += rule(OVERVIEW_TEXT, 'color', c['overview-fg']) +
+                rule(OVERVIEW_DIM_TEXT, 'color', `st-transparentize(${c['overview-fg']}, 0.3)`);
+        }
         if (c.dash) {
             const dash = withOpacity(c.dash, 100);
             css += rule('#dash .dash-background', 'background-color', dash) +
@@ -1119,15 +1134,6 @@ export default class ShellColorManagerExtension extends Extension {
         const arrowOn = match ? accent : native.arrowChecked.replaceAll('-st-accent-color', accent);
         css = merged + css + buttonCss(`${ARROW_SEL}:checked`, arrowOn, dark);
         return css;
-    }
-
-    // The light template, read when light mode first needs it.
-    _template() {
-        if (!this._templateCss) {
-            const [, bytes] = this.dir.get_child('templates').get_child('light.css').load_contents(null);
-            this._templateCss = new TextDecoder().decode(bytes);
-        }
-        return this._templateCss;
     }
 
     // `fade`: fade from the old look to the new one, as when switching modes.
@@ -1319,6 +1325,6 @@ export default class ShellColorManagerExtension extends Extension {
         this._setLegacyColorScheme(this._getColorScheme());
 
         this._settings = this._interface = this._cacheDir = null;
-        this._lastCss = this._modeScheme = this._autoScheme = this._overrides = this._changedKeys = this._templateCss = null;
+        this._lastCss = this._modeScheme = this._autoScheme = this._overrides = this._changedKeys = null;
     }
 }

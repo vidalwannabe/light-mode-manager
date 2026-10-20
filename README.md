@@ -8,7 +8,7 @@ It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 app
 
 ### Light mode and Dark mode tabs
 
-Each tab has twenty-four colors in four groups:
+Each tab has twenty-six colors in four groups:
 
 **Top bar and overview**
 
@@ -17,6 +17,7 @@ Each tab has twenty-four colors in four groups:
 | Top bar text and icons | Top bar text and icons: clock, indicators, the overview button and Dash to Panel's app grid button |
 | Top bar background | The panel; solid unless **Enable panel opacity** is on |
 | Search and password text | The text typed in the overview search field and the lock and login screen password field; their hint text, dimmed. Empty: system default |
+| Overview text | Search results (titles, and descriptions dimmed), the search status and window captions in the overview. Empty: system default |
 | Overview and dialogs background | The overview and dialogs (Power Off, passwords, "not responding"…), always solid |
 | App grid text | App and folder names, folder titles and page arrows in the app grid. Default: black in light mode, white in dark mode |
 | Overview and top bar highlights | The overview dock (dash) and search bar, the password field of the lock and login screens (its text in the titles color) and top bar buttons that are hovered or have their menu open (not on the lock screen). Default: the cards background |
@@ -25,6 +26,7 @@ Each tab has twenty-four colors in four groups:
 
 | Color | What it paints |
 | --- | --- |
+| Menu text | Menu items (right-click and panel menus), OSD and window switcher. Empty: system default |
 | Menu background | Quick Settings, the calendar, right-click menus, OSD and window switcher |
 | Menu borders | Outline of Quick Settings, the calendar and other menus |
 
@@ -123,4 +125,4 @@ Your colors and color sets are stored in dconf (`/org/gnome/shell/extensions/she
 
 ## Credits and license
 
-Derived from [Luminus](https://gitlab.com/dikasetyaprayogi/luminus-project) by dikasp. Licensed under the GPL (see COPYING).
+Originally derived from [Luminus](https://gitlab.com/dikasetyaprayogi/luminus-project) by dikasp; light mode now uses GNOME's own light shell style. Licensed under the GPL (see COPYING).
