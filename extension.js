@@ -180,7 +180,7 @@ function buttonCss(selectors, base, dark) {
 // the menu's own color, a pill that shows on a translucent menu: they join them.
 const QS_BUTTONS = ['.quick-toggle', '.quick-settings-system-item .icon-button', '.quick-slider .icon-button'];
 const QS_MENU = '.quick-toggle-menu';
-// "Active expanded menu": the menu of a toggle that is on. CSS cannot see the toggle's
+// "Active expanded menu background": the menu of a toggle that is on. CSS cannot see the toggle's
 // state from its menu, so _trackActiveMenus() gives the menu this class while it is on.
 const ACTIVE_MENU_CLASS = 'scm-active';
 const QS_ACTIVE_MENU = `${QS_MENU}.${ACTIVE_MENU_CLASS}`;
@@ -743,7 +743,7 @@ export default class ShellColorManagerExtension extends Extension {
         menu._grid.queue_relayout();
     }
 
-    // "Active expanded menu": each Quick Settings menu gets ACTIVE_MENU_CLASS while its
+    // "Active expanded menu background": each Quick Settings menu gets ACTIVE_MENU_CLASS while its
     // toggle is on, so the stylesheet can tell them apart. Items added later (by other
     // extensions too) are followed through the grid's child-added signal.
     _trackActiveMenus(track = true) {
@@ -1096,8 +1096,8 @@ export default class ShellColorManagerExtension extends Extension {
     // uses `native`: GNOME's own toggle, arrow (off, checked) and open menu colors.
     _quickSettingsCss(dark, c, native) {
         const {'qs-button': color, 'qs-active': active, 'qs-menu': menu, 'qs-active-menu': activeMenu} = c;
-        // "Active button background": toggles that are on, their arrows and the icon of the
-        // menu they open. GNOME's own: the accent color.
+        // "Active button background": toggles that are on and their arrows. GNOME's own: the
+        // accent color.
         const accent = active || '-st-accent-color';
         const match = this._settings.get_boolean('match-arrow-buttons');
         const opacity = this._settings.get_int('card-opacity');
@@ -1130,8 +1130,10 @@ export default class ShellColorManagerExtension extends Extension {
             (menu ? rule(QS_MENU_ICON, 'background-color', translucent(menu, opacity)) : '') +
             (menuText ? menuTextCss(menuText) : '');
         if (activeMenu) {
-            // "Active expanded menu": its heading and items take "Active button text and icons".
+            // "Active expanded menu background", also the circle behind its heading icon; its
+            // heading and items take "Active button text and icons".
             menus += menuCss(translucent(activeMenu, opacity), dark, QS_ACTIVE_MENU) +
+                rule(QS_MENU_ICON_ON, 'background-color', translucent(activeMenu, opacity)) +
                 menuTextCss(c['qs-active-fg'] || '-st-accent-fg-color', QS_ACTIVE_MENU);
         } else {
             // On system default, the idle menu's colors are taken off the active menu.
@@ -1144,7 +1146,7 @@ export default class ShellColorManagerExtension extends Extension {
         // Set again after the off colors, which would otherwise also cover the checked arrow.
         const arrowOn = match ? accent : native.arrowChecked.replaceAll('-st-accent-color', accent);
         css = merged + css + buttonCss(`${ARROW_SEL}:checked`, arrowOn, dark);
-        return active ? css + rule(QS_MENU_ICON_ON, 'background-color', active) : css;
+        return css;
     }
 
     // The template is only read when light mode first needs it: [head, tail (login and lock

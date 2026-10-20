@@ -45,9 +45,9 @@ const COLOR_GROUPS = [
         ['qs-menu', 'Idle expanded menu background', 'Menu a toggle that is off opens and the circle of its icon'],
         ['qs-active-fg', 'Active button text and icons', 'Toggles that are on, their arrows and the text and icons of their menus',
             'Accent text color', '#ffffff'],
-        ['qs-active', 'Active button background', 'Toggles that are on, their arrows and the icon of their menus', ACCENT,
+        ['qs-active', 'Active button background', 'Quick Settings toggles that are on and their arrows', ACCENT,
             accentColor],
-        ['qs-active-menu', 'Active expanded menu', 'Background of the menu a toggle that is on opens, such as Wi-Fi'],
+        ['qs-active-menu', 'Active expanded menu background', 'Menu a toggle that is on opens and the circle of its icon'],
         ['highlight', 'Volume and brightness sliders', 'Filled part of the volume, brightness and other sliders', ACCENT, accentColor],
     ]],
     ['Notification panel', [
