@@ -346,21 +346,28 @@ const SELECTED = [':selected', ':highlighted', ':checked'];
 const FOLDER_APPS = ['.app-folder-dialog .overview-tile', '.app-folder-dialog .grid-search-result'];
 const FOLDER_EDIT = '.app-folder-dialog .folder-name-container .icon-button';
 function overviewBoxesCss(color, dark) {
-    const lit = `${shade(dark)}(${color}, 8%)`;
-    return buttonCss(['.app-folder', '.list-search-result'], color, dark) +
-        rule(inStates(['.app-folder', '.list-search-result'], SELECTED), 'background-color', lit) +
+    const adjust = shade(dark);
+    const lit = (base, amount) => `${adjust}(${base}, ${amount}%)`;
+    const selected = lit(color, 8);
+    const hoverStates = SELECTED.map(state => `${state}:hover`);
+    const apps = ['.grid-search-result', '.overview-tile'];
+    // GNOME's own amounts: folders and the edit button +4% on hover, apps and list results
+    // +7%; +9% on click; +8% when selected (then hovered on top). A selected app outside a
+    // folder takes the color itself; inside a folder's dialog (painted the same color) +8%.
+    return buttonCss(['.app-folder', '.list-search-result', FOLDER_EDIT], color, dark) +
+        rule(inStates(['.app-folder', '.list-search-result', ...FOLDER_APPS], SELECTED), 'background-color', selected) +
+        rule(inStates('.app-folder', hoverStates), 'background-color', lit(selected, 4)) +
+        rule(inStates('.list-search-result', [':hover']), 'background-color', lit(color, 7)) +
+        rule(inStates(['.list-search-result', ...FOLDER_APPS], hoverStates), 'background-color', lit(selected, 7)) +
         rule('.search-section-content', 'background-color', color) +
         rule('.app-folder-dialog', 'background-color', color) +
         // The selected app of the Alt+Tab switcher.
         rule('.switcher-list .item-box:selected', 'background-color', color) +
-        rule(inStates(['.grid-search-result', '.overview-tile'], [':focus', ...SELECTED]), 'background-color', color) +
-        rule(inStates(['.grid-search-result', '.overview-tile'], [':active']), 'background-color', lit) +
-        rule(FOLDER_EDIT, 'background-color', color) +
-        // 30% stronger: a folder or a hovered app; an app or the edit button inside a folder's
-        // dialog (painted the same color) also when focused or selected.
-        rule(inStates(['.app-folder', ...FOLDER_APPS], [':focus', ...SELECTED]) + ', ' +
-            inStates(['.app-folder', '.grid-search-result', '.overview-tile', FOLDER_EDIT], [':hover']) + ', ' +
-            inStates(FOLDER_EDIT, [':focus', ':active']), 'background-color', `${shade(dark)}(${color}, 30%)`);
+        rule(inStates(apps, [':focus', ...SELECTED]), 'background-color', color) +
+        rule(inStates(FOLDER_APPS, [':focus', ...SELECTED]), 'background-color', selected) +
+        rule(inStates(apps, [':hover']), 'background-color', lit(color, 7)) +
+        rule(inStates(FOLDER_APPS, hoverStates), 'background-color', lit(selected, 7)) +
+        rule(inStates(apps, [':active']), 'background-color', lit(color, 9));
 }
 const entryTextCss = color => rule(inStates(ENTRY_SEL, ['', ':hover', ':focus']), 'color', color) +
     rule(inStates(ENTRY_SEL, [' StLabel.hint-text']), 'color', `st-transparentize(${color}, 0.5)`);
