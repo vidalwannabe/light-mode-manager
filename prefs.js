@@ -41,6 +41,10 @@ const COLOR_GROUPS = [
         ['card', 'Card background', 'Notifications, banners, Clear button and Today, World Clocks and Weather'],
         ['today', 'Today in the calendar background', 'Circle behind the current day', ACCENT, () => accentColor()],
         ['today-fg', 'Today in the calendar text', 'Number of the current day'],
+        ['media-fg', 'Media player text and icons', 'Title, artist, app name and playback buttons of the music playing',
+            'Same as card text', (settings, key) => settings.get_string(key.replace('media-fg', 'fg')).trim() || '#808080'],
+        ['media', 'Media player background', 'Card of the music playing; its buttons light up from it on hover',
+            'Same as card background', (settings, key) => settings.get_string(key.replace('media', 'card')).trim() || '#808080'],
     ]],
 ];
 

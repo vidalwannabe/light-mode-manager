@@ -84,12 +84,21 @@ const DARK_RULES = [
 // below the calendar. They get every state, as GNOME draws them (see buttonCss). The
 // notification list's Clear button follows the cards too.
 const CLEAR_BUTTON = '.message-list-controls .button';
+// The media player card; `.message.media-message` outranks the card and text rules above.
+const MEDIA_CARD = '.message.media-message';
+const MEDIA_CONTROL = '.message-media-control';
+const MEDIA_TEXT = [
+    '.message.media-message .message-header .message-header-content .message-source-title',
+    '.message.media-message .message-header .message-source-icon',
+    '.message.media-message .message-box .message-content .message-title',
+    '.message.media-message .message-box .message-content .message-body',
+];
 const CARD_BUTTONS = ['.message', '.events-button', '.world-clocks-button', '.weather-button', CLEAR_BUTTON];
 
 // Color settings of each mode.
 const LIGHT_KEYS = [...new Set(TOKENS.map(([key]) => key)), 'color-border', 'color-qs-button', 'color-panel-fg',
     'color-qs-active-fg', 'color-qs-active', 'color-highlight', 'color-today', 'color-today-fg', 'color-qs-fg', 'color-qs-fg-muted', 'color-qs-menu', 'color-qs-active-menu',
-    'color-dash', 'color-grid-fg', 'color-panel',
+    'color-media-fg', 'color-media', 'color-dash', 'color-grid-fg', 'color-panel',
     'color-overview'];
 const DARK_KEYS = DARK_RULES.map(([, , key]) => key);
 // Settings that rebuild the theme of each mode (colors and Appearance tab options);
@@ -100,7 +109,7 @@ const LIGHT_THEME_KEYS = [...LIGHT_KEYS, ...EFFECT_KEYS];
 const DARK_THEME_KEYS = [...DARK_KEYS, 'color-border-dark', 'color-qs-button-dark', 'color-panel-fg-dark',
     'color-qs-active-fg-dark', 'color-qs-active-dark', 'color-highlight-dark', 'color-today-dark', 'color-today-fg-dark',
     'color-qs-fg-dark', 'color-qs-fg-muted-dark', 'color-qs-menu-dark',
-    'color-qs-active-menu-dark', 'color-panel-dark',
+    'color-qs-active-menu-dark', 'color-media-fg-dark', 'color-media-dark', 'color-panel-dark',
     'color-overview-dark', ...EFFECT_KEYS];
 
 // Accepted color values: #rgb, #rrggbb, rgb()/rgba() or a name. Anything else (edited in
@@ -975,6 +984,36 @@ export default class ShellColorManagerExtension extends Extension {
             (todayFg ? rule(CALENDAR_TODAY, 'color', todayFg) : '');
     }
 
+    // "Media player text and icons" and "Media player background": the card of the music or
+    // video playing (a notification with the media-message class) and its playback buttons.
+    // Empty, they follow the cards. The buttons are flat; on hover and click they light up
+    // from the player's background (the cards' when empty) by the same amounts as buttons.
+    // `card`: the "Card background" in use, empty for GNOME's own.
+    _mediaCss(dark, card) {
+        const [fg, bg] = this._values(dark ? ['color-media-fg-dark', 'color-media-dark']
+            : ['color-media-fg', 'color-media']);
+        const opacity = this._settings.get_int('card-opacity');
+        let css = '';
+        if (bg)
+            css += buttonCss(MEDIA_CARD, translucent(bg, opacity), dark);
+        const base = bg || card;
+        if (base) {
+            // The pointer over a button is also over the card, which is lit 4% (buttonCss):
+            // the button lights up from that.
+            const adjust = shade(dark);
+            const color = `${adjust}(${translucent(base, opacity)}, 4%)`;
+            css += rule(`${MEDIA_CONTROL}:hover`, 'background-color', `${adjust}(${color}, 4%)`) +
+                rule(`${MEDIA_CONTROL}:active`, 'background-color', `${adjust}(${color}, 9%)`) +
+                rule(`${MEDIA_CONTROL}:active:hover`, 'background-color', `${adjust}(${adjust}(${color}, 9%), 4%)`);
+        }
+        if (fg) {
+            css += rule([...MEDIA_TEXT, MEDIA_CONTROL, `${MEDIA_CONTROL}:hover`, `${MEDIA_CONTROL}:active`].join(', '),
+                'color', fg) +
+                rule(`${MEDIA_CONTROL}:insensitive`, 'color', `st-transparentize(${fg}, 0.5)`);
+        }
+        return css;
+    }
+
     // "Top bar background": with "Enable panel opacity" it also gets the shell opacity.
     // `fallback` is the color used on system default. With no color and full opacity nothing
     // is written: the top bar stays as GNOME (or the light template) and other extensions leave it.
@@ -1042,7 +1081,8 @@ export default class ShellColorManagerExtension extends Extension {
         css += this._darkCardsCss(values[DARK_KEYS.indexOf('color-card-dark')],
             ...this._values(['color-qs-button-dark', 'color-qs-active-dark']),
             this._values(['color-qs-menu-dark', 'color-qs-active-menu-dark']));
-        return css + this._highlightCss(true) + this._borderCss('color-border-dark');
+        return css + this._highlightCss(true) + this._mediaCss(true, values[DARK_KEYS.indexOf('color-card-dark')]) +
+            this._borderCss('color-border-dark');
     }
 
     // Cards, inactive Quick Settings buttons and calendar background on GNOME's dark style;
@@ -1232,7 +1272,7 @@ export default class ShellColorManagerExtension extends Extension {
         }, byKey['color-qs-active'], byKey['color-qs-menu'], byKey['color-qs-active-menu']);
         if (this._settings.get_boolean('calendar-background'))
             css += calendarCss(translucent(card, cardOpacity), false);
-        return css + this._highlightCss(false) + this._borderCss('color-border');
+        return css + this._highlightCss(false) + this._mediaCss(false, card) + this._borderCss('color-border');
     }
 
     // `fade`: fade from the old look to the new one, as when switching modes.

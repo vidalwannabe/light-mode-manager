@@ -3,7 +3,7 @@
 
 // The color rows of the Light mode and Dark mode tabs.
 export const ROW_NAMES = ['panel', 'panel-fg', 'overview', 'grid-fg', 'dash', 'general', 'border', 'fg', 'fg-muted', 'qs-button', 'card',
-    'qs-active-fg', 'qs-active', 'highlight', 'today', 'today-fg', 'qs-fg', 'qs-fg-muted', 'qs-menu', 'qs-active-menu'];
+    'qs-active-fg', 'qs-active', 'highlight', 'today', 'today-fg', 'qs-fg', 'qs-fg-muted', 'qs-menu', 'qs-active-menu', 'media-fg', 'media'];
 
 // Rows added later: a profile saved before them takes the value of the row they came
 // from, so it keeps its look: the top bar text used to follow "Text and icons", the top bar
