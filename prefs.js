@@ -872,7 +872,7 @@ export default class ShellColorManagerPrefs extends ExtensionPreferences {
             loadBorders();
             BORDER_KEYS.forEach(([key]) => watch(key, loadBorders));
             const borders = new Adw.ActionRow({
-                title: 'Borders', subtitle: 'Removes the borders of menus and cards, or adds borders to buttons',
+                title: 'Borders', subtitle: 'Remove or add borders to the shell',
             });
             borders.add_suffix(bordersButton);
             effects.add(borders);
