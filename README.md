@@ -22,7 +22,7 @@ Each tab has twelve colors in three groups. An empty color is the system default
 
 | Color | What it paints |
 | --- | --- |
-| Active button text and icons | Toggles that are on (text, subtitles and arrows) and the menus they open, today in the calendar, and the media player's text and icons. Empty: the accent's text color |
+| Active button text and icons | Toggles that are on (text, subtitles and arrows) and the menus they open, today in the calendar, and the media player's title, text and icons. Empty: the accent's text color |
 | Active button background | Toggles that are on, their arrows and the menus they open (with their outline and the circle behind the heading icon), the circle behind today in the calendar, and the media player card, whose playback buttons light up from it on hover and click. Default: the accent color set in GNOME Settings › Appearance |
 | Idle button text and icons | Toggles that are off (titles, subtitles and arrows), the menus they open (heading, items and icons), the round buttons at the top, the slider buttons and the sliders' handles |
 | Idle button background | Toggles that are off and their arrows, the menus they open (with their outline and the circle behind the heading icon), the round buttons at the top, the slider buttons, the sliders' track, the Background Apps toggle and the close buttons of its apps |
@@ -32,7 +32,7 @@ Each tab has twelve colors in three groups. An empty color is the system default
 
 | Color | What it paints |
 | --- | --- |
-| Card titles and icons | Titles and icons of notifications (app name and title) and their buttons, Today, World Clocks, Weather, the calendar, the Clear button, the Do Not Disturb label and the media player's title (app name and icon) |
+| Card titles and icons | Titles and icons of notifications (app name and title) and their buttons, Today, World Clocks, Weather, the calendar, the Clear button and the Do Not Disturb label |
 | Card subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday, week numbers |
 | Card buttons | The notifications' buttons: actions ("Open File"...), close, expand and collapse, in every state. Empty: GNOME's own translucent buttons |
 | Card background | Notifications, banners, the Clear button, the Do Not Disturb switch when off, and the cards below the calendar (Today, World Clocks, Weather) |

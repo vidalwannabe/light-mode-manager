@@ -989,9 +989,10 @@ export default class ShellColorManagerExtension extends Extension {
         } else if (c.fg || c['fg-muted']) {
             css += rule(MEDIA_HEADER.join(', '), 'color', native.header) + rule(MEDIA_BODY.join(', '), 'color', native.text);
         }
-        // The player's title (the app's name and icon) follows "Card titles and icons".
-        if (c.fg)
-            css += rule(MEDIA_HEADER.join(', '), 'color', c.fg);
+        // On an empty "Active button text and icons" the player's title (the app's name and
+        // icon) and text keep its default, the accent text color, over the active background.
+        if (!fg && bg)
+            css += rule(MEDIA_TEXT.join(', '), 'color', '-st-accent-fg-color');
         return css;
     }
 

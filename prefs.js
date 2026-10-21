@@ -43,7 +43,7 @@ const COLOR_GROUPS = [
         ['highlight', 'Volume and brightness sliders', 'OSD and Quick Settings sliders'],
     ]],
     ['Notification Panel', [
-        ['fg', 'Card titles and icons', 'Calendar, Clear button, Do Not Disturb label, media player title, notifications and their buttons, Today, Weather and World Clocks'],
+        ['fg', 'Card titles and icons', 'Calendar, Clear button, Do Not Disturb label, notifications and their buttons, Today, Weather and World Clocks'],
         ['fg-muted', 'Card subtitles', 'Locations, notification body, times and weekdays'],
         ['card-buttons', 'Card buttons', 'Close, collapse, expand and notification action buttons'],
         ['card', 'Card background', 'Banners, Calendar as card, Clear button, Do Not Disturb switch, notifications, Today, Weather and World Clocks'],
