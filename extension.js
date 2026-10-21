@@ -989,6 +989,9 @@ export default class ShellColorManagerExtension extends Extension {
         } else if (c.fg || c['fg-muted']) {
             css += rule(MEDIA_HEADER.join(', '), 'color', native.header) + rule(MEDIA_BODY.join(', '), 'color', native.text);
         }
+        // The player's title (the app's name and icon) follows "Card titles and icons".
+        if (c.fg)
+            css += rule(MEDIA_HEADER.join(', '), 'color', c.fg);
         return css;
     }
 

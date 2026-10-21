@@ -32,7 +32,7 @@ Each tab has twelve colors in three groups. An empty color is the system default
 
 | Color | What it paints |
 | --- | --- |
-| Card titles and icons | Titles and icons of notifications (app name and title) and their buttons, Today, World Clocks, Weather, the calendar, the Clear button and the Do Not Disturb label |
+| Card titles and icons | Titles and icons of notifications (app name and title) and their buttons, Today, World Clocks, Weather, the calendar, the Clear button, the Do Not Disturb label and the media player's title (app name and icon) |
 | Card subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday, week numbers |
 | Card buttons | The notifications' buttons: actions ("Open File"...), close, expand and collapse, in every state. Empty: GNOME's own translucent buttons |
 | Card background | Notifications, banners, the Clear button, the Do Not Disturb switch when off, and the cards below the calendar (Today, World Clocks, Weather) |
