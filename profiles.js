@@ -3,7 +3,7 @@
 
 // The color rows of the Light mode and Dark mode tabs.
 export const ROW_NAMES = ['panel-fg', 'general', 'dash', 'qs-fg', 'qs-button', 'qs-active-fg', 'qs-active', 'highlight',
-    'fg', 'fg-muted', 'card'];
+    'fg', 'fg-muted', 'card-buttons', 'card'];
 
 // Rows added later: a profile saved before them takes the value of the row they came
 // from, so it keeps its look: the shell and idle button text used to follow the cards' text,

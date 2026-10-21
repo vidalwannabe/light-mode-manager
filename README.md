@@ -8,7 +8,7 @@ It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 app
 
 ### Light mode and Dark mode tabs
 
-Each tab has eleven colors in two groups. An empty color is the system default: GNOME's own color in that mode.
+Each tab has twelve colors in two groups. An empty color is the system default: GNOME's own color in that mode.
 
 **Shell**
 
@@ -29,7 +29,8 @@ Each tab has eleven colors in two groups. An empty color is the system default: 
 | Volume and brightness sliders | The filled part of the volume, brightness and other sliders, and of the volume and brightness popup (OSD). Default: the accent color set in GNOME Settings › Appearance |
 | Card titles and icons | Titles and icons of notifications (app name and title) and their buttons, Today, World Clocks, Weather, the calendar, the Clear button and the Do Not Disturb label |
 | Card subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday, week numbers |
-| Card background | Notifications and their buttons (actions, close, expand: 4% lighter in dark style and 4% darker in light style, so they show without hovering), banners, the Clear button, the Do Not Disturb switch when off, and the cards below the calendar (Today, World Clocks, Weather) |
+| Card buttons | The notifications' buttons: actions ("Open File"...), close, expand and collapse, in every state. Empty: GNOME's own translucent buttons |
+| Card background | Notifications, banners, the Clear button, the Do Not Disturb switch when off, and the cards below the calendar (Today, World Clocks, Weather) |
 
 Color sets saved before a color existed take it from the color it came from (shell and idle button text from the card text, the dash from the card background), so they keep their look.
 

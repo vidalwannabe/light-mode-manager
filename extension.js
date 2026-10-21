@@ -1049,16 +1049,17 @@ export default class ShellColorManagerExtension extends Extension {
         css += textRolesCss(c.fg, c['fg-muted']) + quickSettingsTextCss(c['qs-fg']);
         if (c['qs-fg'] || c['qs-active-fg'])
             css += activeTextCss(c['qs-active-fg'] || '-st-accent-fg-color');
+        // "Card buttons": the notifications' buttons, in every state (GNOME's own on system
+        // default, translucent over the card).
+        if (c['card-buttons'])
+            css += buttonCss(NOTIFICATION_BUTTONS, c['card-buttons'], style);
         // Cards, Quick Settings and "Calendar as card" (GNOME's own card color on system default).
         const card = c.card || native.card;
         if (c.card) {
             // Stacked notifications behind the first get GNOME's darker shades: GNOME draws the
             // first one 5% lighter than its card color and the others 1% and 4% darker (dark
             // style), so 6% and 9% under the first; 4% and 7% in light style.
-            // The notifications' buttons 4% lighter than the card in dark style and 4% darker in
-            // light style, so they show without hovering the notification.
             css += buttonCss(CARD_BUTTONS, card, style) +
-                buttonCss(NOTIFICATION_BUTTONS, `${shade(style)}(${card}, 4%)`, style) +
                 rule('.message:second-in-stack', 'background-color', `st-darken(${card}, ${style ? 6 : 4}%)`) +
                 rule('.message:lower-in-stack', 'background-color', `st-darken(${card}, ${style ? 9 : 7}%)`) +
                 rule(DND_SWITCH, 'background-color', card) +
