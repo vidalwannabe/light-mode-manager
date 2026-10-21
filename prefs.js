@@ -33,7 +33,7 @@ const COLOR_GROUPS = [
         ['dash', 'Overview and top bar highlights',
             'Alt+Tab selection, app hover, dash, folders, password field, search and top bar buttons'],
     ]],
-    ['Quick Settings and Notification Panel', [
+    ['Quick Settings', [
         ['qs-active-fg', 'Active button text and icons', 'Active menus, media player, today in the calendar and toggles that are on',
             'Accent text color', '#ffffff'],
         ['qs-active', 'Active button background', 'Active menus, media player, today in the calendar and toggles that are on',
@@ -41,6 +41,8 @@ const COLOR_GROUPS = [
         ['qs-fg', 'Idle button text and icons', 'Idle menus, round buttons, slider handles and toggles that are off'],
         ['qs-button', 'Idle button background', 'Idle menus, round buttons, slider buttons, slider tracks and toggles that are off'],
         ['highlight', 'Volume and brightness sliders', 'OSD and Quick Settings sliders'],
+    ]],
+    ['Notification Panel', [
         ['fg', 'Card titles and icons', 'Calendar, Clear button, Do Not Disturb label, notifications and their buttons, Today, Weather and World Clocks'],
         ['fg-muted', 'Card subtitles', 'Locations, notification body, times and weekdays'],
         ['card-buttons', 'Card buttons', 'Close, collapse, expand and notification action buttons'],

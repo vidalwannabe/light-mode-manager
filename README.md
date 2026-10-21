@@ -8,7 +8,7 @@ It customizes **GNOME Shell only**. App colors are not changed; legacy GTK 3 app
 
 ### Light mode and Dark mode tabs
 
-Each tab has twelve colors in two groups. An empty color is the system default: GNOME's own color in that mode.
+Each tab has twelve colors in three groups. An empty color is the system default: GNOME's own color in that mode.
 
 **Shell**
 
@@ -18,7 +18,7 @@ Each tab has twelve colors in two groups. An empty color is the system default: 
 | Shell background | The top bar, menus (Quick Settings, calendar, right-click menus), OSD, window switcher, the overview and dialogs (Power Off, passwords…). The lock and login screens keep their transparent top bar |
 | Overview and top bar highlights | The dash, app folders and the dialog a folder opens (its name field included), the highlight of a hovered or selected app, the search bar and search result sections, the selected app of the Alt+Tab switcher, the password field of the lock and login screens, and hovered or open top bar buttons |
 
-**Quick Settings and Notification Panel**
+**Quick Settings**
 
 | Color | What it paints |
 | --- | --- |
@@ -27,6 +27,11 @@ Each tab has twelve colors in two groups. An empty color is the system default: 
 | Idle button text and icons | Toggles that are off (titles, subtitles and arrows), the menus they open (heading, items and icons), the round buttons at the top, the slider buttons and the sliders' handles |
 | Idle button background | Toggles that are off and their arrows, the menus they open (with their outline and the circle behind the heading icon), the round buttons at the top, the slider buttons, the sliders' track, the Background Apps toggle and the close buttons of its apps |
 | Volume and brightness sliders | The filled part of the volume, brightness and other sliders, and of the volume and brightness popup (OSD). Default: the accent color set in GNOME Settings › Appearance |
+
+**Notification Panel**
+
+| Color | What it paints |
+| --- | --- |
 | Card titles and icons | Titles and icons of notifications (app name and title) and their buttons, Today, World Clocks, Weather, the calendar, the Clear button and the Do Not Disturb label |
 | Card subtitles | Only the line under a title: a notification's text and time, event times, "No Events", the weather location and hours, the weekday, week numbers |
 | Card buttons | The notifications' buttons: actions ("Open File"...), close, expand and collapse, in every state. Empty: GNOME's own translucent buttons |
