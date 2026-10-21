@@ -982,17 +982,16 @@ export default class ShellColorManagerExtension extends Extension {
         } else if (c.card) {
             css += buttonCss(MEDIA_CARD, native.media, dark);
         }
-        if (fg) {
+        // Every text and icon of the player follows "Active button text and icons"; empty, the
+        // accent's text color over the active background (GNOME's own over its own card).
+        const text = fg || (bg ? '-st-accent-fg-color' : '');
+        if (text) {
             css += rule([...MEDIA_TEXT, MEDIA_CONTROL, `${MEDIA_CONTROL}:hover`, `${MEDIA_CONTROL}:active`].join(', '),
-                'color', fg) +
-                rule(`${MEDIA_CONTROL}:insensitive`, 'color', `st-transparentize(${fg}, 0.5)`);
+                'color', text) +
+                rule(`${MEDIA_CONTROL}:insensitive`, 'color', `st-transparentize(${text}, 0.5)`);
         } else if (c.fg || c['fg-muted']) {
             css += rule(MEDIA_HEADER.join(', '), 'color', native.header) + rule(MEDIA_BODY.join(', '), 'color', native.text);
         }
-        // On an empty "Active button text and icons" the player's title (the app's name and
-        // icon) and text keep its default, the accent text color, over the active background.
-        if (!fg && bg)
-            css += rule(MEDIA_TEXT.join(', '), 'color', '-st-accent-fg-color');
         return css;
     }
 
