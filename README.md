@@ -15,8 +15,8 @@ Each tab has twelve colors in three groups. An empty color is the system default
 | Color | What it paints |
 | --- | --- |
 | Shell text and icons | Top bar text and icons (clock, indicators, overview button, Dash to Panel's app grid button), menu items, OSD and window switcher text, app and folder names, the folder edit button, page arrows, overview search results and window captions, and the text typed in the search and password fields (their hint dimmed). The lock and login screens keep their white top bar text |
-| Shell background | The top bar, menus (Quick Settings, calendar, right-click menus), OSD, window switcher, the overview and dialogs (Power Off, passwords…). The lock and login screens keep their transparent top bar |
-| Overview and top bar highlights | The dash background, app folders and the dialog a folder opens (its name field included), the highlight of a hovered or selected app (not in the dash), the search bar and search result sections, the selected app of the Alt+Tab switcher, the password field of the lock and login screens, and hovered or open top bar buttons |
+| Shell background | The top bar, the dash, menus (Quick Settings, calendar, right-click menus), OSD, window switcher, the overview and dialogs (Power Off, passwords…). The lock and login screens keep their transparent top bar |
+| Overview and top bar highlights | The square behind each app of the dash and its Show Apps button (with GNOME's own hover, click and checked shades; with Dash to Dock, the app of the focused window is marked with a mix of this color with white in dark mode or black in light mode, so it stands out in both), app folders and the dialog a folder opens (its name field included), the highlight of a hovered or selected app (not in the dash), the search bar and search result sections, the selected app of the Alt+Tab switcher, the password field of the lock and login screens, and hovered or open top bar buttons |
 
 **Quick Settings**
 

@@ -29,9 +29,9 @@ const ACCENT = 'Accent color set in\nGNOME Settings › Appearance';
 const COLOR_GROUPS = [
     ['Shell', [
         ['panel-fg', 'Shell text and icons', 'App grid, menus, OSD, overview, password field, search, switchers and top bar'],
-        ['general', 'Shell background', 'Dialogs, menus, OSD, overview, top bar and window switcher'],
+        ['general', 'Shell background', 'Dash, dialogs, menus, OSD, overview, top bar and window switcher'],
         ['dash', 'Overview and top bar highlights',
-            'Alt+Tab selection, app hover, dash background, folders, password field, search and top bar buttons'],
+            'Alt+Tab selection, app hover, dash buttons, folders, password field, search and top bar buttons'],
     ]],
     ['Quick Settings', [
         ['qs-active-fg', 'Active button text and icons', 'Active menus, media player, today in the calendar and toggles that are on',

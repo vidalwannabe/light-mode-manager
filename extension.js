@@ -43,7 +43,7 @@ const MENU_TEXT = inStates(['.popup-menu-item', '.popup-inactive-menu-item'],
 // "Overview text": search results (with their descriptions dimmed), the search status and
 // window captions.
 const OVERVIEW_TEXT = '.list-search-result, .list-search-result .list-search-result-title, .search-statustext, ' +
-    '.list-search-provider-details, .window-caption';
+    '.list-search-provider-details';
 const OVERVIEW_DIM_TEXT = '.list-search-result .list-search-result-description';
 // "Overview and dialogs background": the overview and modal dialogs (Power Off, passwords,
 // "not responding"...), always opaque: dialogs ask for attention, so they stay easy to read.
@@ -378,6 +378,43 @@ function overviewBoxesCss(color, dark) {
         // colors): their tall tile stays transparent.
         rule(inStates(['#dash .overview-tile', '#dash .show-apps'], ['', ':focus', ':hover', ':active', ...SELECTED, ...hoverStates]),
             'background-color', 'transparent');
+}
+// "Overview and top bar highlights" on the square GNOME draws behind each app of the dash and
+// its Show Apps button (the .overview-icon). GNOME sets its hover, focus, click and checked
+// states on the tile that holds it, not on the icon itself, so the rules follow the tile's
+// states. GNOME's own amounts for this button: +7% on hover, +9% on click, +8% when checked
+// (then hovered or clicked on top), and a 5% accent tint on focus. The color is the base.
+const DASH_TILES = ['#dash .overview-tile', '#dash .show-apps'];
+// Dash to Dock marks the app of the focused window with a fixed translucent light overlay
+// (20% of #eeeeec) that replaces the tile's color. Over a dark tile that reads as a highlight,
+// but over a light one it ends up almost the dock's own color, so the focused app looks
+// unmarked. Its tile takes the color mixed with white (dark) or black (light) instead, about
+// as far from the color as that overlay is on a dark tile, and lit like any tile on hover and click.
+const DASH_FOCUSED = '#dashtodockContainer .app-well-app.focused';
+function dashTilesCss(color, dark) {
+    const adjust = shade(dark);
+    const focus = focusTint(dark);
+    const lit = (base, amount) => `${adjust}(${base}, ${amount}%)`;
+    const paint = (state, value) => rule(DASH_TILES.map(tile => `${tile}${state} .overview-icon`).join(', '),
+        'background-color', value);
+    const tint = base => `st-mix(${focus}, ${base}, 5%)`;
+    const current = `st-mix(${dark ? '#ffffff' : '#000000'}, ${color}, 11%)`;
+    const paintFocused = (state, value) => rule(`${DASH_FOCUSED}${state} .overview-icon`,
+        'background-color', `${value} !important`);
+    return paintFocused('', current) +
+        paintFocused(':hover', lit(current, 7)) +
+        paintFocused(':active', lit(current, 9)) +
+        paintFocused(':active:hover', lit(lit(current, 9), 7)) +
+        paint('', color) +
+        paint(':hover', lit(color, 7)) +
+        paint(':focus', tint(color)) +
+        paint(':focus:hover', tint(lit(color, 7))) +
+        paint(':active', lit(color, 9)) +
+        paint(':active:hover', lit(lit(color, 9), 7)) +
+        paint(':active:focus', tint(lit(color, 9))) +
+        paint(':checked', lit(color, 8)) +
+        paint(':checked:hover', lit(lit(color, 8), 7)) +
+        paint(':checked:active', lit(lit(color, 8), 9));
 }
 const entryTextCss = color => rule(inStates(ENTRY_SEL, ['', ':hover', ':focus']), 'color', color) +
     rule(inStates(ENTRY_SEL, [' StLabel.hint-text']), 'color', `st-transparentize(${color}, 0.5)`);
@@ -1031,9 +1068,11 @@ export default class ShellColorManagerExtension extends Extension {
         const native = NATIVE[style ? 'dark' : 'light'];
         // Expanded Quick Settings menus 1px narrower on each side.
         let css = rule(QS_MENU, 'margin-left', '19px') + rule(QS_MENU, 'margin-right', '19px');
-        // "Shell background": menus, OSD, switchers, the top bar, the overview and dialogs.
-        if (c.general)
-            css += rule(`${GENERAL_SEL}, ${OPAQUE_SEL}`, 'background-color', c.general) + this._panelCss(c.general);
+        // "Shell background": menus, OSD, switchers, the top bar, the dash, the overview and dialogs.
+        if (c.general) {
+            css += rule(`${GENERAL_SEL}, ${OPAQUE_SEL}`, 'background-color', c.general) + this._panelCss(c.general) +
+                rule('#dash .dash-background', 'background-color', c.general);
+        }
         // "Shell text and icons": top bar, menus, OSD, switchers, app grid, overview, and the
         // search and password fields (their hint dimmed).
         const text = c['panel-fg'];
@@ -1042,10 +1081,11 @@ export default class ShellColorManagerExtension extends Extension {
                 rule(OVERVIEW_TEXT, 'color', text) + rule(OVERVIEW_DIM_TEXT, 'color', `st-transparentize(${text}, 0.3)`) +
                 entryTextCss(text);
         }
+        // "Overview and top bar highlights", the square behind each app of the dash included.
         if (c.dash) {
             const dash = c.dash;
-            css += rule('#dash .dash-background', 'background-color', dash) +
-                entriesCss(dash, style) + panelButtonsCss(dash) + overviewBoxesCss(dash, style);
+            css += entriesCss(dash, style) + panelButtonsCss(dash) + overviewBoxesCss(dash, style) +
+                dashTilesCss(dash, style);
         }
         // Card text, Quick Settings text and, after the subtitles so a toggle that is on keeps
         // its own, "Active button text and icons".
